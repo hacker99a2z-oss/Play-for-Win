@@ -62,4 +62,18 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Get Top Leaderboard API
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const topUsers = await User.find({})
+      .sort({ weeklyCoins: -1 })
+      .limit(100)
+      .select('firstName username weeklyCoins');
+
+    res.json(topUsers);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
 module.exports = router;
