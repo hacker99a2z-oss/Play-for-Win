@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 
 const API_URL = "https://play-for-win.onrender.com"; // আপনার ব্যাকএন্ড URL
 
@@ -9,9 +8,10 @@ export default function Contest() {
 
   useEffect(() => {
     // ব্যাকএন্ড থেকে আসল ইউজারদের ডাটা ফেচ করবে
-    axios.get(`${API_URL}/api/auth/leaderboard`)
-      .then(res => {
-        setLeaderboard(res.data);
+    fetch(`${API_URL}/api/auth/leaderboard`)
+      .then(res => res.json())
+      .then(data => {
+        setLeaderboard(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {
