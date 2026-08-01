@@ -23,4 +23,6 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+userSchema.index({ weeklyCoins: -1 });
+
 module.exports = mongoose.model('User', userSchema);
