@@ -8,7 +8,7 @@ export default function Contest() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // ব্যাকএন্ড থেকে আসল ডাটা নিয়ে আসবে
+    // ব্যাকএন্ড থেকে আসল ইউজারদের ডাটা ফেচ করবে
     axios.get(`${API_URL}/api/auth/leaderboard`)
       .then(res => {
         setLeaderboard(res.data);
