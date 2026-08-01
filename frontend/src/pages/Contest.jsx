@@ -5,9 +5,37 @@ const API_URL = "https://play-for-win.onrender.com"; // আপনার ব্�
 export default function Contest() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
+  // 1. Live Countdown Timer Logic (Next Sunday Reset)
   useEffect(() => {
-    // ব্যাকএন্ড থেকে আসল ইউজারদের ডাটা ফেচ করবে
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      const nextSunday = new Date();
+      
+      // আগামী রোববারের শেষ সময় (২৩:৫৯:৫৯) হিসাব করা
+      nextSunday.setDate(now.getDate() + ((7 - now.getDay()) % 7));
+      nextSunday.setHours(23, 59, 59, 999);
+
+      const difference = nextSunday - now;
+
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        });
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // 2. Fetch Real Users Leaderboard
+  useEffect(() => {
     fetch(`${API_URL}/api/auth/leaderboard`)
       .then(res => res.json())
       .then(data => {
@@ -20,20 +48,23 @@ export default function Contest() {
       });
   }, []);
 
+  // 3. Prizes mapping
+  const prizes = ["$0.50", "$0.30", "$0.20"];
+
   return (
     <div className="p-4 text-white flex flex-col gap-6 max-w-md mx-auto">
-      {/* Contest Status */}
+      {/* Contest Status & Live Timer */}
       <div className="bg-slate-900 border border-slate-700 p-4 rounded-2xl text-center shadow-lg">
-        <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Weekly Contest Status</p>
+        <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">WEEKLY CONTEST ENDS IN</p>
         <div className="flex items-center justify-center gap-2 text-yellow-400 font-extrabold text-lg">
-          ⏰ <span>Resets Every Sunday</span>
+          ⏰ <span>{timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s</span>
         </div>
       </div>
 
       {/* Leaderboard Section */}
       <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-xl">
         <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-yellow-400">
-          🏆 Top Leaderboard
+          🏆 Top 100 Leaderboard
         </h2>
 
         {loading ? (
@@ -64,6 +95,11 @@ export default function Contest() {
 
                 <div className="text-right">
                   <p className="font-bold text-blue-400 text-sm">{player.weeklyCoins || 0} Coins</p>
+                  {index < 3 && (
+                    <p className="text-xs font-semibold text-emerald-400">
+                      Prize: {prizes[index]}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
