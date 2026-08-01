@@ -19,7 +19,26 @@ export default function App() {
   });
 
   const handlePlayAd = () => {
-    alert("AdsGram Ad Triggered!");
+    if (window.Adsgram) {
+      const AdController = window.Adsgram.init({ 
+        blockId: "YOUR_BLOCK_ID" // 👈 এখানে আপনার Adsgram-এর আসল Block ID দিন
+      });
+
+      AdController.show()
+        .then((result) => {
+          // এড সফলভাবে দেখলে পয়েন্ট বাড়াবে
+          setUser((prev) => ({
+            ...prev,
+            mainCoins: prev.mainCoins + 100,
+            weeklyCoins: prev.weeklyCoins + 100
+          }));
+        })
+        .catch((result) => {
+          console.log("Ad skipped or error:", result);
+        });
+    } else {
+      alert("Adsgram SDK Not Loaded!");
+    }
   };
 
   return (
