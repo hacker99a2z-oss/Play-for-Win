@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function Contest() {
   // Dummy Leaderboard Data for UI Preview
@@ -8,13 +8,41 @@ export default function Contest() {
     { rank: 3, name: "Rakib", coins: 3900, prize: "$0.20" },
   ];
 
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      // আগামী রোববার রাত ১২:০০ টা (Sunday Midnight) হিসাব করা
+      const nextSunday = new Date();
+      nextSunday.setDate(now.getDate() + ((7 - now.getDay()) % 7 || 7));
+      nextSunday.setHours(24, 0, 0, 0);
+
+      const difference = nextSunday - now;
+
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        });
+      }
+    };
+
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="p-4 text-white flex flex-col gap-4">
       {/* Countdown Timer */}
       <div className="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/30 rounded-2xl p-4 text-center">
         <p className="text-xs text-blue-300 uppercase font-semibold">Weekly Contest Ends In</p>
-        <div className="text-xl font-black text-blue-400 mt-1 font-mono">
-          ⏰ 5 Days 10 Hours 21 Mins
+        <div className="text-lg font-black text-blue-400 mt-1 font-mono">
+          ⏰ {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s
         </div>
       </div>
 
