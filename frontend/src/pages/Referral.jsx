@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 
 export default function Referral({ user }) {
   const [copied, setCopied] = useState(false);
-  const botUsername = "playersfordestiny_bot"; // আপনার Telegram Bot Username
+
+  const botUsername = "playersfordestiny_bot"; 
   const refLink = `https://t.me/${botUsername}/gamers?startapp=${user?.telegramId || ''}`;
 
   const handleCopy = () => {
@@ -11,23 +12,25 @@ export default function Referral({ user }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const referralsList = user?.referrals || [];
+
   return (
     <div className="p-4 text-white flex flex-col gap-4">
       {/* Referral Link Box */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
         <h2 className="text-sm text-gray-400 font-medium mb-2">Your Invite Link</h2>
         <div className="flex items-center gap-2 bg-gray-950 p-2.5 rounded-xl border border-gray-800">
-          <input 
-            type="text" 
-            readOnly 
-            value={refLink} 
+          <input
+            type="text"
+            readOnly
+            value={refLink}
             className="bg-transparent text-xs text-yellow-400 flex-1 outline-none truncate"
           />
-          <button 
+          <button
             onClick={handleCopy}
-            className="bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition-all"
+            className="bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition"
           >
-            {copied ? 'Copied! ✅' : 'Copy 📋'}
+            {copied ? 'Copied! ✓' : 'Copy 📋'}
           </button>
         </div>
         <p className="text-[11px] text-gray-400 mt-2.5">
@@ -37,22 +40,25 @@ export default function Referral({ user }) {
 
       {/* Referrals List */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-        <h3 className="font-bold text-sm mb-3">My Referrals ({user?.referrals?.length || 0})</h3>
-        <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
-          {user?.referrals && user.referrals.length > 0 ? (
-            user.referrals.map((ref, idx) => (
-              <div key={idx} className="flex items-center justify-between bg-gray-950 p-2.5 rounded-xl border border-gray-800 text-xs">
+        <h3 className="font-bold text-sm mb-3">My Referrals ({user?.referralCount || referralsList.length})</h3>
+        
+        {referralsList.length > 0 ? (
+          <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+            {referralsList.map((ref, idx) => (
+              <div key={idx} className="flex items-center justify-between bg-gray-950 p-2.5 rounded-xl border border-gray-800">
                 <div className="flex items-center gap-2">
-                  <img src={ref.photoUrl || "https://via.placeholder.com/30"} alt="pic" className="w-7 h-7 rounded-full" />
-                  <span className="font-medium">{ref.firstName}</span>
+                  <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center text-xs">
+                    {ref.firstName ? ref.firstName[0] : 'U'}
+                  </div>
+                  <span className="font-medium text-xs">{ref.firstName || ref.username || 'User'}</span>
                 </div>
-                <span className="text-gray-400 font-mono">{ref.adsWatchedForReferral || 0}/20 Ads</span>
+                <span className="text-xs text-gray-400 font-mono">{ref.adsWatched || 0}/20 Ads</span>
               </div>
-            ))
-          ) : (
-            <p className="text-center text-xs text-gray-500 py-4">No referrals yet. Share your link!</p>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-xs text-gray-500 py-4">No referrals yet. Share your link!</p>
+        )}
       </div>
     </div>
   );
