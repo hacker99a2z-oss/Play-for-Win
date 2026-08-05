@@ -67,7 +67,7 @@ app.use('/api/auth', authRoutes);
 
 // ১. ইউজারের তথ্য আনবে অথবা না থাকলে ডাটাবেজে তৈরি করবে
 app.post('/api/user/sync', async (req, res) => {
-  const { telegramId, firstName, username, photoUrl } = req.body;
+  const { telegramId, firstName, username, photoUrl, referrerId } = req.body;
 
   if (!telegramId) {
     return res.status(400).json({ error: 'Telegram ID required' });
@@ -81,9 +81,22 @@ app.post('/api/user/sync', async (req, res) => {
         telegramId,
         firstName: firstName || 'User',
         username: username || '',
-        photoUrl: photoUrl || ''
+        photoUrl: photoUrl || '',
+        referredBy: referrerId || null
       });
       await user.save();
+
+      if (referrerId && referrerId !== telegramId) {
+        await User.findOneAndUpdate(
+          { telegramId: referrerId },
+          {
+            $inc: {
+              mainCoins: 1000,
+              referralCount: 1
+            }
+          }
+        );
+      }
     } else {
       // ইউজারের নাম বা ছবি পরিবর্তন হলে আপডেট রাখা
       user.firstName = firstName || user.firstName;
