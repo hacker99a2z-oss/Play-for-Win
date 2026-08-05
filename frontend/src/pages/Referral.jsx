@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function Referral({ user }) {
+export default function Referral({ user, refreshUser }) {
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (refreshUser) refreshUser();
+  }, []);
 
   const botUsername = "playersfordestiny_bot"; 
   const refLink = `https://t.me/${botUsername}/gamers?startapp=${user?.telegramId || ''}`;
