@@ -12,6 +12,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/', (req, res) => {
+  res.status(200).send('Server is alive!');
+});
+
 // ================= TELEGRAM BOT SETUP =================
 const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE';
 const WEB_APP_URL = process.env.WEB_APP_URL || 'https://your-vercel-app.vercel.app';
