@@ -13,7 +13,6 @@ app.use(cors());
 app.use(express.json());
 
 // ================= TELEGRAM BOT SETUP =================
-// .env ফাইল থেকে লিংক ও টোকেনগুলো নেওয়া হচ্ছে
 const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE';
 const WEB_APP_URL = process.env.WEB_APP_URL || 'https://your-vercel-app.vercel.app';
 const CHANNEL_URL = process.env.CHANNEL_URL || 'https://t.me/your_official_channel';
@@ -59,6 +58,79 @@ bot.launch().then(() => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+
+// ================= API ENDPOINTS FOR FRONTEND =================
+
+// ১. ইউজারের তথ্য আনবে অথবা না থাকলে ডাটাবেজে তৈরি করবে
+app.post('/api/user/sync', async (req, res) => {
+  const { telegramId, firstName, username, photoUrl } = req.body;
+
+  if (!telegramId) {
+    return res.status(400).json({ error: 'Telegram ID required' });
+  }
+
+  try {
+    let user = await User.findOne({ telegramId });
+
+    if (!user) {
+      user = new User({
+        telegramId,
+        firstName: firstName || 'User',
+        username: username || '',
+        photoUrl: photoUrl || ''
+      });
+      await user.save();
+    } else {
+      // ইউজারের নাম বা ছবি পরিবর্তন হলে আপডেট রাখা
+      user.firstName = firstName || user.firstName;
+      user.username = username || user.username;
+      user.photoUrl = photoUrl || user.photoUrl;
+      await user.save();
+    }
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ২. অ্যাড দেখলে mainCoins এবং weeklyCoins বাড়িয়ে দেওয়া
+app.post('/api/user/watch-ad', async (req, res) => {
+  const { telegramId } = req.body;
+
+  if (!telegramId) {
+    return res.status(400).json({ error: 'Telegram ID required' });
+  }
+
+  try {
+    const updatedUser = await User.findOneAndUpdate(
+      { telegramId },
+      { 
+        $inc: { 
+          mainCoins: 100,      // মূল ব্যালেন্স ১০০ যোগ হবে
+          weeklyCoins: 100,    // উইকলি কনটেস্টের পয়েন্ট ১০০ যোগ হবে
+          adsWatched: 1        // অ্যাড কাউন্ট ১ বাড়বে
+        } 
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      mainCoins: updatedUser.mainCoins,
+      weeklyCoins: updatedUser.weeklyCoins,
+      adsWatched: updatedUser.adsWatched
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==============================================================
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
