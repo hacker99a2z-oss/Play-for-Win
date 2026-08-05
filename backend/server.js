@@ -74,7 +74,7 @@ app.post('/api/user/sync', async (req, res) => {
   }
 
   try {
-    let user = await User.findOne({ telegramId });
+    let user = await User.findOne({ telegramId }).populate('referrals', 'firstName username photoUrl adsWatchedForReferral');
 
     if (!user) {
       user = new User({
@@ -90,7 +90,7 @@ app.post('/api/user/sync', async (req, res) => {
         await User.findOneAndUpdate(
           { telegramId: referrerId },
           {
-            $inc: { mainCoins: 1000, referralCount: 1 },
+            $inc: { referralCount: 1 },
             $push: { referrals: user._id }
           }
         );
@@ -109,7 +109,7 @@ app.post('/api/user/sync', async (req, res) => {
   }
 });
 
-// ২. অ্যাড দেখলে mainCoins এবং weeklyCoins বাড়িয়ে দেওয়া
+// ২. অ্যাড দেখলে ব্যালেন্স বাড়ানো এবং রেফারকারীকে ২০ অয়াডে ৫০০ কয়েন বোনাস দেওয়া
 app.post('/api/user/watch-ad', async (req, res) => {
   const { telegramId } = req.body;
 
@@ -118,28 +118,40 @@ app.post('/api/user/watch-ad', async (req, res) => {
   }
 
   try {
-    const updatedUser = await User.findOneAndUpdate(
-      { telegramId },
-      { 
-        $inc: { 
-          mainCoins: 100,      // মূল ব্যালেন্স ১০০ যোগ হবে
-          weeklyCoins: 100,    // উইকলি কনটেস্টের পয়েন্ট ১০০ যোগ হবে
-          adsWatched: 1        // অ্যাড কাউন্ট ১ বাড়বে
-        } 
-      },
-      { new: true }
-    );
+    let user = await User.findOne({ telegramId });
 
-    if (!updatedUser) {
+    if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    user.mainCoins += 100;
+    user.weeklyCoins += 100;
+    user.adsWatched += 1;
+    user.adsWatchedForReferral += 1;
+
+    // যদি রেফার করা ইউজার ২০টি অ্যাড দেখে ফেলে
+    if (user.referredBy && user.adsWatchedForReferral === 20) {
+      await User.findOneAndUpdate(
+        { telegramId: user.referredBy },
+        { 
+          $inc: { 
+            mainCoins: 500,
+            weeklyCoins: 500
+          } 
+        }
+      );
+    }
+
+    await user.save();
+
     res.json({
       success: true,
-      mainCoins: updatedUser.mainCoins,
-      weeklyCoins: updatedUser.weeklyCoins,
-      adsWatched: updatedUser.adsWatched
+      mainCoins: user.mainCoins,
+      weeklyCoins: user.weeklyCoins,
+      adsWatched: user.adsWatched,
+      adsWatchedForReferral: user.adsWatchedForReferral
     });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
