@@ -21,6 +21,7 @@ export default function App() {
       tg.expand();
 
       const tgUser = tg.initDataUnsafe?.user;
+      const startParam = tg.initDataUnsafe?.start_param;
       if (tgUser) {
         fetch(`${BACKEND_URL}/api/user/sync`, {
           method: 'POST',
@@ -29,7 +30,8 @@ export default function App() {
             telegramId: tgUser.id.toString(),
             firstName: tgUser.first_name,
             username: tgUser.username,
-            photoUrl: tgUser.photo_url
+            photoUrl: tgUser.photo_url,
+            referrerId: startParam ? startParam.toString() : null
           })
         })
           .then((res) => res.json())
