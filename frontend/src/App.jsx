@@ -76,7 +76,7 @@ export default function App() {
   const handlePlayAd = () => {
     if (window.Adsgram) {
       const AdController = window.Adsgram.init({
-        blockId: "int-40672" // 👈 আপনার Adsgram Block ID
+        blockId: "38077" // 👈 আপনার Adsgram Block ID
       });
 
       AdController.show()
