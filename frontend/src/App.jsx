@@ -14,41 +14,43 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   // ১. অ্যাপ চালু হলে টেলিগ্রাম ইউজারের তথ্য ব্যাকএন্ডের সাথে Sync করা
+const syncUserData = () => {
+    const tg = window.Telegram?.WebApp;
+    const tgUser = tg?.initDataUnsafe?.user;
+
+    if (tgUser) {
+      fetch(`${BACKEND_URL}/api/user/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramId: tgUser.id.toString(),
+          firstName: tgUser.first_name,
+          username: tgUser.username,
+          photoUrl: tgUser.photo_url,
+          referrerId: tg?.initDataUnsafe?.start_param ? tg.initDataUnsafe.start_param.toString() : null
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        setUser(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("User sync error:", err);
+        setLoading(false);
+      });
+    } else {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
     if (tg) {
       tg.ready();
       tg.expand();
-
-      const tgUser = tg.initDataUnsafe?.user;
-      const startParam = tg.initDataUnsafe?.start_param;
-      if (tgUser) {
-        fetch(`${BACKEND_URL}/api/user/sync`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            telegramId: tgUser.id.toString(),
-            firstName: tgUser.first_name,
-            username: tgUser.username,
-            photoUrl: tgUser.photo_url,
-            referrerId: startParam ? startParam.toString() : null
-          })
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            setUser(data);
-            setLoading(false);
-          })
-          .catch((err) => {
-            console.error("User sync error:", err);
-            setLoading(false);
-          });
-      } else {
-        setLoading(false);
-      }
-    } else {
-      setLoading(false);
     }
+    syncUserData();
   }, []);
 
   // ২. অ্যাড দেখার পর ব্যাকএন্ডে পয়েন্ট পাঠানোর ফাংশন
