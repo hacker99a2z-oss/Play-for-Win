@@ -67,7 +67,9 @@ export default function App() {
           setUser((prev) => ({
             ...prev,
             mainCoins: data.mainCoins,
-            weeklyCoins: data.weeklyCoins
+            weeklyCoins: data.weeklyCoins,
+            adsWatched: data.adsWatched,
+            adsWatchedForReferral: data.adsWatchedForReferral
           }));
         }
       })
