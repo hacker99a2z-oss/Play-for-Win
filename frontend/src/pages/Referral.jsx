@@ -44,7 +44,15 @@ export default function Referral({ user, refreshUser }) {
 
       {/* Referrals List */}
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-        <h3 className="font-bold text-sm mb-3">My Referrals ({user?.referralCount || referralsList.length})</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-sm">My Referrals ({user?.referralCount || referralsList.length})</h3>
+          <button
+            onClick={refreshUser}
+            className="text-xs text-yellow-400 hover:underline flex items-center gap-1"
+          >
+            🔄 Refresh
+          </button>
+        </div>
         
         {referralsList.length > 0 ? (
           <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
@@ -56,7 +64,7 @@ export default function Referral({ user, refreshUser }) {
                   </div>
                   <span className="font-medium text-xs">{ref.firstName || ref.username || 'User'}</span>
                 </div>
-                <span className="text-xs text-gray-400 font-mono">{ref.adsWatched || 0}/20 Ads</span>
+                <span className="text-xs text-gray-400 font-mono">{ref.adsWatchedForReferral || 0}/20 Ads</span>
               </div>
             ))}
           </div>
