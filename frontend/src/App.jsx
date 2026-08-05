@@ -109,7 +109,7 @@ export default function App() {
       <Header user={user} />
 
       {activeTab === 'home' && <Home user={user} onPlayAd={handlePlayAd} />}
-      {activeTab === 'referral' && <Referral user={user} refreshUser={() => window.location.reload()} />}
+      {activeTab === 'referral' && <Referral user={user} refreshUser={syncUserData} />}
       {activeTab === 'contest' && <Contest user={user} />}
       {activeTab === 'withdraw' && <Withdraw user={user} />}
 
