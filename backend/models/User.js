@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema({
   // Referral System
   referredBy: { type: String, default: null },
   referralCount: { type: Number, default: 0 },
+  referrals: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   
   // Ad Counters
   adsWatched: { type: Number, default: 0 },
