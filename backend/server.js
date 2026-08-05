@@ -90,10 +90,8 @@ app.post('/api/user/sync', async (req, res) => {
         await User.findOneAndUpdate(
           { telegramId: referrerId },
           {
-            $inc: {
-              mainCoins: 1000,
-              referralCount: 1
-            }
+            $inc: { mainCoins: 1000, referralCount: 1 },
+            $push: { referrals: user._id }
           }
         );
       }
