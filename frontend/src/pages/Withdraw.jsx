@@ -86,7 +86,7 @@ export default function Withdraw({ user }) {
       </form>
 
       {/* Support Link */}
-      <a href="https://t.me/YourSupportGroup" target="_blank" rel="noreferrer" className="text-center text-xs text-blue-400 hover:underline py-1">
+      <a href="https://t.me/earners_1b" target="_blank" rel="noreferrer" className="text-center text-xs text-blue-400 hover:underline py-1">
         💬 Contact Support
       </a>
     </div>
