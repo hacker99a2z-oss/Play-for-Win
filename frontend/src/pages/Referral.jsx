@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 
 export default function Referral({ user }) {
   const [copied, setCopied] = useState(false);
-  const botUsername = "PlayForWinBot"; // আপনার Telegram Bot Username
-  const refLink = `https://t.me/${botUsername}/app?startapp=${user?.telegramId || '123456'}`;
+  const botUsername = "playersfordestiny_bot"; // আপনার Telegram Bot Username
+  const refLink = `https://t.me/${botUsername}/gamers?startapp=${user?.telegramId || ''}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(refLink);
