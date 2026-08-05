@@ -4,35 +4,6 @@ export default function Home({ user, onPlayAd }) {
   return (
     <div className="flex flex-col items-center justify-between min-h-[calc(100vh-140px)] p-6 text-white text-center">
       
-      {/* Header Profile & Balance Section */}
-      <div className="w-full flex items-center justify-between gap-4">
-        {/* Profile Info */}
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-slate-800 border-2 border-yellow-500 flex items-center justify-center font-bold text-lg overflow-hidden">
-            {user?.photoUrl ? (
-              <img src={user.photoUrl} alt="profile" className="w-full h-full object-cover" />
-            ) : (
-              <span>{user?.firstName ? user.firstName.charAt(0) : 'U'}</span>
-            )}
-          </div>
-          <div className="text-left">
-            <h3 className="font-bold text-sm leading-tight">
-              {user?.firstName || 'Telegram User'}
-            </h3>
-            <p className="text-xs text-gray-400">
-              @{user?.username || 'username'}
-            </p>
-          </div>
-        </div>
-
-        {/* Total Coins / Balance */}
-        <div className="flex items-center gap-2 bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-full">
-          <span className="text-amber-400 font-bold text-sm">🪙</span>
-          <span className="font-extrabold text-amber-400 text-sm">
-            {user?.balance?.toLocaleString() || 0}
-          </span>
-        </div>
-      </div>
 
       {/* Weekly Coins Display */}
       <div className="w-full flex justify-end my-2">
