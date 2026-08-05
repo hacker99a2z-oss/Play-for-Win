@@ -64,7 +64,7 @@ export default function Withdraw({ user }) {
 
         <button
           type="submit"
-          className="w-full mt-2 py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-extrabold text-base shadow-lg shadow-yellow-500/10 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full mt-2 py-3.5 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-base shadow-lg hover:brightness-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
         >
           💸 Withdraw Funds
         </button>
