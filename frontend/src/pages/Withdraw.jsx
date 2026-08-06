@@ -13,7 +13,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
     }
 
     try {
-      const res = await fetch(`${BACKEND_URL}/api/user/withdraw`, {
+      const res = await fetch(`https://play-for-win.onrender.com/api/user/withdraw`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
