@@ -159,54 +159,61 @@ app.post('/api/user/watch-ad', async (req, res) => {
 
 // ৩. উইথড্র রিকোয়েস্ট এবং বোনাস ব্যালেন্স ও কয়েন ফি চেক API
 app.post('/api/user/withdraw', async (req, res) => {
-  const { telegramId, wallet, amount } = req.body;
-
   try {
+    const { telegramId, wallet, amount } = req.body;
+
     const user = await User.findOne({ telegramId });
-    if (!user) return res.status(404).json({ error: 'User not found!' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found!' });
+    }
 
     const reqAmount = parseFloat(amount);
     if (isNaN(reqAmount) || reqAmount <= 0) {
       return res.status(400).json({ error: 'Invalid amount entered!' });
     }
 
-    // বোনাস ব্যালেন্স চেক (Bonus Balance যথেষ্ট আছে কিনা)
+    // ১. বোনাস ব্যালেন্স চেক
     const userBonus = user.bonusBalanceUSD || user.bonusBalance || 0;
     if (userBonus < reqAmount) {
       return res.status(400).json({ error: 'Insufficient Bonus Balance!' });
     }
 
-    // কয়েন ফি হিসাব ($0.10 = 10,000 coins, $0.50 = 50,000 coins, $1.00 = 100,000 coins)
+    // ২. কয়েন ফি চেক ($1 = 100,000 Coins)
     const requiredCoins = reqAmount * 100000;
-
-    // মেইন কয়েন চেক (যথেষ্ট Main Coins আছে কিনা)
     if ((user.mainCoins || 0) < requiredCoins) {
       return res.status(400).json({ 
-        error: `Insufficient Main Coins! You need at least ${requiredCoins.toLocaleString()} Coins fee for $${reqAmount} withdraw.` 
+        error: `Insufficient Main Coins! Required: ${requiredCoins.toLocaleString()} Coins.` 
       });
     }
 
-    // শর্ত পূরণ হলে বোনাস ব্যালেন্স ও কয়েন কেটে নেওয়া
+    // ৩. ব্যালেন্স ও কয়েন কাটা
     user.bonusBalanceUSD = userBonus - reqAmount;
     user.mainCoins -= requiredCoins;
     await user.save();
 
-    // টেলিগ্রাম চ্যানেলে বা আপনার চ্যাটে মেসেজ পাঠানো
-    const adminMessage = `💸 *New Withdraw Request!* 💸\n\n` +
-      `👤 *User:* ${user.firstName || 'User'} (@${user.username || 'N/A'})\n` +
-      `🆔 *Telegram ID:* \`${telegramId}\`\n` +
-      `💰 *Withdraw Amount:* $${reqAmount}\n` +
-      `🔥 *Coins Fee Deducted:* ${requiredCoins.toLocaleString()} Coins\n` +
-      `💎 *TON Wallet:* \`${wallet}\``;
+    // ৪. টেলিগ্রামে নোটিফিকেশন পাঠানো (Safe Block)
+    try {
+      const adminMessage = `💸 *New Withdraw Request!* 💸\n\n` +
+        `👤 *User:* ${user.firstName || 'User'} (@${user.username || 'N/A'})\n` +
+        `🆔 *Telegram ID:* \`${telegramId}\`\n` +
+        `💰 *Withdraw Amount:* $${reqAmount}\n` +
+        `🔥 *Coins Fee Deducted:* ${requiredCoins.toLocaleString()} Coins\n` +
+        `💎 *TON Wallet:* \`${wallet}\``;
 
-    const adminChatId = process.env.ADMIN_CHAT_ID || CHANNEL_URL;
-    await bot.telegram.sendMessage(adminChatId, adminMessage, { parse_mode: 'Markdown' });
+      // Render Environment থেকে ADMIN_CHAT_ID নিবে
+      const adminChatId = process.env.ADMIN_CHAT_ID;
+      if (adminChatId) {
+        await bot.telegram.sendMessage(adminChatId, adminMessage, { parse_mode: 'Markdown' });
+      }
+    } catch (telegramErr) {
+      console.error('Telegram Notification Error:', telegramErr.message);
+    }
 
-    res.json({ success: true, message: 'Withdraw request submitted successfully!' });
+    return res.json({ success: true, message: 'Withdraw request submitted successfully!' });
 
   } catch (error) {
-    console.error('Withdraw Error:', error);
-    res.status(500).json({ error: 'Server error during withdraw request.' });
+    console.error('Withdraw API Error:', error);
+    return res.status(500).json({ error: 'Something went wrong. Try again!' });
   }
 });
 
