@@ -52,8 +52,15 @@ bot.start((ctx) => {
   });
 });
 
-// bot.launch() বন্ধ রাখা হলো 409 Conflict Error এড়ানোর জন্য
-console.log('🤖 Bot notification mode active');
+// Webhook সেটআপ (Polling ছাড়া বোট রিপ্লাই এবং চ্যানেলে মেসেজ দেওয়ার সেরা উপায়)
+if (process.env.BOT_TOKEN) {
+  const WEBHOOK_URL = `https://play-for-win.onrender.com/telegram-webhook`;
+  bot.telegram.setWebhook(WEBHOOK_URL)
+    .then(() => console.log('🤖 Webhook Configured Successfully'))
+    .catch((err) => console.error('Webhook Error:', err.message));
+
+  app.use(bot.webhookCallback('/telegram-webhook'));
+}
 // =======================================================
 
 // Routes
