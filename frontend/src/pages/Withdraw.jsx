@@ -44,7 +44,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-gray-900 border border-gray-800 p-3 rounded-2xl">
           <p className="text-[11px] text-gray-400">Bonus Balance</p>
-          <p className="text-lg font-bold text-emerald-400">${user?.bonusBalanceUSD || "0.00"}</p>
+          <p className="text-lg font-bold text-emerald-400">${user?.bonusBalanceUSD ? Number(user.bonusBalanceUSD).toFixed(2) : "0.00"}</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 p-3 rounded-2xl">
           <p className="text-[11px] text-gray-400">Main Coins</p>
