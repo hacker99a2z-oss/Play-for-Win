@@ -82,7 +82,7 @@ const syncUserData = () => {
   const handlePlayAd = () => {
     if (window.Adsgram) {
       const AdController = window.Adsgram.init({
-        blockId: "int-41387" // 👈 আপনার Adsgram Block ID
+        blockId: "41470" // 👈 আপনার Adsgram Block ID
       });
 
       AdController.show()
