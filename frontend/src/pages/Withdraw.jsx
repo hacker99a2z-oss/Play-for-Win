@@ -1,12 +1,41 @@
 import React, { useState } from 'react';
 
-export default function Withdraw({ user }) {
+export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
   const [wallet, setWallet] = useState('');
   const [amount, setAmount] = useState('');
 
-  const handleWithdraw = (e) => {
+  const handleWithdraw = async (e) => {
     e.preventDefault();
-    alert(`Withdraw Request: $${amount} to address ${wallet}`);
+
+    if (!wallet) {
+      alert("Please enter your TON Wallet Address!");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/user/withdraw`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramId: user?.telegramId,
+          wallet,
+          amount
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("✅ Withdraw Request Submitted Successfully!");
+        setWallet('');
+        setAmount('');
+        if (refreshUser) refreshUser();
+      } else {
+        alert(`❌ ${data.error}`);
+      }
+    } catch (err) {
+      alert("❌ Something went wrong. Try again!");
+    }
   };
 
   return (
