@@ -196,7 +196,7 @@ app.post('/api/user/withdraw', async (req, res) => {
     }
 
     // ৩. ব্যালেন্স ও কয়েন কাটা
-    user.bonusBalanceUSD = userBonus - reqAmount;
+    user.bonusBalanceUSD = parseFloat((userBonus - reqAmount).toFixed(2));
     user.mainCoins -= requiredCoins;
     await user.save();
 
