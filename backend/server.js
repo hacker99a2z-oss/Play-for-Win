@@ -52,21 +52,8 @@ bot.start((ctx) => {
   });
 });
 
-// বটের সার্ভিস স্টার্ট করা (Crash-Safe)
-if (process.env.BOT_TOKEN) {
-  bot.telegram.deleteWebhook({ drop_pending_updates: true })
-    .then(() => {
-      bot.launch()
-        .then(() => console.log('🤖 Telegram Bot Started Successfully'))
-        .catch((err) => {
-          console.error('⚠️ Telegram Bot Launch Warning:', err.message);
-        });
-    })
-    .catch((err) => console.error('Webhook Clear Error:', err.message));
-}
-
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+// bot.launch() বন্ধ রাখা হলো 409 Conflict Error এড়ানোর জন্য
+console.log('🤖 Bot notification mode active');
 // =======================================================
 
 // Routes
