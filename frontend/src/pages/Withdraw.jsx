@@ -29,7 +29,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
         alert("✅ Withdraw Request Submitted Successfully!");
         setWallet('');
         setAmount('');
-        if (refreshUser) refreshUser();
+        window.location.reload();
       } else {
         alert(`❌ ${data.error}`);
       }
