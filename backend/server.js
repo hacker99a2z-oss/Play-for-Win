@@ -160,6 +160,41 @@ app.post('/api/user/watch-ad', async (req, res) => {
   }
 });
 
+// AdsGram Webhook Endpoint (Server-to-Server Verification)
+app.get('/api/adsgram-reward', async (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).send('User ID missing');
+  }
+
+  try {
+    let user = await User.findOne({ telegramId: userId });
+
+    if (user) {
+      user.mainCoins += 100;
+      user.weeklyCoins += 100;
+      user.adsWatched += 1;
+      user.adsWatchedForReferral += 1;
+
+      // রেফার বোনাস চেক (২০টি অ্যাড দেখার পর)
+      if (user.referredBy && user.adsWatchedForReferral === 20) {
+        await User.findOneAndUpdate(
+          { telegramId: user.referredBy },
+          { $inc: { mainCoins: 500, weeklyCoins: 500 } }
+        );
+      }
+
+      await user.save();
+      return res.status(200).send('OK');
+    }
+
+    return res.status(404).send('User not found');
+  } catch (err) {
+    console.error('AdsGram Webhook Error:', err);
+    return res.status(500).send('Internal Server Error');
+  }
+});
 // ৩. উইথড্র রিকোয়েস্ট এবং বোনাস ব্যালেন্স ও কয়েন ফি চেক API
 app.post('/api/user/withdraw', async (req, res) => {
   try {
