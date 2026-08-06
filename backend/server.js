@@ -196,17 +196,17 @@ app.post('/api/user/withdraw', async (req, res) => {
 
     // ৪. টেলিগ্রামে নোটিফিকেশন পাঠানো (Safe Block)
     try {
-      const adminMessage = `💸 *New Withdraw Request!* 💸\n\n` +
-        `👤 *User:* ${user.firstName || 'User'} (@${user.username || 'N/A'})\n` +
-        `🆔 *Telegram ID:* \`${telegramId}\`\n` +
-        `💰 *Withdraw Amount:* $${reqAmount}\n` +
-        `🔥 *Coins Fee Deducted:* ${requiredCoins.toLocaleString()} Coins\n` +
-        `💎 *TON Wallet:* \`${wallet}\``;
+      const adminMessage = `🚨 <b>New Withdraw Request!</b> 💸\n\n` +
+        `👤 <b>User:</b> ${user.firstName || 'User'} (@${user.username || 'N/A'})\n` +
+        `🆔 <b>Telegram ID:</b> <code>${telegramId}</code>\n` +
+        `💰 <b>Withdraw Amount:</b> $${reqAmount}\n` +
+        `🔥 <b>Coins Fee Deducted:</b> ${requiredCoins.toLocaleString()} Coins\n` +
+        `💎 <b>TON Wallet:</b> <code>${wallet}</code>`;
 
       // Render Environment থেকে ADMIN_CHAT_ID নিবে
       const adminChatId = process.env.ADMIN_CHAT_ID;
       if (adminChatId) {
-        await bot.telegram.sendMessage(adminChatId, adminMessage, { parse_mode: 'Markdown' });
+        await bot.telegram.sendMessage(adminChatId, adminMessage, { parse_mode: 'HTML' });
       }
     } catch (telegramErr) {
       console.error('Telegram Notification Error:', telegramErr.message);
