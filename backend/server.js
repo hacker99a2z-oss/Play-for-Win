@@ -100,36 +100,6 @@ app.post('/api/user/sync', async (req, res) => {
   }
 });
 
-// ২. অ্যাড দেখে ব্যালেন্স বাড়ানো (শুধুমাত্র ইউজারের নিজস্ব ১০০ কয়েন)
-app.post('/api/user/watch-ad', async (req, res) => {
-  const { telegramId } = req.body;
-
-  if (!telegramId) {
-    return res.status(400).json({ error: 'Telegram ID required' });
-  }
-
-  try {
-    let user = await User.findOne({ telegramId });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    user.adsWatched = (user.adsWatched || 0) + 1;
-
-    await user.save();
-
-    res.json({
-      success: true,
-      mainCoins: user.mainCoins,
-      dailyCoins: user.dailyCoins,
-      adsWatched: user.adsWatched
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // ৩. গেম খেলে রিওয়ার্ড ক্লেম করা ও ২০ গেমের রেফারেল বোনাস দেওয়া
 app.post('/api/game/reward', async (req, res) => {
   try {
@@ -270,7 +240,7 @@ cron.schedule('0 0 * * *', async () => {
   try {
     // ১. টপ ৩ ডেইলি প্লেয়ার বের করা
     const topUsers = await User.find({}).sort({ dailyCoins: -1 }).limit(3);
-    const prizes = [0.50, 0.30, 0.20];
+    const prizes = [0.08, 0.05, 0.03];
 
     // ২. বিজয়ী ৩ জনের অ্যাকাউন্টে প্রাইজ যোগ করা
     for (let i = 0; i < topUsers.length; i++) {
