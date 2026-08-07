@@ -69,7 +69,7 @@ export default function App() {
         setUser((prev) => ({
           ...prev,
           mainCoins: data.mainCoins,
-          weeklyCoins: data.weeklyCoins,
+          dailyCoins: data.dailyCoins,
           adsWatched: data.adsWatched,
           adsWatchedForReferral: data.adsWatchedForReferral
         }));
