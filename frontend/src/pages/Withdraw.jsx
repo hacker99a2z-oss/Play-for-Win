@@ -67,7 +67,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
             value={wallet} 
             onChange={(e) => setWallet(e.target.value)}
             required
-            className="w-full bg-white text-black border border-gray-800 rounded-xl p-2.5 text-xs outline-none focus:border-yellow-500"
+            className="w-full bg-white text-black font-bold text-base p-3 border border-gray-800 rounded-xl outline-none focus:border-yellow-500"
           />
         </div>
 
@@ -80,7 +80,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
             value={amount} 
             onChange={(e) => setAmount(e.target.value)}
             required
-            className="w-full bg-white text-black border border-gray-800 rounded-xl p-2.5 text-xs outline-none focus:border-yellow-500"
+            className="w-full bg-white text-black font-bold text-base p-3 border border-gray-800 rounded-xl outline-none focus:border-yellow-500"
           />
         </div>
 
