@@ -6,24 +6,25 @@ const userSchema = new mongoose.Schema({
   lastName: { type: String, default: '' },
   username: { type: String, default: '' },
   photoUrl: { type: String, default: '' },
-  
+
   // Coins & Balances
   mainCoins: { type: Number, default: 0 },
-  weeklyCoins: { type: Number, default: 0 },
+  dailyCoins: { type: Number, default: 0 }, // 👈 weeklyCoins বাদ দিয়ে dailyCoins করা হলো
   bonusBalanceUSD: { type: Number, default: 0.0 },
-  
+
   // Referral System
   referredBy: { type: String, default: null },
   referralCount: { type: Number, default: 0 },
   referrals: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  
+
   // Ad Counters
   adsWatched: { type: Number, default: 0 },
   adsWatchedForReferral: { type: Number, default: 0 },
-  
+
   createdAt: { type: Date, default: Date.now }
 });
 
-userSchema.index({ weeklyCoins: -1 });
+// Daily Contest Leaderboard-এর জন্য ইনডেক্সিং
+userSchema.index({ dailyCoins: -1 });
 
 module.exports = mongoose.model('User', userSchema);
