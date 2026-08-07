@@ -56,7 +56,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
               }
               return updated;
             });
-          }, 1500);
+          }, 1200);
 
           return newHoles;
         });
@@ -184,7 +184,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           </div>
 
           <h2 className="text-2xl font-bold text-amber-400 mb-2">Whack A Mouse</h2>
-          <p className="text-gray-400 text-sm mb-1">Hit mice 3 times before they hide in 1.5s!</p>
+          <p className="text-gray-400 text-sm mb-1">Hit mice 3 times before they hide in 1.2s!</p>
           <p className="text-xs text-amber-300 bg-amber-950/40 px-3 py-1 rounded-full border border-amber-500/20 mb-6">
             ✨ Destroy 1 Mouse = +10 Coins
           </p>
