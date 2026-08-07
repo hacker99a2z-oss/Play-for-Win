@@ -11,28 +11,22 @@ export default function Contest() {
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date();
-      const nextSunday = new Date();
-      
-      // আগামী রোববারের শেষ সময় (২৩:৫৯:৫৯) হিসাব করা
-      nextSunday.setDate(now.getDate() + ((7 - now.getDay()) % 7));
-      nextSunday.setHours(23, 59, 59, 999);
+      const endOfDay = new Date();
 
-      const difference = nextSunday - now;
+      // আজকের রাত ১১:৫৯:৫৯ পর্যন্ত সময় হিসাব করা
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const difference = endOfDay - now;
 
       if (difference > 0) {
         setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          days: 0,
           hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
           minutes: Math.floor((difference / 1000 / 60) % 60),
           seconds: Math.floor((difference / 1000) % 60),
         });
       }
     };
-
-    calculateTimeLeft();
-    const timer = setInterval(calculateTimeLeft, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   // 2. Fetch Real Users Leaderboard
   useEffect(() => {
@@ -55,9 +49,9 @@ export default function Contest() {
     <div className="p-4 text-white flex flex-col gap-6 max-w-md mx-auto">
       {/* Contest Status & Live Timer */}
       <div className="bg-slate-900 border border-slate-700 p-4 rounded-2xl text-center shadow-lg">
-        <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">WEEKLY CONTEST ENDS IN</p>
+        <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">DAILY CONTEST ENDS IN</p>
         <div className="flex items-center justify-center gap-2 text-yellow-400 font-extrabold text-lg">
-          ⏰ <span>{timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s</span>
+          ⏰ <span>{timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s</span>
         </div>
       </div>
 
@@ -94,7 +88,7 @@ export default function Contest() {
                 </div>
 
                 <div className="text-right">
-                  <p className="font-bold text-blue-400 text-sm">{player.weeklyCoins || 0} Coins</p>
+                  <p className="font-bold text-blue-400 text-sm">{player.dailyCoins || 0} Coins</p>
                   {index < 3 && (
                     <p className="text-xs font-semibold text-emerald-400">
                       Prize: {prizes[index]}
