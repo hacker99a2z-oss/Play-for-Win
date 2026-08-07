@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
   res.status(200).send('Server is alive!');
 });
 
-// =============== TELEGRAM BOT SETUP ===============
+// ============ TELEGRAM BOT SETUP ============
 const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE';
 const WEB_APP_URL = process.env.WEB_APP_URL || 'https://your-vercel-app.vercel.app';
 const CHANNEL_URL = process.env.CHANNEL_URL || 'https://t.me/your_official_channel';
@@ -55,7 +55,7 @@ if (process.env.BOT_TOKEN) {
 // Routes
 app.use('/api/auth', authRoutes);
 
-// ================= API ENDPOINTS FOR FRONTEND =================
+// ==================== API ENDPOINTS FOR FRONTEND ====================
 
 // ১. ইউজার তথ্য আনবে অথবা না থাকলে ডাটাবেজে তৈরি করবে
 app.post('/api/user/sync', async (req, res) => {
@@ -66,7 +66,7 @@ app.post('/api/user/sync', async (req, res) => {
   }
 
   try {
-    let user = await User.findOne({ telegramId }).populate('referrals', 'firstName username photoUrl adsWatchedForReferral');
+    let user = await User.findOne({ telegramId }).populate('referrals', 'firstName username photoUrl gamesPlayedForReferral');
 
     if (!user) {
       user = new User({
@@ -100,7 +100,7 @@ app.post('/api/user/sync', async (req, res) => {
   }
 });
 
-// ২. অ্যাড দেখে ব্যালেন্স বাড়ানো
+// ২. অ্যাড দেখে ব্যালেন্স বাড়ানো (শুধুমাত্র ইউজারের নিজস্ব ১০০ কয়েন)
 app.post('/api/user/watch-ad', async (req, res) => {
   const { telegramId } = req.body;
 
@@ -116,21 +116,8 @@ app.post('/api/user/watch-ad', async (req, res) => {
     }
 
     user.mainCoins = (user.mainCoins || 0) + 100;
-    user.dailyCoins = (user.dailyCoins || 0) + 100; // Daily Coins বাড়ানো হলো
+    user.dailyCoins = (user.dailyCoins || 0) + 100;
     user.adsWatched = (user.adsWatched || 0) + 1;
-    user.adsWatchedForReferral = (user.adsWatchedForReferral || 0) + 1;
-
-    if (user.referredBy && user.adsWatchedForReferral === 20) {
-      await User.findOneAndUpdate(
-        { telegramId: user.referredBy },
-        {
-          $inc: {
-            mainCoins: 500,
-            dailyCoins: 500
-          }
-        }
-      );
-    }
 
     await user.save();
 
@@ -138,16 +125,14 @@ app.post('/api/user/watch-ad', async (req, res) => {
       success: true,
       mainCoins: user.mainCoins,
       dailyCoins: user.dailyCoins,
-      adsWatched: user.adsWatched,
-      adsWatchedForReferral: user.adsWatchedForReferral
+      adsWatched: user.adsWatched
     });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ৩. গেম খেলে রিওয়ার্ড ক্লেইম করা (Game Claim Endpoint)
+// ৩. গেম খেলে রিওয়ার্ড ক্লেম করা ও ২০ গেমের রেফারেল বোনাস দেওয়া
 app.post('/api/game/reward', async (req, res) => {
   try {
     const { telegramId, coins } = req.body;
@@ -162,8 +147,23 @@ app.post('/api/game/reward', async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
+    // ইউজারের নিজের পয়েন্ট যোগ ও গেম কাউন্ট বৃদ্ধি
     user.mainCoins = (user.mainCoins || 0) + rewardCoins;
-    user.dailyCoins = (user.dailyCoins || 0) + rewardCoins; // Daily Coins যোগ হলো
+    user.dailyCoins = (user.dailyCoins || 0) + rewardCoins;
+    user.gamesPlayedForReferral = (user.gamesPlayedForReferral || 0) + 1;
+
+    // রেফারেল লজিক: ২০ বার গেম খেললে রেফারার ১০০০ কয়েন পাবে
+    if (user.referredBy && user.gamesPlayedForReferral === 20) {
+      await User.findOneAndUpdate(
+        { telegramId: user.referredBy },
+        {
+          $inc: {
+            mainCoins: 1000,
+            dailyCoins: 1000
+          }
+        }
+      );
+    }
 
     await user.save();
 
@@ -171,7 +171,8 @@ app.post('/api/game/reward', async (req, res) => {
       success: true,
       message: 'Coins claimed successfully',
       mainCoins: user.mainCoins,
-      dailyCoins: user.dailyCoins
+      dailyCoins: user.dailyCoins,
+      gamesPlayedForReferral: user.gamesPlayedForReferral
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -193,14 +194,6 @@ app.get('/api/adsgram-reward', async (req, res) => {
       user.mainCoins = (user.mainCoins || 0) + 100;
       user.dailyCoins = (user.dailyCoins || 0) + 100;
       user.adsWatched = (user.adsWatched || 0) + 1;
-      user.adsWatchedForReferral = (user.adsWatchedForReferral || 0) + 1;
-
-      if (user.referredBy && user.adsWatchedForReferral === 20) {
-        await User.findOneAndUpdate(
-          { telegramId: user.referredBy },
-          { $inc: { mainCoins: 500, dailyCoins: 500 } }
-        );
-      }
 
       await user.save();
       return res.status(200).send('OK');
@@ -245,13 +238,13 @@ app.post('/api/user/withdraw', async (req, res) => {
     await user.save();
 
     try {
-      const adminMessage =
-        `🚨 <b>New Withdraw Request!</b> 🚨\n\n` +
-        `👤 <b>User:</b> ${user.firstName || 'User'} (@${user.username || 'N/A'})\n` +
-        `🆔 <b>Telegram ID:</b> <code>${telegramId}</code>\n` +
-        `💵 <b>Withdraw Amount:</b> $${reqAmount}\n` +
-        `🔥 <b>Coins Fee Deducted:</b> ${requiredCoins.toLocaleString()} Coins\n` +
-        `💎 <b>TON Wallet:</b> <code>${wallet}</code>`;
+      const adminMessage = 
+        `🚨<b>New Withdraw Request!</b>🚨\n\n` +
+        `👤<b>User:</b> ${user.firstName || 'User'} (@${user.username || 'N/A'})\n` +
+        `🆔<b>Telegram ID:</b> <code>${telegramId}</code>\n` +
+        `💵<b>Withdraw Amount:</b> $${reqAmount}\n` +
+        `🔥<b>Coins Fee Deducted:</b> ${requiredCoins.toLocaleString()} Coins\n` +
+        `💎<b>TON Wallet:</b> <code>${wallet}</code>`;
 
       const adminChatId = process.env.ADMIN_CHAT_ID;
       if (adminChatId) {
@@ -274,12 +267,12 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Connected Successfully'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// ================= DAILY CONTEST RESET & PRIZE DISTRIBUTION =================
-// প্রতিদিন রাত ১২:০০ টায় (00:00 AM) টপ ৩ জনকে প্রাইজ দেবে এবং Daily Coins ০ করে দেবে
+// ==================== DAILY CONTEST RESET & PRIZE DISTRIBUTION ====================
+// প্রতিদিন রাত ১২:০০ টায় (00:00 AM) টপ ৩ জনকে প্রাইজ দেবে এবং Daily Coins ০ করে দেবে
 cron.schedule('0 0 * * *', async () => {
   console.log('🏆 Running Daily Contest Reset & Distributing Prizes...');
   try {
-    // ১. টপ ৩ ডেইলি প্লেয়ার বের করা
+    // ১. টপ ৩ ডেইলি প্লেয়ার বের করা
     const topUsers = await User.find({}).sort({ dailyCoins: -1 }).limit(3);
     const prizes = [0.50, 0.30, 0.20];
 
