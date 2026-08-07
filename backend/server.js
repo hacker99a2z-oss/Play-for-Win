@@ -115,8 +115,6 @@ app.post('/api/user/watch-ad', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    user.mainCoins = (user.mainCoins || 0) + 100;
-    user.dailyCoins = (user.dailyCoins || 0) + 100;
     user.adsWatched = (user.adsWatched || 0) + 1;
 
     await user.save();
@@ -191,8 +189,6 @@ app.get('/api/adsgram-reward', async (req, res) => {
     let user = await User.findOne({ telegramId: userId });
 
     if (user) {
-      user.mainCoins = (user.mainCoins || 0) + 100;
-      user.dailyCoins = (user.dailyCoins || 0) + 100;
       user.adsWatched = (user.adsWatched || 0) + 1;
 
       await user.save();
