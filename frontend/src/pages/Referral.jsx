@@ -7,7 +7,7 @@ export default function Referral({ user, refreshUser }) {
     if (refreshUser) refreshUser();
   }, []);
 
-  const botUsername = "playersfordestiny_bot"; 
+  const botUsername = "playersfordestiny_bot";
   const refLink = `https://t.me/${botUsername}/gamers?startapp=${user?.telegramId || ''}`;
 
   const handleCopy = () => {
@@ -38,7 +38,7 @@ export default function Referral({ user, refreshUser }) {
           </button>
         </div>
         <p className="text-[11px] text-gray-400 mt-2.5">
-          🎁 Rule: When your referral watches <span className="text-yellow-400 font-bold">20 Ads</span>, you receive <span className="text-yellow-400 font-bold">500 Coins</span>!
+          🎁 Rule: When your referral plays <span className="text-yellow-400 font-bold">20 Games</span>, you receive <span className="text-yellow-400 font-bold">1,000 Main Coins & Daily Coins</span>
         </p>
       </div>
 
@@ -53,7 +53,7 @@ export default function Referral({ user, refreshUser }) {
             🔄 Refresh
           </button>
         </div>
-        
+
         {referralsList.length > 0 ? (
           <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
             {referralsList.map((ref, idx) => (
@@ -64,7 +64,7 @@ export default function Referral({ user, refreshUser }) {
                   </div>
                   <span className="font-medium text-xs">{ref.firstName || ref.username || 'User'}</span>
                 </div>
-                <span className="text-xs text-gray-400 font-mono">{ref.adsWatchedForReferral || 0}/20 Ads</span>
+                <span className="text-xs text-gray-400 font-mono">{ref.gamesPlayedForReferral || 0}/20 Games</span>
               </div>
             ))}
           </div>
