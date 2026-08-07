@@ -68,7 +68,10 @@ export default function Contest() {
   }, []);
 
   // ৩. Prizes mapping
-  const prizes = ["$0.10", "$0.07", "$0.03"];
+  const prizes = [
+    "$0.20", "$0.18", "$0.16", "$0.14", "$0.12",
+    "$0.10", "$0.08", "$0.06", "$0.04", "$0.02"
+  ];
 
   return (
     <div className="p-4 text-white flex flex-col gap-6 max-w-md mx-auto">
@@ -114,7 +117,7 @@ export default function Contest() {
 
                 <div className="text-right">
                   <p className="font-bold text-blue-400 text-sm">{player.dailyCoins || 0} Coins</p>
-                  {index < 3 && (
+                  {index < 10 && (
                     <p className="text-xs font-semibold text-emerald-400">
                       Prize: {prizes[index]}
                     </p>
