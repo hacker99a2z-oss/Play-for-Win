@@ -28,15 +28,20 @@ export default function Contest() {
       }
     };
 
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // 2. Fetch Real Users Leaderboard
   useEffect(() => {
     fetch(`${API_URL}/api/auth/leaderboard`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setLeaderboard(Array.isArray(data) ? data : []);
         setLoading(false);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Leaderboard Fetch Error:", err);
         setLoading(false);
       });
@@ -51,7 +56,7 @@ export default function Contest() {
       <div className="bg-slate-900 border border-slate-700 p-4 rounded-2xl text-center shadow-lg">
         <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">DAILY CONTEST ENDS IN</p>
         <div className="flex items-center justify-center gap-2 text-yellow-400 font-extrabold text-lg">
-          ⏰ <span>{timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s</span>
+          <span>⏰ {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s</span>
         </div>
       </div>
 
@@ -68,7 +73,7 @@ export default function Contest() {
         ) : (
           <div className="flex flex-col gap-3">
             {leaderboard.map((player, index) => (
-              <div 
+              <div
                 key={player._id || index}
                 className="flex items-center justify-between bg-slate-800/60 border border-slate-700/50 p-3 rounded-xl"
               >
