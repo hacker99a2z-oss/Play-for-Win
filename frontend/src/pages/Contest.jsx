@@ -5,35 +5,55 @@ const API_URL = "https://play-for-win.onrender.com"; // আপনার ব্�
 export default function Contest() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
-  // 1. Live Countdown Timer Logic (Next Sunday Reset)
+  // ১. Fetch Time Left from Server & Start Local Countdown
   useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      const endOfDay = new Date();
-
-      // আজকের রাত ১১:৫৯:৫৯ পর্যন্ত সময় হিসাব করা
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const difference = endOfDay - now;
-
-      if (difference > 0) {
-        setTimeLeft({
-          days: 0,
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
-        });
-      }
+    const fetchTimer = () => {
+      fetch(`${API_URL}/api/contest/timer`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data) {
+            setTimeLeft(data);
+          }
+        })
+        .catch((err) => console.error("Timer Fetch Error:", err));
     };
 
-    calculateTimeLeft();
-    const timer = setInterval(calculateTimeLeft, 1000);
+    fetchTimer(); // প্রথমবার সার্ভার থেকে সময় আনবে
+
+    // প্রতি ১ সেকেন্ড পরপর ফ্রন্টএন্ডে টাইমার কমাবে
+    const timer = setInterval(() => {
+      setTimeLeft((prevTime) => {
+        if (prevTime.hours === 0 && prevTime.minutes === 0 && prevTime.seconds === 0) {
+          fetchTimer(); // টাইমার ০ হলে আবার সার্ভার থেকে সময় আপডেট করবে
+          return prevTime;
+        }
+
+        let { hours, minutes, seconds } = prevTime;
+
+        if (seconds > 0) {
+          seconds--;
+        } else {
+          seconds = 59;
+          if (minutes > 0) {
+            minutes--;
+          } else {
+            minutes = 59;
+            if (hours > 0) {
+              hours--;
+            }
+          }
+        }
+
+        return { hours, minutes, seconds };
+      });
+    }, 1000);
+
     return () => clearInterval(timer);
   }, []);
 
-  // 2. Fetch Real Users Leaderboard
+  // ২. Fetch Real Users Leaderboard
   useEffect(() => {
     fetch(`${API_URL}/api/auth/leaderboard`)
       .then((res) => res.json())
@@ -47,7 +67,7 @@ export default function Contest() {
       });
   }, []);
 
-  // 3. Prizes mapping
+  // ৩. Prizes mapping
   const prizes = ["$0.10", "$0.07", "$0.03"];
 
   return (
