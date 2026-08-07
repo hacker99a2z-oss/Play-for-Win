@@ -92,7 +92,6 @@ export default function App() {
         AdController.show()
           .then(async (result) => {
             if (result && result.done) {
-              await rewardUserOnBackend();
               resolve(true);
             } else {
               alert("অ্যাডটি সম্পূর্ণ দেখুন! স্কিপ করলে গেম খেলা বা পয়েন্ট পাওয়া যাবে না।");
