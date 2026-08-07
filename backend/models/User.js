@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
 
   // Coins & Balances
   mainCoins: { type: Number, default: 0 },
-  dailyCoins: { type: Number, default: 0 }, // 👈 weeklyCoins বাদ দিয়ে dailyCoins করা হলো
+  dailyCoins: { type: Number, default: 0 },
   bonusBalanceUSD: { type: Number, default: 0.0 },
 
   // Referral System
@@ -17,14 +17,13 @@ const userSchema = new mongoose.Schema({
   referralCount: { type: Number, default: 0 },
   referrals: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 
-  // Ad Counters
+  // Counters
   adsWatched: { type: Number, default: 0 },
-  adsWatchedForReferral: { type: Number, default: 0 },
+  gamesPlayedForReferral: { type: Number, default: 0 }, // 👈 গেম খেলার কাউন্টার
 
   createdAt: { type: Date, default: Date.now }
 });
 
-// Daily Contest Leaderboard-এর জন্য ইনডেক্সিং
 userSchema.index({ dailyCoins: -1 });
 
 module.exports = mongoose.model('User', userSchema);
