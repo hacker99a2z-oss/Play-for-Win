@@ -126,7 +126,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
             💬 Contact Support
           </a>
 
-         <a href="https://t.me/payment_proofs_for" target="_blank" rel="noreferrer" className="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 transition underline">
+         <a href="https://t.me/payment_proofs_for" target="_blank" rel="noreferrer" className="text-center text-xs text-blue-400 hover:underline">
             📢 Payment's Proofs
          </a>
        </div>
