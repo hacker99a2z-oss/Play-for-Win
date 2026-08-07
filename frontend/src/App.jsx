@@ -14,7 +14,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   // ১. অ্যাপ চালু হলে টেলিগ্রাম ইউজারের তথ্য ব্যাকএন্ডের সাথে Sync করা
-const syncUserData = () => {
+  const syncUserData = () => {
     const tg = window.Telegram?.WebApp;
     const tgUser = tg?.initDataUnsafe?.user;
 
@@ -53,49 +53,62 @@ const syncUserData = () => {
     syncUserData();
   }, []);
 
-  // ২. অ্যাড দেখার পর ব্যাকএন্ডে পয়েন্ট পাঠানোর ফাংশন
-  const rewardUserOnBackend = () => {
-    if (!user) return;
+  // ২. অ্যাড দেখার পর ব্যাকএন্ডে পয়েন্ট ও রেফারেল কাউন্ট পাঠানোর ফাংশন
+  const rewardUserOnBackend = async () => {
+    if (!user) return null;
 
-    fetch(`${BACKEND_URL}/api/user/watch-ad`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegramId: user.telegramId })
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.mainCoins !== undefined) {
-          // ব্যাকএন্ড থেকে আসা আপডেটেড পয়েন্ট স্টেটে বসানো
-          setUser((prev) => ({
-            ...prev,
-            mainCoins: data.mainCoins,
-            weeklyCoins: data.weeklyCoins,
-            adsWatched: data.adsWatched,
-            adsWatchedForReferral: data.adsWatchedForReferral
-          }));
-        }
-      })
-      .catch((err) => console.error("Error updating ad reward:", err));
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/user/watch-ad`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegramId: user.telegramId })
+      });
+      const data = await res.json();
+      
+      if (data.mainCoins !== undefined) {
+        setUser((prev) => ({
+          ...prev,
+          mainCoins: data.mainCoins,
+          weeklyCoins: data.weeklyCoins,
+          adsWatched: data.adsWatched,
+          adsWatchedForReferral: data.adsWatchedForReferral
+        }));
+      }
+      return data;
+    } catch (err) {
+      console.error("Error updating ad reward:", err);
+      return null;
+    }
   };
 
-  // ৩. Adsgram Ad Controller
+  // ৩. Adsgram Ad Controller (অ্যাড সফলভাবে সম্পূর্ণ দেখলে রিকোয়েস্ট পাঠাবে)
   const handlePlayAd = () => {
-    if (window.Adsgram) {
-      const AdController = window.Adsgram.init({
-        blockId: "41509" // 👈 আপনার Adsgram Block ID
-      });
-
-      AdController.show()
-        .then((result) => {
-          // অ্যাড সফলভাবে দেখলে ব্যাকএন্ডে রিকোয়েস্ট যাবে এবং পয়েন্ট ডাটাবেজে সেভ হবে
-          rewardUserOnBackend();
-        })
-        .catch((result) => {
-          console.log("Ad skipped or error:", result);
+    return new Promise((resolve) => {
+      if (window.Adsgram) {
+        const AdController = window.Adsgram.init({
+          blockId: "41509" // 👈 আপনার Adsgram Block ID
         });
-    } else {
-      alert("Adsgram SDK Not Loaded!");
-    }
+
+        AdController.show()
+          .then(async (result) => {
+            if (result && result.done) {
+              await rewardUserOnBackend();
+              resolve(true);
+            } else {
+              alert("অ্যাডটি সম্পূর্ণ দেখুন! স্কিপ করলে গেম খেলা বা পয়েন্ট পাওয়া যাবে না।");
+              resolve(false);
+            }
+          })
+          .catch((result) => {
+            console.log("Ad skipped or error:", result);
+            alert("অ্যাডটি সম্পূর্ণ দেখুন! আবার চেষ্টা করুন।");
+            resolve(false);
+          });
+      } else {
+        alert("Adsgram SDK Not Loaded!");
+        resolve(false);
+      }
+    });
   };
 
   if (loading) {
@@ -110,7 +123,13 @@ const syncUserData = () => {
     <div className="min-h-screen bg-gray-950 text-white font-sans pb-20">
       <Header user={user} />
 
-      {activeTab === 'home' && <Home user={user} onPlayAd={handlePlayAd} />}
+      {activeTab === 'home' && (
+        <Home 
+          user={user} 
+          onPlayAd={handlePlayAd} 
+          refreshUserData={syncUserData} 
+        />
+      )}
       {activeTab === 'referral' && <Referral user={user} refreshUser={syncUserData} />}
       {activeTab === 'contest' && <Contest user={user} />}
       {activeTab === 'withdraw' && <Withdraw user={user} />}
