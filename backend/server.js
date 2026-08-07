@@ -1,6 +1,6 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const cron = require('node-cron');
 const { Telegraf } = require('telegraf'); // Telegraf library
 require('dotenv').config();
@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
   res.status(200).send('Server is alive!');
 });
 
-// ================= TELEGRAM BOT SETUP =================
+// =============== TELEGRAM BOT SETUP ===============
 const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE';
 const WEB_APP_URL = process.env.WEB_APP_URL || 'https://your-vercel-app.vercel.app';
 const CHANNEL_URL = process.env.CHANNEL_URL || 'https://t.me/your_official_channel';
@@ -24,51 +24,40 @@ const GROUP_URL = process.env.GROUP_URL || 'https://t.me/your_official_group';
 
 const bot = new Telegraf(BOT_TOKEN);
 
-// /start কমান্ড দিলে ১. Open App, ২. Official Channel, ৩. Official Group আসবে
 bot.start((ctx) => {
   ctx.reply('Welcome! Click below to open the app or join our community:', {
     reply_markup: {
       inline_keyboard: [
         [
-          { 
-            text: '🎮 Open App', 
-            web_app: { url: WEB_APP_URL } 
-          }
+          { text: '🎮 Open App', web_app: { url: WEB_APP_URL } }
         ],
         [
-          { 
-            text: '📢 Official Channel', 
-            url: CHANNEL_URL 
-          }
+          { text: '📢 Official Channel', url: CHANNEL_URL }
         ],
         [
-          { 
-            text: '💬 Official Group', 
-            url: GROUP_URL 
-          }
+          { text: '💬 Official Group', url: GROUP_URL }
         ]
       ]
     }
   });
 });
 
-// Webhook সেটআপ (Polling ছাড়া বোট রিপ্লাই এবং চ্যানেলে মেসেজ দেওয়ার সেরা উপায়)
+// Webhook সেটআপ
 if (process.env.BOT_TOKEN) {
-  const WEBHOOK_URL = `https://play-for-win.onrender.com/telegram-webhook`;
+  const WEBHOOK_URL = 'https://play-for-win.onrender.com/telegram-webhook';
   bot.telegram.setWebhook(WEBHOOK_URL)
-    .then(() => console.log('🤖 Webhook Configured Successfully'))
+    .then(() => console.log('✅ Webhook Configured Successfully'))
     .catch((err) => console.error('Webhook Error:', err.message));
 
   app.use(bot.webhookCallback('/telegram-webhook'));
 }
-// =======================================================
 
 // Routes
 app.use('/api/auth', authRoutes);
 
 // ================= API ENDPOINTS FOR FRONTEND =================
 
-// ১. ইউজারের তথ্য আনবে অথবা না থাকলে ডাটাবেজে তৈরি করবে
+// ১. ইউজার তথ্য আনবে অথবা না থাকলে ডাটাবেজে তৈরি করবে
 app.post('/api/user/sync', async (req, res) => {
   const { telegramId, firstName, username, photoUrl, referrerId } = req.body;
 
@@ -99,7 +88,6 @@ app.post('/api/user/sync', async (req, res) => {
         );
       }
     } else {
-      // ইউজারের নাম বা ছবি পরিবর্তন হলে আপডেট রাখা
       user.firstName = firstName || user.firstName;
       user.username = username || user.username;
       user.photoUrl = photoUrl || user.photoUrl;
@@ -112,7 +100,7 @@ app.post('/api/user/sync', async (req, res) => {
   }
 });
 
-// ২. অ্যাড দেখলে ব্যালেন্স বাড়ানো এবং রেফারকারীকে ২০ অয়াডে ৫০০ কয়েন বোনাস দেওয়া
+// ২. অ্যাড দেখে ব্যালেন্স বাড়ানো
 app.post('/api/user/watch-ad', async (req, res) => {
   const { telegramId } = req.body;
 
@@ -127,20 +115,19 @@ app.post('/api/user/watch-ad', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    user.mainCoins += 100;
-    user.weeklyCoins += 100;
-    user.adsWatched += 1;
-    user.adsWatchedForReferral += 1;
+    user.mainCoins = (user.mainCoins || 0) + 100;
+    user.dailyCoins = (user.dailyCoins || 0) + 100; // Daily Coins বাড়ানো হলো
+    user.adsWatched = (user.adsWatched || 0) + 1;
+    user.adsWatchedForReferral = (user.adsWatchedForReferral || 0) + 1;
 
-    // যদি রেফার করা ইউজার ২০টি অ্যাড দেখে ফেলে
     if (user.referredBy && user.adsWatchedForReferral === 20) {
       await User.findOneAndUpdate(
         { telegramId: user.referredBy },
-        { 
-          $inc: { 
+        {
+          $inc: {
             mainCoins: 500,
-            weeklyCoins: 500
-          } 
+            dailyCoins: 500
+          }
         }
       );
     }
@@ -150,7 +137,7 @@ app.post('/api/user/watch-ad', async (req, res) => {
     res.json({
       success: true,
       mainCoins: user.mainCoins,
-      weeklyCoins: user.weeklyCoins,
+      dailyCoins: user.dailyCoins,
       adsWatched: user.adsWatched,
       adsWatchedForReferral: user.adsWatchedForReferral
     });
@@ -160,7 +147,38 @@ app.post('/api/user/watch-ad', async (req, res) => {
   }
 });
 
-// AdsGram Webhook Endpoint (Server-to-Server Verification)
+// ৩. গেম খেলে রিওয়ার্ড ক্লেইম করা (Game Claim Endpoint)
+app.post('/api/game/reward', async (req, res) => {
+  try {
+    const { telegramId, coins } = req.body;
+    const rewardCoins = Number(coins);
+
+    if (!telegramId || isNaN(rewardCoins)) {
+      return res.status(400).json({ success: false, message: 'Invalid payload' });
+    }
+
+    let user = await User.findOne({ telegramId });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    user.mainCoins = (user.mainCoins || 0) + rewardCoins;
+    user.dailyCoins = (user.dailyCoins || 0) + rewardCoins; // Daily Coins যোগ হলো
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Coins claimed successfully',
+      mainCoins: user.mainCoins,
+      dailyCoins: user.dailyCoins
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ৪. AdsGram Webhook Endpoint
 app.get('/api/adsgram-reward', async (req, res) => {
   const { userId } = req.query;
 
@@ -172,16 +190,15 @@ app.get('/api/adsgram-reward', async (req, res) => {
     let user = await User.findOne({ telegramId: userId });
 
     if (user) {
-      user.mainCoins += 100;
-      user.weeklyCoins += 100;
-      user.adsWatched += 1;
-      user.adsWatchedForReferral += 1;
+      user.mainCoins = (user.mainCoins || 0) + 100;
+      user.dailyCoins = (user.dailyCoins || 0) + 100;
+      user.adsWatched = (user.adsWatched || 0) + 1;
+      user.adsWatchedForReferral = (user.adsWatchedForReferral || 0) + 1;
 
-      // রেফার বোনাস চেক (২০টি অ্যাড দেখার পর)
       if (user.referredBy && user.adsWatchedForReferral === 20) {
         await User.findOneAndUpdate(
           { telegramId: user.referredBy },
-          { $inc: { mainCoins: 500, weeklyCoins: 500 } }
+          { $inc: { mainCoins: 500, dailyCoins: 500 } }
         );
       }
 
@@ -195,7 +212,8 @@ app.get('/api/adsgram-reward', async (req, res) => {
     return res.status(500).send('Internal Server Error');
   }
 });
-// ৩. উইথড্র রিকোয়েস্ট এবং বোনাস ব্যালেন্স ও কয়েন ফি চেক API
+
+// ৫. উইথড্র রিকোয়েস্ট
 app.post('/api/user/withdraw', async (req, res) => {
   try {
     const { telegramId, wallet, amount } = req.body;
@@ -210,35 +228,31 @@ app.post('/api/user/withdraw', async (req, res) => {
       return res.status(400).json({ error: 'Invalid amount entered!' });
     }
 
-    // ১. বোনাস ব্যালেন্স চেক
-    const userBonus = user.bonusBalanceUSD || user.bonusBalance || 0;
+    const userBonus = user.bonusBalanceUSD || 0;
     if (userBonus < reqAmount) {
       return res.status(400).json({ error: 'Insufficient Bonus Balance!' });
     }
 
-    // ২. কয়েন ফি চেক ($1 = 100,000 Coins)
     const requiredCoins = reqAmount * 100000;
     if ((user.mainCoins || 0) < requiredCoins) {
-      return res.status(400).json({ 
-        error: `Insufficient Main Coins! Required: ${requiredCoins.toLocaleString()} Coins.` 
+      return res.status(400).json({
+        error: `Insufficient Main Coins! Required: ${requiredCoins.toLocaleString()} Coins.`
       });
     }
 
-    // ৩. ব্যালেন্স ও কয়েন কাটা
     user.bonusBalanceUSD = parseFloat((userBonus - reqAmount).toFixed(2));
     user.mainCoins -= requiredCoins;
     await user.save();
 
-    // ৪. টেলিগ্রামে নোটিফিকেশন পাঠানো (Safe Block)
     try {
-      const adminMessage = `🚨 <b>New Withdraw Request!</b> 💸\n\n` +
+      const adminMessage =
+        `🚨 <b>New Withdraw Request!</b> 🚨\n\n` +
         `👤 <b>User:</b> ${user.firstName || 'User'} (@${user.username || 'N/A'})\n` +
         `🆔 <b>Telegram ID:</b> <code>${telegramId}</code>\n` +
-        `💰 <b>Withdraw Amount:</b> $${reqAmount}\n` +
+        `💵 <b>Withdraw Amount:</b> $${reqAmount}\n` +
         `🔥 <b>Coins Fee Deducted:</b> ${requiredCoins.toLocaleString()} Coins\n` +
         `💎 <b>TON Wallet:</b> <code>${wallet}</code>`;
 
-      // Render Environment থেকে ADMIN_CHAT_ID নিবে
       const adminChatId = process.env.ADMIN_CHAT_ID;
       if (adminChatId) {
         await bot.telegram.sendMessage(adminChatId, adminMessage, { parse_mode: 'HTML' });
@@ -255,25 +269,23 @@ app.post('/api/user/withdraw', async (req, res) => {
   }
 });
 
-// ==============================================================
-
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Connected Successfully'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// Weekly Contest Reset & Prize Distribution (Every Sunday 00:00 AM)
-cron.schedule('0 0 * * 0', async () => {
-  console.log("🏆 Running Weekly Contest Reset & Distributing Prizes...");
+// ================= DAILY CONTEST RESET & PRIZE DISTRIBUTION =================
+// প্রতিদিন রাত ১২:০০ টায় (00:00 AM) টপ ৩ জনকে প্রাইজ দেবে এবং Daily Coins ০ করে দেবে
+cron.schedule('0 0 * * *', async () => {
+  console.log('🏆 Running Daily Contest Reset & Distributing Prizes...');
   try {
-    // ১. টপ ৩ ইউজার বের করা
-    const topUsers = await User.find({}).sort({ weeklyCoins: -1 }).limit(3);
-
+    // ১. টপ ৩ ডেইলি প্লেয়ার বের করা
+    const topUsers = await User.find({}).sort({ dailyCoins: -1 }).limit(3);
     const prizes = [0.50, 0.30, 0.20];
 
-    // ২. বিজয়ী ৩ জনের অ্যাকাউন্টে প্রাইজ ডলার যোগ করা
+    // ২. বিজয়ী ৩ জনের অ্যাকাউন্টে প্রাইজ যোগ করা
     for (let i = 0; i < topUsers.length; i++) {
-      if (topUsers[i] && topUsers[i].weeklyCoins > 0) {
+      if (topUsers[i] && topUsers[i].dailyCoins > 0) {
         await User.findByIdAndUpdate(topUsers[i]._id, {
           $inc: { bonusBalanceUSD: prizes[i] }
         });
@@ -281,9 +293,9 @@ cron.schedule('0 0 * * 0', async () => {
       }
     }
 
-    // ৩. সকল ইউজারের weeklyCoins ০ করে দেওয়া
-    await User.updateMany({}, { $set: { weeklyCoins: 0 } });
-    console.log("✅ Weekly Contest Reset Successfully!");
+    // ৩. সকল ইউজারের dailyCoins রিসেট করে ০ করা
+    await User.updateMany({}, { $set: { dailyCoins: 0 } });
+    console.log('✅ Daily Contest Reset Successfully!');
 
   } catch (error) {
     console.error('❌ Reset Error:', error);
