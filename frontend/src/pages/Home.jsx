@@ -10,9 +10,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   const [isClaiming, setIsClaiming] = useState(false);
   const [hasFreePlay, setHasFreePlay] = useState(true);
 
-  const targetIdRef = useRef(0);
-
-  // ১. ডেলি ফ্রি লিমিট চেক
+  // ১. ডেলি ফ্রি খেলার লিমিট চেক
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
     const lastFreePlayDate = localStorage.getItem('last_free_play_date');
@@ -23,42 +21,41 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     }
   }, []);
 
-  // ২. অবজেক্ট স্পন (Spawn) ও অটো-মুছে যাওয়া (১.৫ সেকেন্ড) লজিক
+  // ২. গেম লুপ: প্রতি ১ সেকেন্ড পরপর নতুন অবজেক্ট স্পন করা এবং ১.৫ সেকেন্ড পর অবজেক্ট সরিয়ে ফেলা
   useEffect(() => {
-    let spawnInterval;
-
-    if (gameState === 'playing') {
-      spawnInterval = setInterval(() => {
-        targetIdRef.current += 1;
-        const currentId = targetIdRef.current;
-
-        // র‍্যান্ডম পজিশন (১০% থেকে ৭০% এর মধ্যে যেন স্ক্রিনের বাইরে না যায়)
-        const newTarget = {
-          id: currentId,
-          top: Math.floor(Math.random() * 60 + 15), // percentage
-          left: Math.floor(Math.random() * 70 + 10), // percentage
-          hitsLeft: 3
-        };
-
-        setTargets((prev) => {
-          if (prev.length >= 5) return prev; // স্ক্রিনে সর্বোচ্চ ৫টি থাকবে
-          return [...prev, newTarget];
-        });
-
-        // ১.৫ সেকেন্ড পর নির্দিষ্ট অবজেক্টটি গায়েব হয়ে যাবে
-        setTimeout(() => {
-          setTargets((prev) => prev.filter((t) => t.id !== currentId));
-        }, 1500);
-
-      }, 800); // প্রতি ০.৮ সেকেন্ডে নতুন অবজেক্ট স্পন হবে
-    } else {
+    if (gameState !== 'playing') {
       setTargets([]);
+      return;
     }
 
-    return () => clearInterval(spawnInterval);
+    const interval = setInterval(() => {
+      const id = Date.now() + Math.random();
+      
+      // পজিশন ১০% থেকে ৭০% এর ভেতর রাখা যেন স্ক্রিনের বাইরে না যায়
+      const newTarget = {
+        id,
+        top: Math.floor(Math.random() * 60) + 10,
+        left: Math.floor(Math.random() * 60) + 10,
+        hitsLeft: 3
+      };
+
+      // নতুন অবজেক্ট যোগ করা (সর্বোচ্চ ৪ টি স্ক্রিনে থাকতে পারবে)
+      setTargets((prev) => {
+        if (prev.length >= 4) return prev;
+        return [...prev, newTarget];
+      });
+
+      // ১.৫ সেকেন্ড (১৫০০ms) পর নির্দিষ্ট অবজেক্টটি মুছে যাবে
+      setTimeout(() => {
+        setTargets((prev) => prev.filter((item) => item.id !== id));
+      }, 1500);
+
+    }, 800); // প্রতি ০.৮ সেকেন্ডে একটি করে অবজেক্ট আসবে
+
+    return () => clearInterval(interval);
   }, [gameState]);
 
-  // ৩. ৩০ সেকেন্ড কাউন্টডাউন টাইমার
+  // ৩. ৩০ সেকেন্ডের কাউন্টডাউন টাইমার
   useEffect(() => {
     let timer;
     if (gameState === 'playing' && timeLeft > 0) {
@@ -94,28 +91,28 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     setGameState('playing');
   };
 
-  // ৫. টার্গেট শুটিং/হিট লজিক (৩ বার ক্লিক)
-  const handleHitTarget = (e, id) => {
-    e.stopPropagation(); // ক্যানভাসের অন্য ইভেন্ট ব্লক করার জন্য
+  // ৫. টার্গেট অবজেক্টে ৩ বার ক্লিকে পয়েন্ট দেওয়ার লজিক
+  const handleHit = (e, targetId) => {
+    e.stopPropagation(); // ক্যানভাসের ব্যাকগ্রাউন্ডে ক্লিক রেজিস্টার হওয়া রোধ করতে
 
     setTargets((prevTargets) => {
       return prevTargets
-        .map((target) => {
-          if (target.id === id) {
-            const updatedHits = target.hitsLeft - 1;
-            if (updatedHits <= 0) {
-              setScore((s) => s + 10); // ১০ কয়েন প্লাস
-              return null; // অবজেক্ট সম্পূর্ণ ধ্বংস
+        .map((t) => {
+          if (t.id === targetId) {
+            const nextHits = t.hitsLeft - 1;
+            if (nextHits <= 0) {
+              setScore((s) => s + 10); // ১০ পয়েন্ট যোগ
+              return null; // অবজেক্ট ধ্বংস
             }
-            return { ...target, hitsLeft: updatedHits };
+            return { ...t, hitsLeft: nextHits };
           }
-          return target;
+          return t;
         })
         .filter(Boolean);
     });
   };
 
-  // ৬. রিওয়ার্ড ক্লেইম ও ডাবল লজিক
+  // ৬. ব্যাকএন্ডে পয়েন্ট পাঠানো ও ডাবল ক্লেইম লজিক
   const claimReward = async (isDouble = false) => {
     if (score === 0) {
       setGameState('idle');
@@ -162,9 +159,9 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   };
 
   return (
-    <div className="p-4 text-center min-h-[80vh] flex flex-col justify-between select-none">
+    <div className="p-4 text-center min-h-[75vh] flex flex-col justify-between select-none">
       
-      {/* 1. IDLE STATE */}
+      {/* ১. IDLE STATE (শুরু করার হোম স্ক্রিন) */}
       {gameState === 'idle' && (
         <div className="mt-8 flex flex-col items-center">
           <div className="w-24 h-24 bg-amber-500/10 rounded-full flex items-center justify-center border-2 border-amber-500/30 mb-4 animate-bounce">
@@ -186,41 +183,43 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         </div>
       )}
 
-      {/* 2. PLAYING STATE */}
+      {/* ২. PLAYING STATE (গেম ক্যানভাস) */}
       {gameState === 'playing' && (
         <div className="w-full">
-          <div className="flex justify-between items-center bg-gray-900 px-4 py-3 rounded-xl border border-gray-800 mb-4 font-bold text-lg">
+          {/* টাইমার ও পয়েন্ট বার */}
+          <div className="flex justify-between items-center bg-gray-900 px-4 py-3 rounded-xl border border-gray-800 mb-3 font-bold text-lg">
             <span className="text-amber-400">⏱️ {timeLeft}s</span>
             <span className="text-emerald-400">🪙 {score}</span>
           </div>
 
-          {/* Shooting Arena Canvas */}
-          <div className="h-[380px] w-full bg-gray-900 border-2 border-dashed border-gray-800 rounded-2xl relative overflow-hidden">
+          {/* শুট খেলার ক্যানভাস এলাকা */}
+          <div className="relative w-full h-[350px] bg-gray-900/90 border-2 border-dashed border-gray-800 rounded-2xl overflow-hidden">
             {targets.map((target) => (
-              <button
+              <div
                 key={target.id}
-                onClick={(e) => handleHitTarget(e, target.id)}
+                onClick={(e) => handleHit(e, target.id)}
                 style={{
                   top: `${target.top}%`,
                   left: `${target.left}%`,
                   position: 'absolute',
-                  zIndex: 20
+                  zIndex: 50,
+                  touchAction: 'manipulation'
                 }}
-                className="w-14 h-14 -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-gradient-to-br from-red-500 to-amber-600 border-2 border-white shadow-xl active:scale-90 transition-transform flex flex-col items-center justify-center font-black text-white cursor-pointer"
+                className="w-16 h-16 bg-gradient-to-br from-red-500 to-amber-600 border-2 border-white rounded-2xl shadow-lg flex flex-col items-center justify-center cursor-pointer active:scale-90 transition-transform"
               >
-                <span className="text-lg leading-none">👾</span>
-                <span className="text-[10px] bg-black/70 px-1.5 py-0.2 rounded-full mt-0.5">
+                <span className="text-2xl pointer-events-none">👾</span>
+                <span className="text-[10px] bg-black/80 px-1.5 py-0.5 rounded-full text-white font-black pointer-events-none">
                   {target.hitsLeft} HP
                 </span>
-              </button>
+              </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* 3. GAME OVER SCREEN */}
+      {/* ৩. GAME OVER SCREEN */}
       {gameState === 'ended' && (
-        <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl mt-6">
+        <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl mt-4">
           <h3 className="text-xl font-bold text-white mb-2">🎉 Match Finished!</h3>
           <p className="text-gray-400 text-sm mb-1">Total Coins Earned:</p>
           <p className="text-3xl font-black text-amber-400 mb-6">{score} Coins</p>
