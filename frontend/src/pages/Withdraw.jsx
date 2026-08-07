@@ -112,12 +112,24 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
         >
           💸 Withdraw Funds
         </button>
-      </form>
 
-      {/* Support Link */}
-      <a href="https://t.me/earners_1b" target="_blank" rel="noreferrer" className="text-center text-xs text-blue-400 hover:underline py-1">
-        💬 Contact Support
-      </a>
+        {/* Warning Notice under Withdraw Button */}
+        <p className="text-[11px] text-amber-400/90 text-center mt-3 px-2 leading-relaxed font-medium bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
+          ⚠️ <b>Note:</b> You must join our Official Channel before withdrawing. Requests from non-members will be manually checked and cancelled.
+        </p>
+
+        </form>
+
+        {/* Support & Payment Proof Links */}
+        <div className="flex flex-col items-center gap-2 mt-4 text-xs">
+          <a href="https://t.me/earners_1b" target="_blank" rel="noreferrer" className="text-center text-xs text-blue-400 hover:underline">
+            💬 Contact Support
+          </a>
+
+         <a href="https://t.me/payment_proofs_for" target="_blank" rel="noreferrer" className="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 transition underline">
+            📢 Payment's Proofs
+         </a>
+       </div>
     </div>
   );
 }
