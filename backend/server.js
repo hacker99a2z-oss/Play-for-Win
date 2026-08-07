@@ -172,6 +172,27 @@ app.get('/api/adsgram-reward', async (req, res) => {
   }
 });
 
+// ডেইলি টাইমার এন্ডপয়েন্ট (বাংলাদেশ টাইমজোনে রাত ১২:০০ টা হিসাব করবে)
+app.get('/api/contest/timer', (req, res) => {
+  const now = new Date();
+  const bdNowStr = now.toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
+  const bdNow = new Date(bdNowStr);
+
+  const bdEndOfDay = new Date(bdNowStr);
+  bdEndOfDay.setHours(23, 59, 59, 999);
+
+  const difference = bdEndOfDay - bdNow;
+
+  if (difference <= 0) {
+    return res.json({ hours: 0, minutes: 0, seconds: 0 });
+  }
+
+  res.json({
+    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((difference / 1000 / 60) % 60),
+    seconds: Math.floor((difference / 1000) % 60),
+  });
+});
 // ৫. উইথড্র রিকোয়েস্ট
 app.post('/api/user/withdraw', async (req, res) => {
   try {
@@ -240,7 +261,7 @@ cron.schedule('0 0 * * *', async () => {
   try {
     // ১. টপ ৩ ডেইলি প্লেয়ার বের করা
     const topUsers = await User.find({}).sort({ dailyCoins: -1 }).limit(3);
-    const prizes = [0.08, 0.05, 0.03];
+    const prizes = [0.10, 0.07, 0.03];
 
     // ২. বিজয়ী ৩ জনের অ্যাকাউন্টে প্রাইজ যোগ করা
     for (let i = 0; i < topUsers.length; i++) {
