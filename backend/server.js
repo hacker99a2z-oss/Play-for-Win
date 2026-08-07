@@ -260,8 +260,11 @@ cron.schedule('0 0 * * *', async () => {
   console.log('🏆 Running Daily Contest Reset & Distributing Prizes...');
   try {
     // ১. টপ ৩ ডেইলি প্লেয়ার বের করা
-    const topUsers = await User.find({}).sort({ dailyCoins: -1 }).limit(3);
-    const prizes = [0.10, 0.07, 0.03];
+    const topUsers = await User.find({}).sort({ dailyCoins: -1 }).limit(10);
+    const prizes = [
+      0.20, 0.18, 0.16, 0.14, 0.12,
+      0.10, 0.08, 0.06, 0.04, 0.02
+    ];
 
     // ২. বিজয়ী ৩ জনের অ্যাকাউন্টে প্রাইজ যোগ করা
     for (let i = 0; i < topUsers.length; i++) {
