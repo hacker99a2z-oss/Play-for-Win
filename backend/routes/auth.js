@@ -65,10 +65,10 @@ router.post('/login', async (req, res) => {
 // Get Top Leaderboard API
 router.get('/leaderboard', async (req, res) => {
   try {
-    const topUsers = await User.find({})
-      .sort({ weeklyCoins: -1 })
-      .limit(100)
-      .select('firstName username weeklyCoins');
+  const topUsers = await User.find({})
+    .sort({ dailyCoins: -1 })
+    .limit(100)
+    .select('firstName username photoUrl dailyCoins');
 
     res.json(topUsers);
   } catch (error) {
