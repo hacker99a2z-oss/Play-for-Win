@@ -238,7 +238,7 @@ mongoose.connect(process.env.MONGO_URI)
 cron.schedule('0 0 * * *', async () => {
   console.log('🏆 Running Daily Contest Reset & Distributing Prizes...');
   try {
-    // ১. টপ ৩ ডেইলি প্লেয়ার বের করা
+    // ১. টপ ৩ ডেইলি প্লেয়ার বের করা
     const topUsers = await User.find({}).sort({ dailyCoins: -1 }).limit(3);
     const prizes = [0.08, 0.05, 0.03];
 
@@ -259,6 +259,9 @@ cron.schedule('0 0 * * *', async () => {
   } catch (error) {
     console.error('❌ Reset Error:', error);
   }
+}, {
+  scheduled: true,
+  timezone: "Asia/Dhaka"
 });
 
 const PORT = process.env.PORT || 5000;
