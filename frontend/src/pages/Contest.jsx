@@ -43,7 +43,7 @@ export default function Contest() {
   }, []);
 
   // 3. Prizes mapping
-  const prizes = ["$0.50", "$0.30", "$0.20"];
+  const prizes = ["$0.08", "$0.05", "$0.03"];
 
   return (
     <div className="p-4 text-white flex flex-col gap-6 max-w-md mx-auto">
