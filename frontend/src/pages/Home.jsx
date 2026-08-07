@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const BACKEND_URL = 'https://play-for-win.onrender.com';
 
@@ -10,7 +10,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   const [isClaiming, setIsClaiming] = useState(false);
   const [hasFreePlay, setHasFreePlay] = useState(true);
 
-  // ১. ডেলি ফ্রি খেলার লিমিট চেক
+  // ১. ডেইলি ফ্রি খেলার হিসাব
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
     const lastFreePlayDate = localStorage.getItem('last_free_play_date');
@@ -21,41 +21,42 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     }
   }, []);
 
-  // ২. গেম লুপ: প্রতি ১ সেকেন্ড পরপর নতুন অবজেক্ট স্পন করা এবং ১.৫ সেকেন্ড পর অবজেক্ট সরিয়ে ফেলা
+  // ২. অবজেক্ট তৈরি এবং স্পনিং লজিক (নিশ্চিতভাবে ৩-৪টি অবজেক্ট স্ক্রিনে রাখবে)
   useEffect(() => {
-    if (gameState !== 'playing') {
+    let spawnTimer;
+
+    if (gameState === 'playing') {
+      // শুরুতে অবিলম্বে ৪টি অবজেক্ট জেনারেট করা
+      generateTargets();
+
+      // প্রতি ১.২ সেকেন্ড পরপর অবজেক্টের পজিশন ও তালিকা রিফ্রেশ হবে
+      spawnTimer = setInterval(() => {
+        generateTargets();
+      }, 1200);
+    } else {
       setTargets([]);
-      return;
     }
 
-    const interval = setInterval(() => {
-      const id = Date.now() + Math.random();
-      
-      // পজিশন ১০% থেকে ৭০% এর ভেতর রাখা যেন স্ক্রিনের বাইরে না যায়
-      const newTarget = {
-        id,
-        top: Math.floor(Math.random() * 60) + 10,
-        left: Math.floor(Math.random() * 60) + 10,
-        hitsLeft: 3
-      };
-
-      // নতুন অবজেক্ট যোগ করা (সর্বোচ্চ ৪ টি স্ক্রিনে থাকতে পারবে)
-      setTargets((prev) => {
-        if (prev.length >= 4) return prev;
-        return [...prev, newTarget];
-      });
-
-      // ১.৫ সেকেন্ড (১৫০০ms) পর নির্দিষ্ট অবজেক্টটি মুছে যাবে
-      setTimeout(() => {
-        setTargets((prev) => prev.filter((item) => item.id !== id));
-      }, 1500);
-
-    }, 800); // প্রতি ০.৮ সেকেন্ডে একটি করে অবজেক্ট আসবে
-
-    return () => clearInterval(interval);
+    return () => clearInterval(spawnTimer);
   }, [gameState]);
 
-  // ৩. ৩০ সেকেন্ডের কাউন্টডাউন টাইমার
+  // র‍্যান্ডম পজিশনে অবজেক্ট তৈরির সিম্পল ফাংশন
+  const generateTargets = () => {
+    const count = Math.floor(Math.random() * 2) + 3; // এক সাথে ৩ থেকে ৪ টি অবজেক্ট তৈরি হবে
+    const newTargets = [];
+
+    for (let i = 0; i < count; i++) {
+      newTargets.push({
+        id: Math.random(),
+        top: Math.floor(Math.random() * 200) + 20, // ২০px থেকে ২২০px এর মধ্যে
+        left: Math.floor(Math.random() * 200) + 20, // ২০px থেকে ২২০px এর মধ্যে
+        hitsLeft: 3
+      });
+    }
+    setTargets(newTargets);
+  };
+
+  // ৩. ৩০ সেকেন্ড টাইমার
   useEffect(() => {
     let timer;
     if (gameState === 'playing' && timeLeft > 0) {
@@ -87,32 +88,29 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   const startGame = () => {
     setScore(0);
     setTimeLeft(30);
-    setTargets([]);
     setGameState('playing');
   };
 
-  // ৫. টার্গেট অবজেক্টে ৩ বার ক্লিকে পয়েন্ট দেওয়ার লজিক
-  const handleHit = (e, targetId) => {
-    e.stopPropagation(); // ক্যানভাসের ব্যাকগ্রাউন্ডে ক্লিক রেজিস্টার হওয়া রোধ করতে
-
-    setTargets((prevTargets) => {
-      return prevTargets
-        .map((t) => {
-          if (t.id === targetId) {
-            const nextHits = t.hitsLeft - 1;
-            if (nextHits <= 0) {
+  // ৫. শুটিং / হিট লজিক (৩ হিট প্রয়োজন)
+  const handleHitTarget = (id) => {
+    setTargets((prev) =>
+      prev
+        .map((target) => {
+          if (target.id === id) {
+            const currentHits = target.hitsLeft - 1;
+            if (currentHits <= 0) {
               setScore((s) => s + 10); // ১০ পয়েন্ট যোগ
-              return null; // অবজেক্ট ধ্বংস
+              return null; // অবজেক্ট গায়েব
             }
-            return { ...t, hitsLeft: nextHits };
+            return { ...target, hitsLeft: currentHits };
           }
-          return t;
+          return target;
         })
-        .filter(Boolean);
-    });
+        .filter(Boolean)
+    );
   };
 
-  // ৬. ব্যাকএন্ডে পয়েন্ট পাঠানো ও ডাবল ক্লেইম লজিক
+  // ৬. রিওয়ার্ড ক্লেইম লজিক
   const claimReward = async (isDouble = false) => {
     if (score === 0) {
       setGameState('idle');
@@ -159,65 +157,64 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   };
 
   return (
-    <div className="p-4 text-center min-h-[75vh] flex flex-col justify-between select-none">
+    <div className="p-4 text-center min-h-[70vh] flex flex-col justify-between select-none">
       
-      {/* ১. IDLE STATE (শুরু করার হোম স্ক্রিন) */}
+      {/* 1. IDLE STATE */}
       {gameState === 'idle' && (
         <div className="mt-8 flex flex-col items-center">
-          <div className="w-24 h-24 bg-amber-500/10 rounded-full flex items-center justify-center border-2 border-amber-500/30 mb-4 animate-bounce">
-            <span className="text-5xl">🎯</span>
+          <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center border-2 border-amber-500/30 mb-4">
+            <span className="text-4xl">🎯</span>
           </div>
 
           <h2 className="text-2xl font-bold text-amber-400 mb-2">Target Shooter Game</h2>
-          <p className="text-gray-400 text-sm mb-1">Destroy targets before they vanish in 1.5s!</p>
+          <p className="text-gray-400 text-sm mb-1">Destroy targets with 3 hits before they shift!</p>
           <p className="text-xs text-amber-300 bg-amber-950/40 px-3 py-1 rounded-full border border-amber-500/20 mb-6">
-            ✨ Hit 3 Times = Destroy & Get +10 Coins
+            ✨ Destroy 1 Target = +10 Coins
           </p>
 
           <button
             onClick={handleStartGame}
-            className="w-full max-w-xs py-4 px-6 rounded-2xl font-black text-lg bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-950 shadow-lg shadow-amber-500/20 transition-all transform active:scale-95 cursor-pointer"
+            className="w-full max-w-xs py-4 px-6 rounded-2xl font-black text-lg bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-950 shadow-lg"
           >
             {hasFreePlay ? '🎁 PLAY (1 Daily Free Game)' : '🎬 WATCH AD TO PLAY'}
           </button>
         </div>
       )}
 
-      {/* ২. PLAYING STATE (গেম ক্যানভাস) */}
+      {/* 2. PLAYING STATE */}
       {gameState === 'playing' && (
         <div className="w-full">
-          {/* টাইমার ও পয়েন্ট বার */}
+          {/* হেডার স্কোরবার */}
           <div className="flex justify-between items-center bg-gray-900 px-4 py-3 rounded-xl border border-gray-800 mb-3 font-bold text-lg">
             <span className="text-amber-400">⏱️ {timeLeft}s</span>
             <span className="text-emerald-400">🪙 {score}</span>
           </div>
 
-          {/* শুট খেলার ক্যানভাস এলাকা */}
-          <div className="relative w-full h-[350px] bg-gray-900/90 border-2 border-dashed border-gray-800 rounded-2xl overflow-hidden">
+          {/* Shooting Arena Canvas */}
+          <div className="relative w-full h-[320px] bg-slate-900 border-2 border-amber-500/30 rounded-2xl overflow-hidden block">
             {targets.map((target) => (
-              <div
+              <button
                 key={target.id}
-                onClick={(e) => handleHit(e, target.id)}
+                onClick={() => handleHitTarget(target.id)}
                 style={{
-                  top: `${target.top}%`,
-                  left: `${target.left}%`,
                   position: 'absolute',
-                  zIndex: 50,
-                  touchAction: 'manipulation'
+                  top: `${target.top}px`,
+                  left: `${target.left}px`,
+                  zIndex: 99
                 }}
-                className="w-16 h-16 bg-gradient-to-br from-red-500 to-amber-600 border-2 border-white rounded-2xl shadow-lg flex flex-col items-center justify-center cursor-pointer active:scale-90 transition-transform"
+                className="w-14 h-14 bg-gradient-to-br from-red-500 to-amber-500 border-2 border-white rounded-2xl flex flex-col items-center justify-center font-black text-white active:scale-90 transition-transform shadow-md"
               >
-                <span className="text-2xl pointer-events-none">👾</span>
-                <span className="text-[10px] bg-black/80 px-1.5 py-0.5 rounded-full text-white font-black pointer-events-none">
+                <span className="text-lg">🎯</span>
+                <span className="text-[10px] bg-black/80 px-1.5 rounded-full mt-0.5">
                   {target.hitsLeft} HP
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* ৩. GAME OVER SCREEN */}
+      {/* 3. GAME OVER SCREEN */}
       {gameState === 'ended' && (
         <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl mt-4">
           <h3 className="text-xl font-bold text-white mb-2">🎉 Match Finished!</h3>
@@ -236,7 +233,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             <button
               onClick={() => claimReward(true)}
               disabled={isClaiming}
-              className="w-full py-3 bg-gradient-to-r from-emerald-600 to-green-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-950"
+              className="w-full py-3 bg-gradient-to-r from-emerald-600 to-green-500 text-white font-bold rounded-xl shadow-lg"
             >
               🎬 Watch Ad to Double (2x) → {score * 2} Coins
             </button>
