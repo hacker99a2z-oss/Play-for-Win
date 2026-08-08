@@ -272,7 +272,6 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                     </span>
                   </div>
                 ) : (
-                  // ফাঁকা গর্ত
                   <span className="text-xs text-gray-700">🕳️</span>
                 )}
               </div>
