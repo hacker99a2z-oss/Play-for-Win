@@ -278,7 +278,6 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
               </div>
             ))}
           </div>
-        </div>
       )}
 
       {/* ৩. GAME OVER SCREEN */}
