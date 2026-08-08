@@ -278,6 +278,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             </div>
           )}
 
+
       {/* ৩. GAME OVER SCREEN */}
       {gameState === 'ended' && (
         <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl mt-4">
