@@ -191,7 +191,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
           <button
             onClick={handleStartGame}
-            className="w-full max-w-xs py-4 px-6 rounded-2xl font-black text-lg bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-950 shadow-lg shadow-amber-500/20 transition-all transform active:scale-95 cursor-pointer"
+            className="w-full max-w-xs py-4 px-6 rounded-2xl font-black text-lg bg-gradient-to-r from-emerald-500 to-green-400 text-slate-950 shadow-lg shadow-emerald-500/40 hover:from-emerald-400 hover:to-green-300 transition-all transform active:scale-95 cursor-pointer ring-2 ring-emerald-300/50"
           >
             {hasFreePlay ? '🎁 PLAY (1 Daily Free Game)' : '🎬 WATCH AD TO PLAY'}
           </button>
