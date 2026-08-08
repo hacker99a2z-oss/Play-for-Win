@@ -9,6 +9,8 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   const [isClaiming, setIsClaiming] = useState(false);
   const [hasFreePlay, setHasFreePlay] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [isCooldownActive, setIsCooldownActive] = useState(false);
 
   // ১৬টি গর্তের স্টেট (null থাকলে ফাঁকা গর্ত, অবজেক্ট থাকলে ইঁদুর অবস্থান করছে)
   const [holes, setHoles] = useState(Array(16).fill(null));
@@ -82,6 +84,18 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     }
     return () => clearInterval(timer);
   }, [gameState, timeLeft]);
+  // ৪. ২০ সেকেন্ডের কুলডাউন টাইমার
+  useEffect(() => {
+    let timer;
+    if (isCooldownActive && cooldown > 0) {
+      timer = setInterval(() => {
+        setCooldown((prev) => prev - 1);
+      }, 1000);
+    } else if (cooldown === 0 && isCooldownActive) {
+      setIsCooldownActive(false);
+    }
+    return () => clearInterval(timer);
+  }, [isCooldownActive, cooldown]);
 
   const handleStartGame = async () => {
     if (isLoading) return;
@@ -163,6 +177,8 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           refreshUserData();
           setGameState('idle');
           setScore(0);
+          setCooldown(20);
+          setIsCooldownActive(true);
         } else {
           alert("Error claiming coins. Please try again.");
         }
@@ -203,21 +219,23 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
           <button
             onClick={handleStartGame}
-            disabled={isLoading}
-            className={`w-full max-w-xs py-4 px-6 rounded-2xl font-black text-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 border-2 ${
-              isLoading
-                ? 'bg-gray-700 text-gray-400 border-gray-600 cursor-not-allowed opacity-80'
-                : 'bg-gradient-to-r from-emerald-500 to-green-400 text-slate-950 border-emerald-300/50 shadow-lg shadow-emerald-500/40 hover:from-emerald-400 hover:to-green-300 cursor-pointer'
+            disabled={isLoading || isCooldownActive}
+            className={`w-full max-w-xs py-4 px-6 rounded-2xl font-black text-lg transition-all transform flex items-center justify-center gap-2 border-2 ${
+              isLoading || isCooldownActive
+                ? 'bg-gray-800 text-gray-400 border-gray-700 cursor-not-allowed opacity-80 shadow-none'
+                : 'bg-gradient-to-r from-emerald-500 to-green-400 text-slate-950 border-emerald-300/50 shadow-lg shadow-emerald-500/40 hover:from-emerald-400 hover:to-green-300 active:scale-95 cursor-pointer'
             }`}
           >
             {isLoading ? (
               <>
                 <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 <span>Loading Ad...</span>
-               </>
+              </>
+            ) : isCooldownActive ? (
+              `⏳ Please wait ${cooldown}s...`
             ) : hasFreePlay ? (
               '🎁 PLAY (1 Daily Free Game)'
             ) : (
