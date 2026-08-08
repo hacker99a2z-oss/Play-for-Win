@@ -15,7 +15,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   // ১৬টি গর্তের স্টেট (null থাকলে ফাঁকা গর্ত, অবজেক্ট থাকলে ইঁদুর অবস্থান করছে)
   const [holes, setHoles] = useState(Array(16).fill(null));
 
-  // ১. ডেলি ফ্রি খেলার লিমিট চেক
+  // ১. ডেইলি ফ্রি খেলার লিমিট চেক
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
     const lastFreePlayDate = localStorage.getItem('last_free_play_date');
@@ -50,7 +50,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             hitsLeft: 3 // ৩টি হিট প্রয়োজন
           };
 
-          // ঠিক ১.৫ সেকেন্ড (1500ms) পর ইঁদুরটি গর্ত থেকে গায়েব হয়ে যাবে
+          // ঠিক ১.২ সেকেন্ড পর ইঁদুরটি গর্ত থেকে গায়েব হয়ে যাবে
           setTimeout(() => {
             setHoles((currHoles) => {
               const updated = [...currHoles];
@@ -84,6 +84,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     }
     return () => clearInterval(timer);
   }, [gameState, timeLeft]);
+
   // ৪. ২০ সেকেন্ডের কুলডাউন টাইমার
   useEffect(() => {
     let timer;
@@ -142,7 +143,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       const newHoles = [...prevHoles];
 
       if (updatedHits <= 0) {
-        // ৩ হিট সম্পন্ন হলে ১০ কয়েন প্লাস হবে এবং ইঁদুর গর্তে ঢুকে যাবে
+        // ৩ হিট সম্পন্ন হলে ১০ পয়েন্ট যোগ হবে এবং ইঁদুর গর্তে ঢুকে যাবে
         setScore((prevScore) => prevScore + 10);
         newHoles[index] = null;
       } else {
@@ -223,7 +224,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             className={`w-full max-w-xs py-4 px-6 rounded-2xl font-black text-lg transition-all transform flex items-center justify-center gap-2 border-2 ${
               isLoading || isCooldownActive
                 ? 'bg-gray-800 text-gray-400 border-gray-700 cursor-not-allowed opacity-80 shadow-none'
-                : 'bg-gradient-to-r from-emerald-500 to-green-400 text-slate-950 border-emerald-300/50 shadow-lg shadow-emerald-500/40 hover:from-emerald-400 hover:to-green-300 active:scale-95 cursor-pointer'
+                : 'bg-gradient-to-r from-emerald-500 to-green-400 text-slate-950 border-emerald-300/50 shadow-lg shadow-emerald-500/40 hover:from-emerald-400 hover:to-green-300 active:scale-95'
             }`}
           >
             {isLoading ? (
@@ -239,9 +240,11 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             ) : hasFreePlay ? (
               '🎁 PLAY (1 Daily Free Game)'
             ) : (
-              '🎬 WATCH AD TO PLAY'
+              '📺 WATCH AD TO PLAY'
             )}
           </button>
+        </div>
+      )}
 
       {/* ২. PLAYING STATE (4x4 Grid Holes Arena) */}
       {gameState === 'playing' && (
@@ -249,7 +252,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           {/* টাইমার ও পয়েন্ট ডিসপ্লে */}
           <div className="flex justify-between items-center bg-gray-900 px-4 py-3 rounded-xl border border-gray-800 mb-3 font-bold text-lg">
             <span className="text-amber-400">⏱️ {timeLeft}s</span>
-            <span className="text-emerald-400">🪙 {score}</span>
+            <span className="text-emerald-400">🎯 {score}</span>
           </div>
 
           {/* ৪x৪ ১৬টি গর্তের গ্রিড */}
@@ -275,9 +278,10 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                   <span className="text-xs text-gray-700">🕳️</span>
                 )}
               </div>
-            </div>
-          )}
-
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ৩. GAME OVER SCREEN */}
       {gameState === 'ended' && (
@@ -300,12 +304,11 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
               disabled={isClaiming}
               className="w-full py-3 bg-gradient-to-r from-emerald-600 to-green-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-950"
             >
-              🎬 Watch Ad to Double (2x) → {score * 2} Coins
+              📺 Watch Ad to Double (2x) ➔ {score * 2} Coins
             </button>
           </div>
         </div>
       )}
-
     </div>
   );
 };
