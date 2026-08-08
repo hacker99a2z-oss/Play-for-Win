@@ -276,8 +276,8 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                   <span className="text-xs text-gray-700">🕳️</span>
                 )}
               </div>
-          </div>
-      )}
+            </div>
+          )}
 
       {/* ৩. GAME OVER SCREEN */}
       {gameState === 'ended' && (
