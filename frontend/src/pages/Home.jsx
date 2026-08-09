@@ -302,9 +302,10 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             <button
               onClick={() => claimReward(true)}
               disabled={isClaiming}
-              className="w-full py-3 bg-gradient-to-r from-emerald-600 to-green-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-950"
+              className="w-full py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-400 hover:to-red-400 text-white font-black rounded-xl shadow-lg shadow-orange-500/40 border border-amber-300/30 transform active:scale-95 transition-all animate-pulse disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              📺 Watch Ad to Double (2x) ➔ {score * 2} Coins
+              <span>📺 Watch Ad to Double (2x) ➔</span>
+              <span className="text-yellow-200 underline">{score * 2} Coins</span>
             </button>
           </div>
         </div>
