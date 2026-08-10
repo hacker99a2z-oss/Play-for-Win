@@ -86,9 +86,8 @@ export default function App() {
     return new Promise((resolve) => {
       if (window.Adsgram) {
         const AdController = window.Adsgram.init({
-          blockId: "int-41387",
-          userId: user?.telegramId ? String(user.telegramId) : "",
-          debug: true
+          blockId: "41655",
+          userId: user?.telegramId ? String(user.telegramId) : ""
         });
 
         AdController.show()
