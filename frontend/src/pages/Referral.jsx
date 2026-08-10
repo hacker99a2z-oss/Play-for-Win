@@ -38,7 +38,7 @@ export default function Referral({ user, refreshUser }) {
           </button>
         </div>
         <p className="text-[11px] text-gray-400 mt-2.5">
-          🎁 Rule: When your referral plays <span className="text-yellow-400 font-bold">20 Games</span>, you receive <span className="text-yellow-400 font-bold">1,000 Main Coins & Daily Coins</span>
+          🎁 Rule: When your referral plays <span className="text-yellow-400 font-bold">10 Games</span>, you receive <span className="text-yellow-400 font-bold">1,000 Main Coins & Daily Coins</span>
         </p>
       </div>
 
@@ -64,7 +64,7 @@ export default function Referral({ user, refreshUser }) {
                   </div>
                   <span className="font-medium text-xs">{ref.firstName || ref.username || 'User'}</span>
                 </div>
-                <span className="text-xs text-gray-400 font-mono">{ref.gamesPlayedForReferral || 0}/20 Games</span>
+                <span className="text-xs text-gray-400 font-mono">{ref.gamesPlayedForReferral || 0}/10 Games</span>
               </div>
             ))}
           </div>
