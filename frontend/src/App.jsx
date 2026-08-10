@@ -121,11 +121,13 @@ export default function App() {
           })
           .catch(() => {
             // Adsgram-এ অ্যাড না থাকলে স্বয়ংক্রিয়ভাবে Monetag লোড হবে
-            showMonetagAd().then((success) => resolve(success));
+            alert("No ads available right now. Please try again later!");
+            resolve(false);
           });
       } else {
         // Adsgram SDK না থাকলে সরাসরি Monetag ট্রাই করবে
-        showMonetagAd().then((success) => resolve(success));
+        alert("Ad Network failed to load!");
+        resolve(false);
       }
     });
   };
