@@ -58,7 +58,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
               }
               return updated;
             });
-          }, 400);
+          }, 700);
 
           return newHoles;
         });
