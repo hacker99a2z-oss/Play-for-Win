@@ -87,6 +87,7 @@ export default function App() {
       if (window.Adsgram) {
         const AdController = window.Adsgram.init({
           blockId: "41655"
+          userId: user?.telegramId ? String(user.telegramId) : ""
         });
 
         AdController.show()
@@ -94,13 +95,13 @@ export default function App() {
             if (result && result.done) {
               resolve(true);
             } else {
-              alert("অ্যাডটি সম্পূর্ণ দেখুন! স্কিপ করলে গেম খেলা বা পয়েন্ট পাওয়া যাবে না।");
+              alert("Please watch the full ad! Skipping it will not reward you.");
               resolve(false);
             }
           })
           .catch((result) => {
             console.log("Ad skipped or error:", result);
-            alert("অ্যাডটি সম্পূর্ণ দেখুন! আবার চেষ্টা করুন।");
+            alert("Please watch the ad completely and try again.");
             resolve(false);
           });
       } else {
