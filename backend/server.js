@@ -203,6 +203,31 @@ app.post('/api/user/watch-ad', async (req, res) => {
   }
 });
 
+// ৪.২. Monetag Server-to-Server Postback Endpoint
+app.get('/api/monetag-postback', async (req, res) => {
+  const { sub_id } = req.query; // Monetag থেকে telegramId আসবে
+
+  if (!sub_id) {
+    return res.status(400).send('Missing sub_id (telegramId)');
+  }
+
+  try {
+    let user = await User.findOne({ telegramId: sub_id });
+
+    if (user) {
+      user.adsWatched = (user.adsWatched || 0) + 1;
+      await user.save();
+      console.log(`✅ Monetag Postback Verified for Telegram ID: ${sub_id}`);
+      return res.status(200).send('OK');
+    }
+
+    return res.status(404).send('User not found');
+  } catch (err) {
+    console.error('Monetag Postback Error:', err);
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
 // ডেইলি টাইমার এন্ডপয়েন্ট (বাংলাদেশ টাইমজোনে রাত ১২:০০ টা হিসাব করবে)
 app.get('/api/contest/timer', (req, res) => {
   const now = new Date();
