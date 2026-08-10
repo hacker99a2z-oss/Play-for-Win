@@ -149,23 +149,23 @@ app.post('/api/game/reward', async (req, res) => {
 
 // ৪. AdsGram Webhook Endpoint
 app.get('/api/adsgram-reward', async (req, res) => {
-  const { userId } = req.query;
+  // Adsgram থেকে আসা বড় (userId) বা ছোট (userid) অক্ষরের আইডি গ্রহণ করবে
+  const targetUserId = req.query.userId || req.query.userid;
 
-  if (!userId) {
+  if (!targetUserId) {
     return res.status(400).send('User ID missing');
   }
 
   try {
-    let user = await User.findOne({ telegramId: userId });
+    let user = await User.findOne({ telegramId: targetUserId });
 
     if (user) {
       user.adsWatched = (user.adsWatched || 0) + 1;
-
       await user.save();
-      return res.status(200).send('OK');
     }
 
-    return res.status(404).send('User not found');
+    // Adsgram-কে সাকসেস মেসেজ পাঠানো হচ্ছে যাতে ড্যাশবোর্ডে ইমপ্রেশন ও টাকা যোগ হয়
+    return res.status(200).send('OK');
   } catch (err) {
     console.error('AdsGram Webhook Error:', err);
     return res.status(500).send('Internal Server Error');
