@@ -86,7 +86,7 @@ export default function App() {
     return new Promise((resolve) => {
       if (window.Adsgram) {
         const AdController = window.Adsgram.init({
-          blockId: "int-41387"
+          blockId: "41655"
         });
 
         AdController.show()
