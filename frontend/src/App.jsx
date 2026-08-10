@@ -85,7 +85,7 @@ export default function App() {
   const showMonetagAd = () => {
     return new Promise((resolve) => {
       if (typeof window.show_11548724 === 'function') {
-        window.show_11548724()
+        window.show_11548724({ sub_id: user?.telegramId ? String(user.telegramId) : '' })
           .then(() => {
             resolve(true);
           })
