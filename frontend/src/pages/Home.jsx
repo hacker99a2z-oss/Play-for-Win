@@ -5,7 +5,7 @@ const BACKEND_URL = 'https://play-for-win.onrender.com';
 const Home = ({ user, onPlayAd, refreshUserData }) => {
   const [gameState, setGameState] = useState('idle'); // idle, playing, ended
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(30);
+  const [timeLeft, setTimeLeft] = useState(15);
   const [isClaiming, setIsClaiming] = useState(false);
   const [hasFreePlay, setHasFreePlay] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +47,6 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           const newHoles = [...prevHoles];
           newHoles[randomIndex] = {
             id: mouseId,
-            hitsLeft: 3 // ৩টি হিট প্রয়োজন
           };
 
           // ঠিক ১.২ সেকেন্ড পর ইঁদুরটি গর্ত থেকে গায়েব হয়ে যাবে
@@ -59,11 +58,11 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
               }
               return updated;
             });
-          }, 1000);
+          }, 400);
 
           return newHoles;
         });
-      }, 450); // প্রতি ০.৭ সেকেন্ড পর পর নতুন ইঁদুর বের হবে
+      }, 1000); // প্রতি ০.৭ সেকেন্ড পর পর নতুন ইঁদুর বের হবে
     } else {
       setHoles(Array(16).fill(null));
     }
@@ -126,7 +125,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
   const startGame = () => {
     setScore(0);
-    setTimeLeft(30);
+    setTimeLeft(15);
     setHoles(Array(16).fill(null));
     setGameState('playing');
   };
@@ -139,16 +138,10 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       const mouse = prevHoles[index];
       if (!mouse) return prevHoles;
 
-      const updatedHits = mouse.hitsLeft - 1;
-      const newHoles = [...prevHoles];
 
-      if (updatedHits <= 0) {
-        // ৩ হিট সম্পন্ন হলে ১০ পয়েন্ট যোগ হবে এবং ইঁদুর গর্তে ঢুকে যাবে
-        setScore((prevScore) => prevScore + 10);
-        newHoles[index] = null;
-      } else {
-        newHoles[index] = { ...mouse, hitsLeft: updatedHits };
-      }
+      setScore((prevScore) => prevScore + 10);
+      const newHoles = [...prevHoles];
+      newHoles[index] = null;
 
       return newHoles;
     });
@@ -270,9 +263,6 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                 {mouse ? (
                   <div className="flex flex-col items-center justify-center z-10 animate-pulse">
                     <span className="text-2xl leading-none">🐭</span>
-                    <span className="text-[9px] bg-red-600 px-1.5 py-0.2 rounded-full text-white font-black mt-0.5 border border-white">
-                      {mouse.hitsLeft} HP
-                    </span>
                   </div>
                 ) : (
                   <span className="text-xs text-gray-700">🕳️</span>
