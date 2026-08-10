@@ -121,7 +121,7 @@ app.post('/api/game/reward', async (req, res) => {
     user.gamesPlayedForReferral = (user.gamesPlayedForReferral || 0) + 1;
 
     // রেফারেল লজিক: ২০ বার গেম খেললে রেফারার ১০০০ কয়েন পাবে
-    if (user.referredBy && user.gamesPlayedForReferral === 20) {
+    if (user.referredBy && user.gamesPlayedForReferral === 10) {
       await User.findOneAndUpdate(
         { telegramId: user.referredBy },
         {
