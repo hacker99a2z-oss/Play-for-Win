@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema({
   // Counters
   adsWatched: { type: Number, default: 0 },
   gamesPlayedForReferral: { type: Number, default: 0 }, // 👈 গেম খেলার কাউন্টার
+  referralBonusGiven: { type: Boolean, default: false },
 
   createdAt: { type: Date, default: Date.now }
 });
