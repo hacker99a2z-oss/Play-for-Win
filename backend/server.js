@@ -147,9 +147,8 @@ app.post('/api/game/reward', async (req, res) => {
   }
 });
 
-// ৪. AdsGram Webhook Endpoint
+// ৪. AdsGram Webhook Endpoint (অ্যাডগ্রাম ড্যাশবোর্ড থেকে অটো কল হবে যখন ইউজার অ্যাড শেষ করবে)
 app.get('/api/adsgram-reward', async (req, res) => {
-  // Adsgram থেকে আসা বড় (userId) বা ছোট (userid) অক্ষরের আইডি গ্রহণ করবে
   const targetUserId = req.query.userId || req.query.userid;
 
   if (!targetUserId) {
@@ -160,11 +159,13 @@ app.get('/api/adsgram-reward', async (req, res) => {
     let user = await User.findOne({ telegramId: targetUserId });
 
     if (user) {
+      // ইউজার সম্পূর্ণ অ্যাড দেখলে ডাটাবেজে কাউন্ট বাড়বে
       user.adsWatched = (user.adsWatched || 0) + 1;
       await user.save();
+      console.log(`✅ Adsgram Ad Verified & Counted for User: ${targetUserId}`);
     }
 
-    // Adsgram-কে সাকসেস মেসেজ পাঠানো হচ্ছে যাতে ড্যাশবোর্ডে ইমপ্রেশন ও টাকা যোগ হয়
+    // Adsgram-এর ড্যাশবোর্ডে কাউন্ট দেখানোর জন্য অবশ্যই 200 OK পাঠাতে হবে
     return res.status(200).send('OK');
   } catch (err) {
     console.error('AdsGram Webhook Error:', err);
