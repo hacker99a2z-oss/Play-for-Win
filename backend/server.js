@@ -100,7 +100,7 @@ app.post('/api/user/sync', async (req, res) => {
   }
 });
 
-// ৩. গেম খেলে রিওয়ার্ড ক্লেম করা ও ২০ গেমের রেফারেল বোনাস দেওয়া
+// ৩. গেম খেলে রিওয়ার্ড ক্লেম করা ও রেফারেল বোনাস দেওয়া
 app.post('/api/game/reward', async (req, res) => {
   try {
     const { telegramId, coins } = req.body;
@@ -115,13 +115,13 @@ app.post('/api/game/reward', async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // ইউজারের নিজের পয়েন্ট যোগ ও গেম কাউন্ট বৃদ্ধি
+    // ইউজারের নিজের পয়েন্ট যোগ ও গেম কাউন্ট বৃদ্ধি
     user.mainCoins = (user.mainCoins || 0) + rewardCoins;
     user.dailyCoins = (user.dailyCoins || 0) + rewardCoins;
     user.gamesPlayedForReferral = (user.gamesPlayedForReferral || 0) + 1;
 
-    // রেফারেল লজিক: ২০ বার গেম খেললে রেফারার ১০০০ কয়েন পাবে
-    if (user.referredBy && user.gamesPlayedForReferral === 10) {
+    // রেফারেল লজিক: ১০ বা তার বেশি গেম খেললে রেফারার ১০০০ কয়েন পাবে (একবারই পাবে)
+    if (user.referredBy && user.gamesPlayedForReferral >= 10 && !user.referralBonusGiven) {
       await User.findOneAndUpdate(
         { telegramId: user.referredBy },
         {
@@ -131,6 +131,7 @@ app.post('/api/game/reward', async (req, res) => {
           }
         }
       );
+      user.referralBonusGiven = true; // যেন বারবার বোনাস না দেয়
     }
 
     await user.save();
