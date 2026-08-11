@@ -53,33 +53,6 @@ export default function App() {
     syncUserData();
   }, []);
 
-  // ২. অ্যাড দেখার পর ব্যাকএন্ডে পয়েন্ট ও রেফারেল কাউন্ট পাঠানোর ফাংশন
-  const rewardUserOnBackend = async () => {
-    if (!user) return null;
-
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/user/watch-ad`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegramId: user.telegramId })
-      });
-      const data = await res.json();
-      
-      if (data.mainCoins !== undefined) {
-        setUser((prev) => ({
-          ...prev,
-          mainCoins: data.mainCoins,
-          dailyCoins: data.dailyCoins,
-          adsWatched: data.adsWatched,
-          adsWatchedForReferral: data.adsWatchedForReferral
-        }));
-      }
-      return data;
-    } catch (err) {
-      console.error("Error updating ad reward:", err);
-      return null;
-    }
-  };
 
   // কেবল Adsgram Ad Controller
   const handlePlayAd = () => {
@@ -94,7 +67,6 @@ export default function App() {
           .then(async (result) => {
             if (result && result.done) {
               // ইউজার সম্পূর্ণ অ্যাড দেখলে ব্যাকএন্ডে রিওয়ার্ড ও কাউন্ট আপডেট হবে
-              await rewardUserOnBackend();
               resolve(true);
             } else {
               alert("Please watch the full ad!");
