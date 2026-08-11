@@ -24,6 +24,17 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     } else {
       setHasFreePlay(true);
     }
+
+    const savedCooldownTarget = localStorage.getItem('gameCooldownTarget');
+    if (savedCooldownTarget) {
+      const remaining = Math.ceil((parseInt(savedCooldownTarget) - Date.now()) / 1000);
+      if (remaining > 0) {
+        setCooldown(remaining);
+        setIsCooldownActive(true);
+      } else {
+        localStorage.removeItem('gameCooldownTarget');
+      }
+    }
   }, []);
 
   // ২. ইঁদুর স্পনিং ও ১.৫ সেকেন্ড টাইমার লজিক
@@ -171,6 +182,10 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           refreshUserData();
           setGameState('idle');
           setScore(0);
+          
+          const cooldownTarget = Date.now() + 20 * 1000;
+          localStorage.setItem('gameCooldownTarget', cooldownTarget);
+          
           setCooldown(20);
           setIsCooldownActive(true);
         } else {
