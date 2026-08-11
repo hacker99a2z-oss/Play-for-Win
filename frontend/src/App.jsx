@@ -81,27 +81,7 @@ export default function App() {
     }
   };
 
-// Monetag Backup Helper Function
-  const showMonetagAd = () => {
-    return new Promise((resolve) => {
-      if (typeof window.show_11548724 === 'function') {
-        window.show_11548724({ sub_id: user?.telegramId ? String(user.telegramId) : '' })
-          .then(() => {
-            resolve(true);
-          })
-          .catch((err) => {
-            console.error("Monetag Error:", err);
-            alert("No ads available right now. Please try again later!");
-            resolve(false);
-          });
-      } else {
-        alert("Ad Network failed to load!");
-        resolve(false);
-      }
-    });
-  };
-
-  // Waterfall Ad Controller (Adsgram -> Monetag Backup)
+  // কেবল Adsgram Ad Controller
   const handlePlayAd = () => {
     return new Promise((resolve) => {
       if (window.Adsgram) {
@@ -111,21 +91,22 @@ export default function App() {
         });
 
         AdController.show()
-          .then((result) => {
+          .then(async (result) => {
             if (result && result.done) {
+              // ইউজার সম্পূর্ণ অ্যাড দেখলে ব্যাকএন্ডে রিওয়ার্ড ও কাউন্ট আপডেট হবে
+              await rewardUserOnBackend();
               resolve(true);
             } else {
               alert("Please watch the full ad!");
               resolve(false);
             }
           })
-          .catch(() => {
-            // Adsgram-এ অ্যাড না থাকলে স্বয়ংক্রিয়ভাবে Monetag লোড হবে
+          .catch((err) => {
+            console.error("Adsgram Error:", err);
             alert("No ads available right now. Please try again later!");
             resolve(false);
           });
       } else {
-        // Adsgram SDK না থাকলে সরাসরি Monetag ট্রাই করবে
         alert("Ad Network failed to load!");
         resolve(false);
       }
