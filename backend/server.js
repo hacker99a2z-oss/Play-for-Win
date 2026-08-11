@@ -174,37 +174,6 @@ app.get('/api/adsgram-reward', async (req, res) => {
   }
 });
 
-// ৪.১. ব্যাকআপ অ্যাড দেখার পর ইউজারের অ্যাড কাউন্ট বাড়ানোর এনডপয়েন্ট
-app.post('/api/user/watch-ad', async (req, res) => {
-  const { telegramId } = req.body;
-
-  if (!telegramId) {
-    return res.status(400).json({ error: 'Telegram ID missing' });
-  }
-
-  try {
-    let user = await User.findOne({ telegramId });
-
-    if (user) {
-      user.adsWatched = (user.adsWatched || 0) + 1;
-      await user.save();
-      
-      return res.json({
-        success: true,
-        mainCoins: user.mainCoins,
-        dailyCoins: user.dailyCoins,
-        adsWatched: user.adsWatched,
-        adsWatchedForReferral: user.adsWatchedForReferral
-      });
-    }
-
-    return res.status(404).json({ error: 'User not found' });
-  } catch (err) {
-    console.error('Watch Ad API Error:', err);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
 // ৪.২. Monetag Server-to-Server Postback Endpoint
 app.get('/api/monetag-postback', async (req, res) => {
   const { sub_id } = req.query; // Monetag থেকে telegramId আসবে
