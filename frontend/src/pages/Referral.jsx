@@ -64,7 +64,9 @@ export default function Referral({ user, refreshUser }) {
                   </div>
                   <span className="font-medium text-xs">{ref.firstName || ref.username || 'User'}</span>
                 </div>
-                <span className="text-xs text-gray-400 font-mono">{ref.gamesPlayedForReferral || 0}/10 Games</span>
+                <span className="text-xs text-gray-400 font-mono">
+                  {Math.min(ref.gamesPlayedForReferral || 0, 10)}/10 Games
+                </span>
               </div>
             ))}
           </div>
