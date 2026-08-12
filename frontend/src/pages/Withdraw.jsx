@@ -3,16 +3,38 @@ import React, { useState } from 'react';
 export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
   const [wallet, setWallet] = useState('');
   const [amount, setAmount] = useState('');
-  
-  // নতুন পপ-আপ ও মেম্বারশিপ চেক করার জন্য স্টেট
   const [showPopup, setShowPopup] = useState(false);
   const [membershipStatus, setMembershipStatus] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // ১. প্রথমে উইথড্র বাটনে ক্লিক করলে মেম্বারশিপ চেক করবে
+  // ১. মেম্বারশিপ চেক করার আলাদা ফাংশন (শুধু চেক করবে)
+  const checkMembershipOnly = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`https://play-for-win.onrender.com/api/check-membership`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegramId: user?.telegramId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMembershipStatus(data.membershipStatus);
+        if (data.allJoined) {
+          alert("✅ All joined! You can now close this and withdraw.");
+        }
+      } else {
+        alert("Failed to verify.");
+      }
+    } catch (err) {
+      alert("Error checking membership!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ২. মূল উইথড্র বাটনের হ্যান্ডেলার
   const handleWithdrawClick = async (e) => {
     e.preventDefault();
-
     if (!wallet) {
       alert("Please enter your TON Wallet Address!");
       return;
@@ -22,7 +44,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
       alert("Please enter amount!");
       return;
     }
-
+    
     setLoading(true);
     try {
       const res = await fetch(`https://play-for-win.onrender.com/api/check-membership`, {
@@ -30,45 +52,28 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegramId: user?.telegramId })
       });
-
       const data = await res.json();
 
-      if (data.success) {
-        if (data.allJoined) {
-          // সবগুলোতে জয়েন করা থাকলে সরাসরি আসল উইথড্র API কল হবে
-          executeWithdraw();
-        } else {
-          // জয়েন করা না থাকলে পপ-আপ ওপেন হবে এবং স্ট্যাটাস দেখাবে
-          setMembershipStatus(data.membershipStatus);
-          setShowPopup(true);
-          setLoading(false);
-        }
+      if (data.success && data.allJoined) {
+        executeWithdraw();
       } else {
-        alert("Failed to verify membership. Try again!");
+        setMembershipStatus(data.membershipStatus);
+        setShowPopup(true);
         setLoading(false);
       }
     } catch (err) {
-      console.error(err);
-      alert("Something went wrong checking membership!");
       setLoading(false);
     }
   };
 
-  // ২. আসল উইথড্র API রিকোয়েস্ট (আপনার আগের কোডের লজিক)
   const executeWithdraw = async () => {
     try {
       const res = await fetch(`https://play-for-win.onrender.com/api/user/withdraw`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          telegramId: user?.telegramId,
-          wallet,
-          amount
-        })
+        body: JSON.stringify({ telegramId: user?.telegramId, wallet, amount })
       });
-
       const data = await res.json();
-
       if (res.ok) {
         alert("✅ Withdraw Request Submitted Successfully!");
         setWallet('');
@@ -165,7 +170,6 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
         <p className="text-[11px] text-amber-400/90 text-center mt-3 px-2 leading-relaxed font-medium bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
           ⚠️ <b>Note:</b> You must join our Official Channels & Group before withdrawing. Requests from non-members will be cancelled.
         </p>
-
       </form>
 
       {/* Support & Payment Proof Links */}
@@ -173,13 +177,12 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
         <a href="https://t.me/earners_1b" target="_blank" rel="noreferrer" className="text-center text-xs text-blue-400 hover:underline">
           💬 Contact Support
         </a>
-
         <a href="https://t.me/payment_proofs_for" target="_blank" rel="noreferrer" className="text-center text-xs text-blue-400 hover:underline">
           📢 Payment's Proofs
         </a>
       </div>
 
-      {/* পপ-আপ মডাল (চ্যানেল/গ্রুপ জয়েনিং স্ট্যাটাস চেক করার জন্য) */}
+      {/* পপ-আপ মডাল */}
       {showPopup && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-900 border border-gray-800 w-full max-w-sm rounded-2xl p-5 relative">
@@ -221,11 +224,11 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
             </div>
 
             <button
-              onClick={handleWithdrawClick}
+              onClick={checkMembershipOnly}
               style={{ backgroundColor: '#10b981', color: '#000000' }}
               className="w-full mt-5 py-3 font-bold rounded-xl text-sm shadow-lg hover:opacity-90 cursor-pointer"
             >
-              Check
+              {loading ? "Checking..." : "Check"}
             </button>
 
           </div>
