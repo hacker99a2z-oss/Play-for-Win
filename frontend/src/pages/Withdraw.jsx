@@ -179,7 +179,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
         </a>
       </div>
 
-      {/* পপ-আপ মডাল (চ্যানেল/গ্রুপ জয়েনিং স্ট্যাটাস চেক করার জন্য - ডাইনামিক) */}
+      {/* পপ-আপ মডাল (চ্যানেল/গ্রুপ জয়েনিং স্ট্যাটাস চেক করার জন্য) */}
       {showPopup && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-900 border border-gray-800 w-full max-w-sm rounded-2xl p-5 relative">
@@ -199,13 +199,13 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
                 <div key={chatUsername} className="flex justify-between items-center bg-gray-950 p-3 rounded-xl border border-gray-800">
                   <span className="text-xs font-medium text-gray-300">{chatUsername}</span>
                   {isJoined ? (
-                    <span className="text-emerald-400 font-bold text-xs bg-emerald-950/50 px-3 py-1 rounded-lg border border-emerald-500/30">Done</span>
+                    <span className="bg-emerald-600 text-white font-bold text-xs px-4 py-1.5 rounded-lg">Done</span>
                   ) : (
                     <a
                       href={`https://t.me/${chatUsername.replace('@', '')}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="bg-emerald-600 hover:bg-emerald-500 text-xs px-4 py-1.5 rounded-lg font-bold text-black"
+                      className="bg-blue-600 hover:bg-blue-500 text-xs px-4 py-1.5 rounded-lg font-bold text-white shadow-md"
                     >
                       Join
                     </a>
@@ -216,7 +216,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
 
             <button
               onClick={handleWithdrawClick}
-              className="w-full mt-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl text-sm"
+              className="w-full mt-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl text-sm shadow-lg"
             >
               Check
             </button>
