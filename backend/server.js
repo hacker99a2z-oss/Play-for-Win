@@ -220,6 +220,50 @@ app.get('/api/contest/timer', (req, res) => {
     seconds: Math.floor((difference / 1000) % 60),
   });
 });
+
+// ==================== NEW: CHECK MEMBERSHIP API ====================
+app.post('/api/check-membership', async (req, res) => {
+  const { telegramId } = req.body;
+  
+  if (!telegramId) {
+    return res.status(400).json({ error: 'Telegram ID required' });
+  }
+
+  // Render-এ এনভায়রনমেন্ট ভেরিয়েবল সেট করা না থাকলে ডিফল্ট ইউজারনেম কাজ করবে
+  const channels = [
+    getUsername(CHANNEL_URL),
+    getUsername(GROUP_URL),
+    getUsername(EXTRA_CHANNEL_URL)
+  ];
+
+  try {
+    let allJoined = true;
+    let membershipStatus = {};
+
+    for (const chatUsername of channels) {
+      try {
+        const member = await bot.telegram.getChatMember(chatUsername, telegramId);
+        const status = member.status;
+        if (['member', 'creator', 'administrator'].includes(status)) {
+          membershipStatus[chatUsername] = true;
+        } else {
+          membershipStatus[chatUsername] = false;
+          allJoined = false;
+        }
+      } catch (err) {
+        console.error(`Error checking chat ${chatUsername}:`, err.message);
+        membershipStatus[chatUsername] = false;
+        allJoined = false;
+      }
+    }
+
+    res.json({ success: true, allJoined, membershipStatus });
+  } catch (err) {
+    console.error('Membership Check Error:', err);
+    res.status(500).json({ error: 'Server error checking membership' });
+  }
+});
+
 // ৫. উইথড্র রিকোয়েস্ট
 app.post('/api/user/withdraw', async (req, res) => {
   try {
