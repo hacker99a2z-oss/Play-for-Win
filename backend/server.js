@@ -24,6 +24,15 @@ const GROUP_URL = process.env.GROUP_URL || 'https://t.me/your_official_group';
 
 const bot = new Telegraf(BOT_TOKEN);
 
+// হেল্পার ফাংশন: লিংক বা ইউজারনেম থেকে সঠিক ফরম্যাট (@username) তৈরি করার জন্য
+const getUsername = (urlOrUsername) => {
+  if (!urlOrUsername) return null;
+  if (urlOrUsername.startsWith('@')) return urlOrUsername;
+  const parts = urlOrUsername.split('/');
+  const lastPart = parts[parts.length - 1];
+  return lastPart ? `@${lastPart}` : null;
+};
+
 bot.start((ctx) => {
   ctx.reply('Welcome! Click below to open the app or join our community:', {
     reply_markup: {
@@ -234,7 +243,7 @@ app.post('/api/check-membership', async (req, res) => {
     getUsername(CHANNEL_URL),
     getUsername(GROUP_URL),
     getUsername(EXTRA_CHANNEL_URL)
-  ];
+  ].filter(ch => ch !== null);
 
   try {
     let allJoined = true;
