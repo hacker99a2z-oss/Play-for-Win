@@ -73,7 +73,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
           return newHoles;
         });
-      }, 1100); // প্রতি ০.৭ সেকেন্ড পর পর নতুন ইঁদুর বের হবে
+      }, 1000); // প্রতি ০.৭ সেকেন্ড পর পর নতুন ইঁদুর বের হবে
     } else {
       setHoles(Array(16).fill(null));
     }
