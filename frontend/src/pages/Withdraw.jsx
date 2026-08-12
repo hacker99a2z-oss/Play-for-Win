@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
@@ -36,10 +35,10 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
 
       if (data.success) {
         if (data.allJoined) {
-          // সবগুলোতে জয়েন করা থাকলে সরাসরি আসল উইথড্র API কল হবে
+          // সবগুলোতে জয়েন করা থাকলে সরাসরি আসল উইথড্র API কল হবে
           executeWithdraw();
         } else {
-          // জয়েন করা না থাকলে পপ-আপ ওপেন হবে এবং স্টータস দেখাবে
+          // জয়েন করা না থাকলে পপ-আপ ওপেন হবে এবং স্ট্যাটাস দেখাবে
           setMembershipStatus(data.membershipStatus);
           setShowPopup(true);
           setLoading(false);
@@ -163,7 +162,6 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
           {loading ? "Checking Membership..." : "💸 Withdraw Funds"}
         </button>
 
-        {/* Warning Notice under Withdraw Button */}
         <p className="text-[11px] text-amber-400/90 text-center mt-3 px-2 leading-relaxed font-medium bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
           ⚠️ <b>Note:</b> You must join our Official Channels & Group before withdrawing. Requests from non-members will be cancelled.
         </p>
@@ -181,12 +179,11 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
         </a>
       </div>
 
-      {/* পপ-আপ মডাল (চ্যানেল/গ্রুপ জয়েনিং স্ট্যাটাস চেক করার জন্য) */}
+      {/* পপ-আপ মডাল (চ্যানেল/গ্রুপ জয়েনিং স্ট্যাটাস চেক করার জন্য - ডাইনামিক) */}
       {showPopup && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-900 border border-gray-800 w-full max-w-sm rounded-2xl p-5 relative">
             
-            {/* উপরে ক্লোজ বা X বাটন */}
             <button
               onClick={() => setShowPopup(false)}
               className="absolute top-3 right-4 text-gray-400 hover:text-white text-xl font-bold"
@@ -198,59 +195,25 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
             <p className="text-xs text-gray-400 text-center mb-4">Please join all communities to unlock withdraw.</p>
 
             <div className="flex flex-col gap-3">
-              {/* Official Channel 1 */}
-              <div className="flex justify-between items-center bg-gray-950 p-3 rounded-xl border border-gray-800">
-                <span className="text-xs font-medium">Official Channel</span>
-                {membershipStatus['@official_channel_1'] ? (
-                  <span className="text-emerald-400 font-bold text-xs bg-emerald-950/50 px-3 py-1 rounded-lg border border-emerald-500/30">Done</span>
-                ) : (
-                  <a
-                    href="https://t.me/your_official_channel"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded-lg font-bold text-white"
-                  >
-                    Join
-                  </a>
-                )}
-              </div>
-
-              {/* Official Group */}
-              <div className="flex justify-between items-center bg-gray-950 p-3 rounded-xl border border-gray-800">
-                <span className="text-xs font-medium">Official Group</span>
-                {membershipStatus['@official_group'] ? (
-                  <span className="text-emerald-400 font-bold text-xs bg-emerald-950/50 px-3 py-1 rounded-lg border border-emerald-500/30">Done</span>
-                ) : (
-                  <a
-                    href="https://t.me/your_official_group"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded-lg font-bold text-white"
-                  >
-                    Join
-                  </a>
-                )}
-              </div>
-
-              {/* Payment Channel */}
-              <div className="flex justify-between items-center bg-gray-950 p-3 rounded-xl border border-gray-800">
-                <span className="text-xs font-medium">Payment Channel</span>
-                {membershipStatus['@official_channel_2'] ? (
-                  <span className="text-emerald-400 font-bold text-xs bg-emerald-950/50 px-3 py-1 rounded-lg border border-emerald-500/30">Done</span>
-                ) : (
-                  <a
-                    href="https://t.me/payment_proofs_for"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded-lg font-bold text-white"
-                  >
-                    Join
-                  </a>
-                )}
-              </div>
+              {Object.entries(membershipStatus).map(([chatUsername, isJoined]) => (
+                <div key={chatUsername} className="flex justify-between items-center bg-gray-950 p-3 rounded-xl border border-gray-800">
+                  <span className="text-xs font-medium text-gray-300">{chatUsername}</span>
+                  {isJoined ? (
+                    <span className="text-emerald-400 font-bold text-xs bg-emerald-950/50 px-3 py-1 rounded-lg border border-emerald-500/30">Done</span>
+                  ) : (
+                    <a
+                      href={`https://t.me/${chatUsername.replace('@', '')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded-lg font-bold text-white"
+                    >
+                      Join
+                    </a>
+                  )}
+                </div>
+              ))}
             </div>
 
-            {/* Re-check Button */}
             <button
               onClick={handleWithdrawClick}
               className="w-full mt-5 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm"
@@ -261,7 +224,6 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
           </div>
         </div>
       )}
-
     </div>
   );
 }
