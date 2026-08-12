@@ -57,10 +57,19 @@ export default function App() {
   // কেবল Adsgram Ad Controller
   const handlePlayAd = () => {
     return new Promise((resolve) => {
+      const tg = window.Telegram?.WebApp;
+      const currentTelegramId = user?.telegramId || tg?.initDataUnsafe?.user?.id?.toString();
+
+      if (!currentTelegramId) {
+        alert("User data is still loading. Please wait a second and try again!");
+        resolve(false);
+        return;
+      }
+      
       if (window.Adsgram) {
         const AdController = window.Adsgram.init({
           blockId: "41655",
-          userId: user?.telegramId ? String(user.telegramId) : ""
+          userId: String(currentTelegramId)
         });
 
         AdController.show()
