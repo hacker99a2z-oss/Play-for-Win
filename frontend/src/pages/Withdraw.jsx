@@ -216,7 +216,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
 
             <button
               onClick={handleWithdrawClick}
-              className="w-full mt-5 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm"
+              className="w-full mt-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl text-sm"
             >
               Re-check & Withdraw
             </button>
