@@ -242,7 +242,6 @@ app.post('/api/check-membership', async (req, res) => {
   // Render-এ এনভায়রনমেন্ট ভেরিয়েবল সেট করা না থাকলে ডিফল্ট ইউজারনেম কাজ করবে
   const channels = [
     getUsername(CHANNEL_URL),
-    getUsername(GROUP_URL),
     getUsername(EXTRA_CHANNEL_URL)
   ].filter(ch => ch !== null);
 
