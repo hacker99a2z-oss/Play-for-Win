@@ -1,10 +1,17 @@
+
 import React, { useState } from 'react';
 
 export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
   const [wallet, setWallet] = useState('');
   const [amount, setAmount] = useState('');
+  
+  // নতুন পপ-আপ ও মেম্বারশিপ চেক করার জন্য স্টেট
+  const [showPopup, setShowPopup] = useState(false);
+  const [membershipStatus, setMembershipStatus] = useState({});
+  const [loading, setLoading] = useState(false);
 
-  const handleWithdraw = async (e) => {
+  // ১. প্রথমে উইথড্র বাটনে ক্লিক করলে মেম্বারশিপ চেক করবে
+  const handleWithdrawClick = async (e) => {
     e.preventDefault();
 
     if (!wallet) {
@@ -12,6 +19,44 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
       return;
     }
 
+    if (!amount) {
+      alert("Please enter amount!");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`https://play-for-win.onrender.com/api/check-membership`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegramId: user?.telegramId })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        if (data.allJoined) {
+          // সবগুলোতে জয়েন করা থাকলে সরাসরি আসল উইথড্র API কল হবে
+          executeWithdraw();
+        } else {
+          // জয়েন করা না থাকলে পপ-আপ ওপেন হবে এবং স্টータস দেখাবে
+          setMembershipStatus(data.membershipStatus);
+          setShowPopup(true);
+          setLoading(false);
+        }
+      } else {
+        alert("Failed to verify membership. Try again!");
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong checking membership!");
+      setLoading(false);
+    }
+  };
+
+  // ২. আসল উইথড্র API রিকোয়েস্ট (আপনার আগের কোডের লজিক)
+  const executeWithdraw = async () => {
     try {
       const res = await fetch(`https://play-for-win.onrender.com/api/user/withdraw`, {
         method: 'POST',
@@ -29,12 +74,16 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
         alert("✅ Withdraw Request Submitted Successfully!");
         setWallet('');
         setAmount('');
-        window.location.reload();
+        setShowPopup(false);
+        if (refreshUser) refreshUser();
+        else window.location.reload();
       } else {
         alert(`❌ ${data.error}`);
       }
     } catch (err) {
       alert("❌ Something went wrong. Try again!");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,7 +102,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
       </div>
 
       {/* Withdraw Form */}
-      <form onSubmit={handleWithdraw} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex flex-col gap-3">
+      <form onSubmit={handleWithdrawClick} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex flex-col gap-3">
         <div>
           <label className="text-xs text-gray-400 mb-1 block">Network</label>
           <input type="text" value="TON Network" disabled className="w-full bg-gray-950 border border-gray-800 rounded-xl p-2.5 text-xs text-gray-300 font-semibold" />
@@ -93,6 +142,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
 
         <button
           type="submit"
+          disabled={loading}
           style={{
             backgroundColor: '#10b981',
             color: '#000000',
@@ -110,26 +160,108 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
             gap: '8px'
           }}
         >
-          💸 Withdraw Funds
+          {loading ? "Checking Membership..." : "💸 Withdraw Funds"}
         </button>
 
         {/* Warning Notice under Withdraw Button */}
         <p className="text-[11px] text-amber-400/90 text-center mt-3 px-2 leading-relaxed font-medium bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
-          ⚠️ <b>Note:</b> You must join our Official Channel before withdrawing. Requests from non-members will be manually checked and cancelled.
+          ⚠️ <b>Note:</b> You must join our Official Channels & Group before withdrawing. Requests from non-members will be cancelled.
         </p>
 
-        </form>
+      </form>
 
-        {/* Support & Payment Proof Links */}
-        <div className="flex flex-col items-center gap-2 mt-4 text-xs">
-          <a href="https://t.me/earners_1b" target="_blank" rel="noreferrer" className="text-center text-xs text-blue-400 hover:underline">
-            💬 Contact Support
-          </a>
+      {/* Support & Payment Proof Links */}
+      <div className="flex flex-col items-center gap-2 mt-4 text-xs">
+        <a href="https://t.me/earners_1b" target="_blank" rel="noreferrer" className="text-center text-xs text-blue-400 hover:underline">
+          💬 Contact Support
+        </a>
 
-         <a href="https://t.me/payment_proofs_for" target="_blank" rel="noreferrer" className="text-center text-xs text-blue-400 hover:underline">
-            📢 Payment's Proofs
-         </a>
-       </div>
+        <a href="https://t.me/payment_proofs_for" target="_blank" rel="noreferrer" className="text-center text-xs text-blue-400 hover:underline">
+          📢 Payment's Proofs
+        </a>
+      </div>
+
+      {/* পপ-আপ মডাল (চ্যানেল/গ্রুপ জয়েনিং স্ট্যাটাস চেক করার জন্য) */}
+      {showPopup && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 border border-gray-800 w-full max-w-sm rounded-2xl p-5 relative">
+            
+            {/* উপরে ক্লোজ বা X বাটন */}
+            <button
+              onClick={() => setShowPopup(false)}
+              className="absolute top-3 right-4 text-gray-400 hover:text-white text-xl font-bold"
+            >
+              ✕
+            </button>
+
+            <h3 className="text-lg font-bold text-amber-400 mb-1 text-center">Join Required</h3>
+            <p className="text-xs text-gray-400 text-center mb-4">Please join all communities to unlock withdraw.</p>
+
+            <div className="flex flex-col gap-3">
+              {/* Official Channel 1 */}
+              <div className="flex justify-between items-center bg-gray-950 p-3 rounded-xl border border-gray-800">
+                <span className="text-xs font-medium">Official Channel</span>
+                {membershipStatus['@official_channel_1'] ? (
+                  <span className="text-emerald-400 font-bold text-xs bg-emerald-950/50 px-3 py-1 rounded-lg border border-emerald-500/30">Done</span>
+                ) : (
+                  <a
+                    href="https://t.me/your_official_channel"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded-lg font-bold text-white"
+                  >
+                    Join
+                  </a>
+                )}
+              </div>
+
+              {/* Official Group */}
+              <div className="flex justify-between items-center bg-gray-950 p-3 rounded-xl border border-gray-800">
+                <span className="text-xs font-medium">Official Group</span>
+                {membershipStatus['@official_group'] ? (
+                  <span className="text-emerald-400 font-bold text-xs bg-emerald-950/50 px-3 py-1 rounded-lg border border-emerald-500/30">Done</span>
+                ) : (
+                  <a
+                    href="https://t.me/your_official_group"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded-lg font-bold text-white"
+                  >
+                    Join
+                  </a>
+                )}
+              </div>
+
+              {/* Payment Channel */}
+              <div className="flex justify-between items-center bg-gray-950 p-3 rounded-xl border border-gray-800">
+                <span className="text-xs font-medium">Payment Channel</span>
+                {membershipStatus['@official_channel_2'] ? (
+                  <span className="text-emerald-400 font-bold text-xs bg-emerald-950/50 px-3 py-1 rounded-lg border border-emerald-500/30">Done</span>
+                ) : (
+                  <a
+                    href="https://t.me/payment_proofs_for"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded-lg font-bold text-white"
+                  >
+                    Join
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Re-check Button */}
+            <button
+              onClick={handleWithdrawClick}
+              className="w-full mt-5 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm"
+            >
+              Re-check & Withdraw
+            </button>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
