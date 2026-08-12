@@ -199,13 +199,19 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
                 <div key={chatUsername} className="flex justify-between items-center bg-gray-950 p-3 rounded-xl border border-gray-800">
                   <span className="text-xs font-medium text-gray-300">{chatUsername}</span>
                   {isJoined ? (
-                    <span className="bg-emerald-600 text-white font-bold text-xs px-4 py-1.5 rounded-lg">Done</span>
+                    <span 
+                      style={{ backgroundColor: '#10b981', color: '#ffffff' }}
+                      className="font-bold text-xs px-4 py-1.5 rounded-lg inline-block text-center"
+                    >
+                      Done
+                    </span>
                   ) : (
                     <a
                       href={`https://t.me/${chatUsername.replace('@', '')}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="bg-blue-600 hover:bg-blue-500 text-xs px-4 py-1.5 rounded-lg font-bold text-white shadow-md"
+                      style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
+                      className="text-xs px-4 py-1.5 rounded-lg font-bold shadow-md inline-block text-center hover:opacity-90"
                     >
                       Join
                     </a>
@@ -216,7 +222,8 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
 
             <button
               onClick={handleWithdrawClick}
-              className="w-full mt-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl text-sm shadow-lg"
+              style={{ backgroundColor: '#10b981', color: '#000000' }}
+              className="w-full mt-5 py-3 font-bold rounded-xl text-sm shadow-lg hover:opacity-90 cursor-pointer"
             >
               Check
             </button>
