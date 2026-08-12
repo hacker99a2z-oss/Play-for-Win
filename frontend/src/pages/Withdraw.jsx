@@ -205,7 +205,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
                       href={`https://t.me/${chatUsername.replace('@', '')}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded-lg font-bold text-white"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-xs px-4 py-1.5 rounded-lg font-bold text-black"
                     >
                       Join
                     </a>
@@ -218,7 +218,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
               onClick={handleWithdrawClick}
               className="w-full mt-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl text-sm"
             >
-              Re-check & Withdraw
+              Check
             </button>
 
           </div>
