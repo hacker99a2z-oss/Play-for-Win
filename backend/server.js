@@ -21,6 +21,7 @@ const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE';
 const WEB_APP_URL = process.env.WEB_APP_URL || 'https://your-vercel-app.vercel.app';
 const CHANNEL_URL = process.env.CHANNEL_URL || 'https://t.me/your_official_channel';
 const GROUP_URL = process.env.GROUP_URL || 'https://t.me/your_official_group';
+const EXTRA_CHANNEL_URL = process.env.EXTRA_CHANNEL_URL || '';
 
 const bot = new Telegraf(BOT_TOKEN);
 
