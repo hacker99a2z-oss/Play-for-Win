@@ -35,7 +35,24 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         localStorage.removeItem('gameCooldownTarget');
       }
     }
-  }, []);
+
+    // নতুন যোগ করুন: অ্যাপ ওপেন হলেই ইউজারের কান্ট্রি ব্যাকএন্ডে সেভ করে নিবে
+    const saveUserLocation = async () => {
+      try {
+        if (user?.telegramId) {
+          await fetch(`${BACKEND_URL}/api/save-user-location`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.telegramId })
+          });
+        }
+      } catch (err) {
+        console.error("Location save error:", err);
+      }
+    };
+
+    saveUserLocation();
+  }, [user]);
 
   // ২. ইঁদুর স্পনিং ও ১.৫ সেকেন্ড টাইমার লজিক
   useEffect(() => {
