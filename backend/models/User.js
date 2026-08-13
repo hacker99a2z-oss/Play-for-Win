@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema({
   gamesPlayedForReferral: { type: Number, default: 0 }, // 👈 গেম খেলার কাউন্টার
   referralBonusGiven: { type: Boolean, default: false },
   country: { type: String, default: 'Unknown' },
-  isVpn: { type: Boolean, default: false }
+  isVpn: { type: Boolean, default: false },
 
   createdAt: { type: Date, default: Date.now }
 });
