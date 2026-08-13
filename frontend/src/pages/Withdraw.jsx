@@ -20,7 +20,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
 
     if (tier1Countries.includes(country)) return 100000;
     if (tier2Countries.includes(country)) return 130000;
-    return 160000; // Tier 3 / Default (যেমন: বাংলাদেশ, ভারত ইত্যাদি)
+    return 140000; // Tier 3 / Default (যেমন: বাংলাদেশ, ভারত ইত্যাদি)
   };
 
   const coinsRate = getCoinsPerDollar(user?.country);
