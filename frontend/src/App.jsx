@@ -54,7 +54,7 @@ export default function App() {
   }, []);
 
 
-  // কেবল Adsgram Ad Controller
+  // Adsgram Ad Controller (Invalid / Impression / Fail Protection সহ)
   const handlePlayAd = () => {
     return new Promise((resolve) => {
       const tg = window.Telegram?.WebApp;
@@ -73,22 +73,25 @@ export default function App() {
         });
 
         AdController.show()
-          .then(async (result) => {
-            if (result && result.done) {
-              // ইউজার সম্পূর্ণ অ্যাড দেখলে ব্যাকএন্ডে রিওয়ার্ড ও কাউন্ট আপডেট হবে
-              resolve(true);
-            } else {
-              alert("Please watch the full ad!");
+          .then((result) => {
+            // যদি Adsgram থেকে সফল ইম্প্রেশন এবং কমপ্লিশন (done: true) না আসে
+            if (!result || !result.done) {
+              alert("❌ Ad was skipped, failed, or marked as invalid by Adsgram. You cannot double coins or play.");
               resolve(false);
+              return;
             }
+
+            // অ্যাড সফলভাবে সম্পূর্ণ দেখলে কেবল true রিটার্ন করবে
+            resolve(true);
           })
           .catch((err) => {
-            console.error("Adsgram Error:", err);
-            alert("No ads available right now. Please try again later!");
+            // যদি অ্যাড লোড না হয়, ইম্প্রেশন না ঘটে বা Adsgram কোনো এরর বা ইনভ্যালিড থ্রো করে
+            console.error("Adsgram Error/Invalid Ad:", err);
+            alert("❌ Invalid ad or ad failed to load/impression! Reward denied.");
             resolve(false);
           });
       } else {
-        alert("Ad Network failed to load!");
+        alert("Ad Network failed to load or Adblocker detected!");
         resolve(false);
       }
     });
