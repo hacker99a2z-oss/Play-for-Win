@@ -2,11 +2,12 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const cron = require('node-cron');
-const { Telegraf } = require('telegraf'); // Telegraf library
+const axios = require('axios'); // ১. axios যুক্ত করা হলো আইপি ও ভিপিএন চেক করার জন্য
+const { Telegraf } = require('telegraf'); 
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
-const User = require('./models/User'); // User model path
+const User = require('./models/User'); 
 
 const app = express();
 app.use(cors());
@@ -25,7 +26,6 @@ const EXTRA_CHANNEL_URL = process.env.EXTRA_CHANNEL_URL || '';
 
 const bot = new Telegraf(BOT_TOKEN);
 
-// হেল্পার ফাংশন: লিংক বা ইউজারনেম থেকে সঠিক ফরম্যাট (@username) তৈরি করার জন্য
 const getUsername = (urlOrUsername) => {
   if (!urlOrUsername) return null;
   if (urlOrUsername.startsWith('@')) return urlOrUsername;
@@ -38,21 +38,14 @@ bot.start((ctx) => {
   ctx.reply('Welcome! Click below to open the app or join our community:', {
     reply_markup: {
       inline_keyboard: [
-        [
-          { text: '🎮 Open App', web_app: { url: WEB_APP_URL } }
-        ],
-        [
-          { text: '📢 Official Channel', url: CHANNEL_URL }
-        ],
-        [
-          { text: '💬 Official Group', url: GROUP_URL }
-        ]
+        [{ text: '🎮 Open App', web_app: { url: WEB_APP_URL } }],
+        [{ text: '📢 Official Channel', url: CHANNEL_URL }],
+        [{ text: '💬 Official Group', url: GROUP_URL }]
       ]
     }
   });
 });
 
-// Webhook সেটআপ
 if (process.env.BOT_TOKEN) {
   const WEBHOOK_URL = 'https://play-for-win.onrender.com/telegram-webhook';
   bot.telegram.setWebhook(WEBHOOK_URL)
@@ -62,12 +55,57 @@ if (process.env.BOT_TOKEN) {
   app.use(bot.webhookCallback('/telegram-webhook'));
 }
 
-// Routes
 app.use('/api/auth', authRoutes);
 
 // ==================== API ENDPOINTS FOR FRONTEND ====================
 
-// ১. ইউজার তথ্য আনবে অথবা না থাকলে ডাটাবেজে তৈরি করবে
+// নতুন: ইউজারের আইপি চেক করে কান্ট্রি ও ভিপিএন ডিটেক্ট এবং সেভ করার এন্ডপয়েন্ট
+app.post('/api/save-user-location', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
+
+    let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (clientIp === '::1' || clientIp === '127.0.0.1') {
+      clientIp = ''; // লোকালহস্টে টেস্ট করার সময় আইপি ফাকা রাখা হলো
+    }
+
+    let countryName = "Unknown";
+    let isVpnOrProxy = false;
+
+    if (clientIp) {
+      try {
+        const ipResponse = await axios.get(`http://ip-api.com/json/${clientIp}?fields=status,country,proxy,hosting`);
+        if (ipResponse.data.status === 'success') {
+          countryName = ipResponse.data.country;
+          if (ipResponse.data.proxy || ipResponse.data.hosting) {
+            isVpnOrProxy = true;
+          }
+        }
+      } catch (ipErr) {
+        console.error("IP API error:", ipErr.message);
+      }
+    }
+
+    // ডাটাবেসে ইউজার আপডেট বা তৈরি করা
+    await User.findOneAndUpdate(
+      { telegramId: userId },
+      { 
+        country: countryName, 
+        isVpn: isVpnOrProxy, 
+        lastLogin: Date.now() 
+      },
+      { upsert: true, new: true }
+    );
+
+    res.json({ success: true, country: countryName, isVpn: isVpnOrProxy });
+  } catch (err) {
+    console.error("Save Location Error:", err);
+    res.status(500).json({ error: 'Server error saving location' });
+  }
+});
+
+// ১. ইউজার তথ্য আনবে অথবা না থাকলে ডাটাবেজে তৈরি করবে (কান্ট্রি ডিটেকশনসহ)
 app.post('/api/user/sync', async (req, res) => {
   const { telegramId, firstName, username, photoUrl, referrerId } = req.body;
 
@@ -76,6 +114,25 @@ app.post('/api/user/sync', async (req, res) => {
   }
 
   try {
+    // ইউজারের আইপি ও কান্ট্রি ডিটেক্ট করা
+    let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    let countryName = 'Unknown';
+    let isVpnOrProxy = false;
+
+    if (clientIp && clientIp !== '::1' && clientIp !== '127.0.0.1') {
+      try {
+        const ipResponse = await axios.get(`http://ip-api.com/json/${clientIp}?fields=status,country,proxy,hosting`);
+        if (ipResponse.data.status === 'success') {
+          countryName = ipResponse.data.country;
+          if (ipResponse.data.proxy || ipResponse.data.hosting) {
+            isVpnOrProxy = true;
+          }
+        }
+      } catch (ipErr) {
+        console.log("Sync IP Check Error:", ipErr.message);
+      }
+    }
+
     let user = await User.findOne({ telegramId }).populate('referrals', 'firstName username photoUrl gamesPlayedForReferral');
 
     if (!user) {
@@ -84,7 +141,9 @@ app.post('/api/user/sync', async (req, res) => {
         firstName: firstName || 'User',
         username: username || '',
         photoUrl: photoUrl || '',
-        referredBy: referrerId || null
+        referredBy: referrerId || null,
+        country: countryName,
+        isVpn: isVpnOrProxy
       });
       await user.save();
 
@@ -98,13 +157,33 @@ app.post('/api/user/sync', async (req, res) => {
         );
       }
     } else {
+      // ইউজার আগে থেকেই থাকলে তার নাম, ছবি এবং কান্ট্রি/ভিপিএন আপডেট করে নেওয়া
       user.firstName = firstName || user.firstName;
       user.username = username || user.username;
       user.photoUrl = photoUrl || user.photoUrl;
+      user.country = countryName !== 'Unknown' ? countryName : user.country; // আগেরটা অজানা না থাকলে সেটাই রাখবে
+      user.isVpn = isVpnOrProxy;
       await user.save();
     }
 
-    res.json(user);
+    // ৩টি টায়ার অনুযায়ী ইউজারের কয়েন রেট হিসাব করা
+    const tier1Countries = ['United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'France', 'Switzerland', 'Norway', 'Sweden', 'Denmark', 'Netherlands'];
+    const tier2Countries = ['United Arab Emirates', 'Saudi Arabia', 'Qatar', 'Kuwait', 'Singapore', 'Japan', 'South Korea', 'Malaysia', 'Spain', 'Italy', 'Brazil', 'Mexico'];
+
+    let coinsPerDollar = 160000;
+    if (tier1Countries.includes(user.country)) {
+      coinsPerDollar = 100000;
+    } else if (tier2Countries.includes(user.country)) {
+      coinsPerDollar = 130000;
+    }
+
+    // ইউজার অবজেক্টের সাথে কয়েন রেটটিও ফ্রন্টএন্ডে পাঠিয়ে দেওয়া
+    const userResponse = {
+      ...user.toObject(),
+      coinsPerDollar: coinsPerDollar
+    };
+
+    res.json(userResponse);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -125,12 +204,10 @@ app.post('/api/game/reward', async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // ইউজারের নিজের পয়েন্ট যোগ ও গেম কাউন্ট বৃদ্ধি
     user.mainCoins = (user.mainCoins || 0) + rewardCoins;
     user.dailyCoins = (user.dailyCoins || 0) + rewardCoins;
     user.gamesPlayedForReferral = (user.gamesPlayedForReferral || 0) + 1;
 
-    // রেফারেল লজিক: ১০ বা তার বেশি গেম খেললে রেফারার ১০০০ কয়েন পাবে (একবারই পাবে)
     if (user.referredBy && user.gamesPlayedForReferral >= 10 && !user.referralBonusGiven) {
       await User.findOneAndUpdate(
         { telegramId: user.referredBy },
@@ -141,7 +218,7 @@ app.post('/api/game/reward', async (req, res) => {
           }
         }
       );
-      user.referralBonusGiven = true; // যেন বারবার বোনাস না দেয়
+      user.referralBonusGiven = true;
     }
 
     await user.save();
@@ -158,7 +235,7 @@ app.post('/api/game/reward', async (req, res) => {
   }
 });
 
-// ৪. AdsGram Webhook Endpoint (অ্যাডগ্রাম ড্যাশবোর্ড থেকে অটো কল হবে যখন ইউজার অ্যাড শেষ করবে)
+// ৪. AdsGram Webhook Endpoint
 app.get('/api/adsgram-reward', async (req, res) => {
   const targetUserId = req.query.userId || req.query.userid;
 
@@ -170,13 +247,11 @@ app.get('/api/adsgram-reward', async (req, res) => {
     let user = await User.findOne({ telegramId: targetUserId });
 
     if (user) {
-      // ইউজার সম্পূর্ণ অ্যাড দেখলে ডাটাবেজে কাউন্ট বাড়বে
       user.adsWatched = (user.adsWatched || 0) + 1;
       await user.save();
       console.log(`✅ Adsgram Ad Verified & Counted for User: ${targetUserId}`);
     }
 
-    // Adsgram-এর ড্যাশবোর্ডে কাউন্ট দেখানোর জন্য অবশ্যই 200 OK পাঠাতে হবে
     return res.status(200).send('OK');
   } catch (err) {
     console.error('AdsGram Webhook Error:', err);
@@ -186,7 +261,7 @@ app.get('/api/adsgram-reward', async (req, res) => {
 
 // ৪.২. Monetag Server-to-Server Postback Endpoint
 app.get('/api/monetag-postback', async (req, res) => {
-  const { sub_id } = req.query; // Monetag থেকে telegramId আসবে
+  const { sub_id } = req.query;
 
   if (!sub_id) {
     return res.status(400).send('Missing sub_id (telegramId)');
@@ -209,7 +284,7 @@ app.get('/api/monetag-postback', async (req, res) => {
   }
 });
 
-// ডেইলি টাইমার এন্ডপয়েন্ট (বাংলাদেশ টাইমজোনে রাত ১২:০০ টা হিসাব করবে)
+// ডেইলি টাইমার এন্ডপয়েন্ট
 app.get('/api/contest/timer', (req, res) => {
   const now = new Date();
   const bdNowStr = now.toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
@@ -231,7 +306,7 @@ app.get('/api/contest/timer', (req, res) => {
   });
 });
 
-// ==================== NEW: CHECK MEMBERSHIP API ====================
+// ==================== CHECK MEMBERSHIP API ====================
 app.post('/api/check-membership', async (req, res) => {
   const { telegramId } = req.body;
   
@@ -239,7 +314,6 @@ app.post('/api/check-membership', async (req, res) => {
     return res.status(400).json({ error: 'Telegram ID required' });
   }
 
-  // Render-এ এনভায়রনমেন্ট ভেরিয়েবল সেট করা না থাকলে ডিফল্ট ইউজারনেম কাজ করবে
   const channels = [
     getUsername(CHANNEL_URL),
     getUsername(EXTRA_CHANNEL_URL)
@@ -273,7 +347,7 @@ app.post('/api/check-membership', async (req, res) => {
   }
 });
 
-// ৫. উইথড্র রিকোয়েস্ট
+// ==================== 5. 3-TIER DYNAMIC COUNTRY WITHDRAW API ====================
 app.post('/api/user/withdraw', async (req, res) => {
   try {
     const { telegramId, wallet, amount } = req.body;
@@ -281,6 +355,22 @@ app.post('/api/user/withdraw', async (req, res) => {
     const user = await User.findOne({ telegramId });
     if (!user) {
       return res.status(404).json({ error: 'User not found!' });
+    }
+
+    // ১. লাইভ ভিপিএন চেক
+    let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (clientIp && clientIp !== '::1' && clientIp !== '127.0.0.1') {
+      try {
+        const ipCheck = await axios.get(`http://ip-api.com/json/${clientIp}?fields=status,proxy,hosting,country`);
+        if (ipCheck.data.status === 'success') {
+          if (ipCheck.data.proxy || ipCheck.data.hosting) {
+            return res.status(403).json({ error: '❌ VPN or Proxy detected! Please disable your VPN to withdraw.' });
+          }
+          user.country = ipCheck.data.country;
+        }
+      } catch (ipErr) {
+        console.log("Withdraw IP Check Error:", ipErr.message);
+      }
     }
 
     const reqAmount = parseFloat(amount);
@@ -293,10 +383,33 @@ app.post('/api/user/withdraw', async (req, res) => {
       return res.status(400).json({ error: 'Insufficient Bonus Balance!' });
     }
 
-    const requiredCoins = reqAmount * 100000;
+    // ২. ৩টি টায়ারের দেশগুলোর তালিকা এবং রেট নির্ধারণ
+    const tier1Countries = [
+      'United States', 'United Kingdom', 'Canada', 'Australia', 
+      'Germany', 'France', 'Switzerland', 'Norway', 'Sweden', 'Denmark', 'Netherlands'
+    ];
+
+    const tier2Countries = [
+      'United Arab Emirates', 'Saudi Arabia', 'Qatar', 'Kuwait', 
+      'Singapore', 'Japan', 'South Korea', 'Malaysia', 'Spain', 'Italy', 'Brazil', 'Mexico'
+    ];
+
+    let coinsPerDollar = 160000; // ডিফল্ট বা Tier 3 এর জন্য (যেমন: বাংলাদেশ, ভারত, পাকিস্তান ইত্যাদি)
+    let userTier = "Tier 3";
+
+    if (tier1Countries.includes(user.country)) {
+      coinsPerDollar = 100000;
+      userTier = "Tier 1";
+    } else if (tier2Countries.includes(user.country)) {
+      coinsPerDollar = 130000;
+      userTier = "Tier 2";
+    }
+
+    const requiredCoins = reqAmount * coinsPerDollar;
+
     if ((user.mainCoins || 0) < requiredCoins) {
       return res.status(400).json({
-        error: `Insufficient Main Coins! Required: ${requiredCoins.toLocaleString()} Coins.`
+        error: `Insufficient Main Coins! For your country (${user.country || 'Unknown'} - ${userTier}), required: ${requiredCoins.toLocaleString()} Coins for $${reqAmount}.`
       });
     }
 
@@ -304,13 +417,15 @@ app.post('/api/user/withdraw', async (req, res) => {
     user.mainCoins -= requiredCoins;
     await user.save();
 
+    // ৩. এডমিনের টেলিগ্রাম নোটিফিকেশন
     try {
       const adminMessage = 
         `🚨<b>New Withdraw Request!</b>🚨\n\n` +
         `👤<b>User:</b> ${user.firstName || 'User'} (@${user.username || 'N/A'})\n` +
+        `🌍<b>Country:</b> ${user.country || 'Unknown'} (${userTier})\n` +
         `🆔<b>Telegram ID:</b> <code>${telegramId}</code>\n` +
         `💵<b>Withdraw Amount:</b> $${reqAmount}\n` +
-        `🔥<b>Coins Fee Deducted:</b> ${requiredCoins.toLocaleString()} Coins\n` +
+        `🔥<b>Coins Fee Deducted:</b> ${requiredCoins.toLocaleString()} (${coinsPerDollar.toLocaleString()}/$)\n` +
         `💎<b>TON Wallet:</b> <code>${wallet}</code>`;
 
       const adminChatId = process.env.ADMIN_CHAT_ID;
@@ -334,19 +449,13 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Connected Successfully'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// ==================== DAILY CONTEST RESET & PRIZE DISTRIBUTION ====================
-// প্রতিদিন রাত ১২:০০ টায় (00:00 AM) টপ ৩ জনকে প্রাইজ দেবে এবং Daily Coins ০ করে দেবে
+// ==================== DAILY CONTEST RESET ====================
 cron.schedule('0 0 * * *', async () => {
   console.log('🏆 Running Daily Contest Reset & Distributing Prizes...');
   try {
-    // ১. টপ ৩ ডেইলি প্লেয়ার বের করা
     const topUsers = await User.find({}).sort({ dailyCoins: -1 }).limit(10);
-    const prizes = [
-      1, 0.80, 0.50, 0.30, 0.20,
-      0.10, 0.10, 0.10, 0.10, 0.10
-    ];
+    const prizes = [1, 0.80, 0.50, 0.30, 0.20, 0.10, 0.10, 0.10, 0.10, 0.10];
 
-    // ২. বিজয়ী ৩ জনের অ্যাকাউন্টে প্রাইজ যোগ করা
     for (let i = 0; i < topUsers.length; i++) {
       if (topUsers[i] && topUsers[i].dailyCoins > 0) {
         await User.findByIdAndUpdate(topUsers[i]._id, {
@@ -356,7 +465,6 @@ cron.schedule('0 0 * * *', async () => {
       }
     }
 
-    // ৩. সকল ইউজারের dailyCoins রিসেট করে ০ করা
     await User.updateMany({}, { $set: { dailyCoins: 0 } });
     console.log('✅ Daily Contest Reset Successfully!');
 
