@@ -63,12 +63,16 @@ app.use('/api/auth', authRoutes);
 // নতুন: ইউজারের আইপি চেক করে কান্ট্রি ও ভিপিএন ডিটেক্ট এবং সেভ করার এন্ডপয়েন্ট
 app.post('/api/save-user-location', async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userId, clientIp: frontendIp } = req.body;
     if (!userId) return res.status(400).json({ error: 'User ID required' });
 
-    let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    let clientIp = frontendIp || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (clientIp && clientIp.includes(',')) {
+      clientIp = clientIp.split(',')[0].trim();
+    }
+
     if (clientIp === '::1' || clientIp === '127.0.0.1') {
-      clientIp = ''; // লোকালহস্টে টেস্ট করার সময় আইপি ফাকা রাখা হলো
+      clientIp = ''; // লোকালহোস্ট টেস্ট করার সময় আইপি ফাঁকা রাখা হলো
     }
 
     let countryName = "Unknown";
@@ -88,7 +92,7 @@ app.post('/api/save-user-location', async (req, res) => {
       }
     }
 
-    // ডাটাবেসে ইউজার আপডেট বা তৈরি করা
+    // ডাটাবেজে ইউজারের আপডেট বা তৈরি করা
     await User.findOneAndUpdate(
       { telegramId: userId },
       { 
@@ -108,15 +112,19 @@ app.post('/api/save-user-location', async (req, res) => {
 
 // ১. ইউজার তথ্য আনবে অথবা না থাকলে ডাটাবেজে তৈরি করবে (কান্ট্রি ডিটেকশনসহ)
 app.post('/api/user/sync', async (req, res) => {
-  const { telegramId, firstName, username, photoUrl, referrerId } = req.body;
+  const { telegramId, firstName, username, photoUrl, referrerId, clientIp: frontendIp } = req.body;
 
   if (!telegramId) {
     return res.status(400).json({ error: 'Telegram ID required' });
   }
 
   try {
-    // ইউজারের আইপি ও কান্ট্রি ডিটেক্ট করা
-    let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    // ইউজারের আইপি ও কান্টری ডিটেক্ট করা (ফ্রন্টএন্ডের আইপিকে প্রাধান্য দেওয়া)
+    let clientIp = frontendIp || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (clientIp && clientIp.includes(',')) {
+      clientIp = clientIp.split(',')[0].trim();
+    }
+
     let countryName = 'Unknown';
     let isVpnOrProxy = false;
 
