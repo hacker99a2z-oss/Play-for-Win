@@ -179,7 +179,7 @@ app.post('/api/user/sync', async (req, res) => {
     const tier1Countries = ['United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'France', 'Switzerland', 'Norway', 'Sweden', 'Denmark', 'Netherlands'];
     const tier2Countries = ['United Arab Emirates', 'Saudi Arabia', 'Qatar', 'Kuwait', 'Singapore', 'Japan', 'South Korea', 'Malaysia', 'Spain', 'Italy', 'Brazil', 'Mexico'];
 
-    let coinsPerDollar = 160000;
+    let coinsPerDollar = 140000;
     if (tier1Countries.includes(user.country)) {
       coinsPerDollar = 100000;
     } else if (tier2Countries.includes(user.country)) {
@@ -403,7 +403,7 @@ app.post('/api/user/withdraw', async (req, res) => {
       'Singapore', 'Japan', 'South Korea', 'Malaysia', 'Spain', 'Italy', 'Brazil', 'Mexico'
     ];
 
-    let coinsPerDollar = 160000; // ডিফল্ট বা Tier 3 এর জন্য (যেমন: বাংলাদেশ, ভারত, পাকিস্তান ইত্যাদি)
+    let coinsPerDollar = 140000; // ডিফল্ট বা Tier 3 এর জন্য (যেমন: বাংলাদেশ, ভারত, পাকিস্তান ইত্যাদি)
     let userTier = "Tier 3";
 
     if (tier1Countries.includes(user.country)) {
