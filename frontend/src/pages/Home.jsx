@@ -142,12 +142,17 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         setHasFreePlay(false);
         startGame();
       } else {
+        // এখানে onPlayAd() কল করা হচ্ছে যা App.jsx থেকে পাস হয়ে আসে
         const adWatched = await onPlayAd();
-        if (adWatched) {
-          startGame();
-        } else {
-          alert("Ad failed to load or was closed. Please try again.");
+        
+        // যদি Adsgram অ্যাড সফল না হয়, ইনভ্যালিড হয় বা ইম্প্রেশন না ঘটে
+        if (!adWatched) {
+          // App.jsx থেকে ইতিমধ্যে অ্যালার্ট দেখানো হয়েছে, তাই এখানে শুধু প্রসেস স্টপ হবে
+          setIsLoading(false);
+          return; 
         }
+
+        startGame();
       }
     } catch (error) {
       console.error("Game start error:", error);
@@ -181,7 +186,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     });
   };
 
-  // ৬. রিওয়ার্ড ক্লেইম লজিক
+  // ৬. রিওয়ার্ড ক্লেইম লজিক (Adsgram ভ্যালিডেশন সহ)
   const claimReward = async (isDouble = false) => {
     if (score === 0) {
       setGameState('idle');
@@ -223,11 +228,14 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
     if (isDouble) {
       const adWatched = await onPlayAd();
-      if (adWatched) {
-        await sendScoreToBackend(score * 2);
-      } else {
+      
+      // যদি Adsgram অ্যাড ফেইল করে, ইনভ্যালিড হয় বা ইম্প্রেশন না থাকে
+      if (!adWatched) {
         setIsClaiming(false);
+        return; // এখানেই থেমে যাবে, কয়েন ডাবল করার কোনো সুযোগ দিবে না
       }
+
+      await sendScoreToBackend(score * 2);
     } else {
       await sendScoreToBackend(score);
     }
