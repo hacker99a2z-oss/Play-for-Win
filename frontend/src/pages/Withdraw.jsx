@@ -7,7 +7,27 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
   const [membershipStatus, setMembershipStatus] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // ১. মেম্বারশিপ চেক করার আলাদা ফাংশন (শুধু চেক করবে)
+  // ১. ইউজারের কান্ট্রি অনুযায়ী কয়েন রেট নির্ধারণ (ব্যাকএন্ডের লজিকের সাথে মিল রেখে)
+  const getCoinsPerDollar = (country) => {
+    const tier1Countries = [
+      'United States', 'United Kingdom', 'Canada', 'Australia', 
+      'Germany', 'France', 'Switzerland', 'Norway', 'Sweden', 'Denmark', 'Netherlands'
+    ];
+    const tier2Countries = [
+      'United Arab Emirates', 'Saudi Arabia', 'Qatar', 'Kuwait', 
+      'Singapore', 'Japan', 'South Korea', 'Malaysia', 'Spain', 'Italy', 'Brazil', 'Mexico'
+    ];
+
+    if (tier1Countries.includes(country)) return 100000;
+    if (tier2Countries.includes(country)) return 130000;
+    return 160000; // Tier 3 / Default (যেমন: বাংলাদেশ, ভারত ইত্যাদি)
+  };
+
+  const coinsRate = getCoinsPerDollar(user?.country);
+  const parsedAmount = parseFloat(amount) || 0;
+  const calculatedRequiredCoins = parsedAmount * coinsRate;
+
+  // ২. মেম্বারশিপ চেক করার আলাদা ফাংশন (শুধু চেক করবে)
   const checkMembershipOnly = async () => {
     setLoading(true);
     try {
@@ -32,7 +52,7 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
     }
   };
 
-  // ২. মূল উইথড্র বাটনের হ্যান্ডেলার
+  // ৩. মূল উইথড্র বাটনের হ্যান্ডেলার
   const handleWithdrawClick = async (e) => {
     e.preventDefault();
     if (!wallet) {
@@ -137,11 +157,16 @@ export default function Withdraw({ user, BACKEND_URL, refreshUser }) {
           />
         </div>
 
-        {/* Withdrawal Rules */}
-        <div className="bg-gray-950 p-3 rounded-xl border border-gray-800 text-[11px] text-gray-400 flex flex-col gap-1">
-          <p className="text-yellow-400 font-bold">📌 Fee Structure (From Main Coins):</p>
-          <p>• $0.50 Withdraw = <span className="text-white font-bold">50,000 Coins</span> Fee</p>
-          <p>• $1.00 Withdraw = <span className="text-white font-bold">100,000 Coins</span> Fee</p>
+        {/* Dynamic Withdrawal Fee & Calculation based on Country */}
+        <div className="bg-gray-950 p-3 rounded-xl border border-gray-800 text-[11px] text-gray-400 flex flex-col gap-1.5">
+          <div className="flex justify-between items-center text-yellow-400 font-bold border-b border-gray-800 pb-1.5">
+            <span>📌 Country & Rate:</span>
+            <span className="text-emerald-400">{user?.country || 'Unknown'} ({coinsRate.toLocaleString()} Coins/$1)</span>
+          </div>
+          <div className="flex justify-between items-center pt-1">
+            <span>Required Coins for this withdraw:</span>
+            <span className="text-white font-bold text-xs">{calculatedRequiredCoins.toLocaleString()} Coins</span>
+          </div>
         </div>
 
         <button
