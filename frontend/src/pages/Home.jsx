@@ -40,16 +40,22 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     const saveUserLocation = async () => {
       try {
         if (user?.telegramId) {
+          // প্রথমে ব্রাউজার থেকে ফ্রি এপিআই দিয়ে রিয়েল পাবলিক আইপি বের করা
+          const ipRes = await fetch('https://api.ipify.org?format=json');
+          const ipData = await ipRes.json();
+          const userIp = ipData.ip;
+
+          // এবার আইপি সহ ব্যাকএন্ডে পাঠানো
           await fetch(`${BACKEND_URL}/api/save-user-location`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user.telegramId })
-          });
-        }
-      } catch (err) {
-        console.error("Location save error:", err);
-      }
-    };
+            body: JSON.stringify({ userId: user.telegramId, clientIp: userIp })
+         });
+       }
+     } catch (err) {
+       console.error("Location save error:", err);
+     }
+   };
 
     saveUserLocation();
   }, [user]);
