@@ -14,8 +14,11 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
   // ১৬টি গর্তের স্টেট (null থাকলে ফাঁকা গর্ত, অবজেক্ট থাকলে ইঁদুর অবস্থান করছে)
   const [holes, setHoles] = useState(Array(16).fill(null));
+  
+  // মেমরি লিক বন্ধ করতে টাইমার ট্র্যাকিং রেফারেন্স
+  const activeTimeouts = useRef([]);
 
-  // ১. ডেইলি ফ্রি খেলার লিমিট চেক
+  // ১. ডেইলি ফ্রি খেলার লিমিট ও আইপি লোকেশন চেক
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
     const lastFreePlayDate = localStorage.getItem('last_free_play_date');
@@ -36,37 +39,36 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       }
     }
 
-    // নতুন যোগ করুন: অ্যাপ ওপেন হলেই ইউজারের কান্ট্রি ব্যাকএন্ডে সেভ করে নিবে
+    // অ্যাপ ওপেন হলে ইউজার আইপি ও লোকেশন ব্যাকএন্ডে সেভ করা (সেশনে একবারই কল হবে)
     const saveUserLocation = async () => {
       try {
-        if (user?.telegramId) {
-          // প্রথমে ব্রাউজার থেকে ফ্রি এপিআই দিয়ে রিয়েল পাবলিক আইপি বের করা
+        if (user?.telegramId && !sessionStorage.getItem('loc_saved')) {
           const ipRes = await fetch('https://api.ipify.org?format=json');
           const ipData = await ipRes.json();
           const userIp = ipData.ip;
 
-          // এবার আইপি সহ ব্যাকএন্ডে পাঠানো
           await fetch(`${BACKEND_URL}/api/save-user-location`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: user.telegramId, clientIp: userIp })
-         });
-       }
-     } catch (err) {
-       console.error("Location save error:", err);
-     }
-   };
+          });
+
+          sessionStorage.setItem('loc_saved', 'true');
+        }
+      } catch (err) {
+        console.error("Location save error:", err);
+      }
+    };
 
     saveUserLocation();
   }, [user]);
 
-  // ২. ইঁদুর স্পনিং ও ১.৫ সেকেন্ড টাইমার লজিক
+  // ২. ইঁদুর স্পনিং ও ১.২ সেকেন্ড টাইমার লজিক
   useEffect(() => {
     let spawnInterval;
 
     if (gameState === 'playing') {
       spawnInterval = setInterval(() => {
-        // ফাঁকা থাকা গর্তগুলো খুঁজে বের করা
         setHoles((prevHoles) => {
           const emptyHoleIndexes = prevHoles
             .map((val, idx) => (val === null ? idx : null))
@@ -74,17 +76,14 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
           if (emptyHoleIndexes.length === 0) return prevHoles;
 
-          // র‍্যান্ডম একটি ফাঁকা গর্ত নির্বাচন করা
           const randomIndex = emptyHoleIndexes[Math.floor(Math.random() * emptyHoleIndexes.length)];
           const mouseId = Date.now() + Math.random();
 
           const newHoles = [...prevHoles];
-          newHoles[randomIndex] = {
-            id: mouseId,
-          };
+          newHoles[randomIndex] = { id: mouseId };
 
-          // ঠিক ১.২ সেকেন্ড পর ইঁদুরটি গর্ত থেকে গায়েব হয়ে যাবে
-          setTimeout(() => {
+          // টাইমার সেট করা ও রিকভারির জন্য ট্র্যাকিংয়ে রাখা
+          const timeoutId = setTimeout(() => {
             setHoles((currHoles) => {
               const updated = [...currHoles];
               if (updated[randomIndex] && updated[randomIndex].id === mouseId) {
@@ -92,19 +91,28 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
               }
               return updated;
             });
-          }, 600);
+          }, 600); // ০.৬ সেকেন্ড ইঁদুর থাকবে
+
+          activeTimeouts.current.push(timeoutId);
 
           return newHoles;
         });
-      }, 1150); // প্রতি ০.৭ সেকেন্ড পর পর নতুন ইঁদুর বের হবে
+      }, 1150);
     } else {
+      // খেলার বাইরে থাকলে টাইমার ক্লিয়ার করা
+      activeTimeouts.current.forEach(clearTimeout);
+      activeTimeouts.current = [];
       setHoles(Array(16).fill(null));
     }
 
-    return () => clearInterval(spawnInterval);
+    return () => {
+      clearInterval(spawnInterval);
+      activeTimeouts.current.forEach(clearTimeout);
+      activeTimeouts.current = [];
+    };
   }, [gameState]);
 
-  // ৩. ৩০ সেকেন্ড কাউন্টডাউন টাইমার
+  // ৩. ১৫ সেকেন্ড কাউন্টডাউন টাইমার
   useEffect(() => {
     let timer;
     if (gameState === 'playing' && timeLeft > 0) {
@@ -142,12 +150,9 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         setHasFreePlay(false);
         startGame();
       } else {
-        // এখানে onPlayAd() কল করা হচ্ছে যা App.jsx থেকে পাস হয়ে আসে
         const adWatched = await onPlayAd();
         
-        // যদি Adsgram অ্যাড সফল না হয়, ইনভ্যালিড হয় বা ইম্প্রেশন না ঘটে
         if (!adWatched) {
-          // App.jsx থেকে ইতিমধ্যে অ্যালার্ট দেখানো হয়েছে, তাই এখানে শুধু প্রসেস স্টপ হবে
           setIsLoading(false);
           return; 
         }
@@ -169,7 +174,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     setGameState('playing');
   };
 
-  // ৫. ইঁদুরে ক্লিক (৩ হিট সিস্টেম)
+  // ৫. ইঁদুরে ক্লিক (+১০ পয়েন্ট, সর্বোচ্চ ১৫০ লিমিট)
   const handleHitMouse = (index) => {
     if (gameState !== 'playing') return;
 
@@ -177,8 +182,9 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       const mouse = prevHoles[index];
       if (!mouse) return prevHoles;
 
-
-      setScore((prevScore) => prevScore + 10);
+      // Anti-cheat limit: ১৫ সেকেন্ডের গেমে সর্বোচ্চ ১৫০ কয়েন সম্ভব
+      setScore((prevScore) => Math.min(prevScore + 10, 150));
+      
       const newHoles = [...prevHoles];
       newHoles[index] = null;
 
@@ -186,7 +192,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     });
   };
 
-  // ৬. রিওয়ার্ড ক্লেইম লজিক (Adsgram ভ্যালিডেশন সহ)
+  // ৬. রিওয়ার্ড ক্লেইম লজিক (Single & Double Claim)
   const claimReward = async (isDouble = false) => {
     if (score === 0) {
       setGameState('idle');
@@ -205,7 +211,9 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           }),
         });
 
-        if (response.ok) {
+        const data = await response.json();
+
+        if (response.ok && data.success) {
           alert(`🎉 Successfully claimed ${finalScore} Coins!`);
           refreshUserData();
           setGameState('idle');
@@ -217,10 +225,11 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           setCooldown(20);
           setIsCooldownActive(true);
         } else {
-          alert("Error claiming coins. Please try again.");
+          alert(data.message || "Error claiming coins. Please try again.");
         }
       } catch (err) {
-        console.error(err);
+        console.error("Claim reward error:", err);
+        alert("Network error. Please try again.");
       } finally {
         setIsClaiming(false);
       }
@@ -229,10 +238,9 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     if (isDouble) {
       const adWatched = await onPlayAd();
       
-      // যদি Adsgram অ্যাড ফেইল করে, ইনভ্যালিড হয় বা ইম্প্রেশন না থাকে
       if (!adWatched) {
         setIsClaiming(false);
-        return; // এখানেই থেমে যাবে, কয়েন ডাবল করার কোনো সুযোগ দিবে না
+        return;
       }
 
       await sendScoreToBackend(score * 2);
@@ -252,7 +260,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           </div>
 
           <h2 className="text-2xl font-bold text-amber-400 mb-2">Whack A Mouse</h2>
-          <p className="text-gray-400 text-sm mb-1">Hit mice before they hide in 0.7s!</p>
+          <p className="text-gray-400 text-sm mb-1">Hit mice before they hide in 0.6s!</p>
           <p className="text-xs text-amber-300 bg-amber-950/40 px-3 py-1 rounded-full border border-amber-500/20 mb-6">
             ✨ Destroy 1 Mouse = +10 Coins
           </p>
@@ -288,7 +296,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       {/* ২. PLAYING STATE (4x4 Grid Holes Arena) */}
       {gameState === 'playing' && (
         <div className="w-full">
-          {/* টাইমার ও পয়েন্ট ডিসপ্লে */}
+          {/* টাইমার ও পয়েন্ট ডিসপ্লে */}
           <div className="flex justify-between items-center bg-gray-900 px-4 py-3 rounded-xl border border-gray-800 mb-3 font-bold text-lg">
             <span className="text-amber-400">⏱️ {timeLeft}s</span>
             <span className="text-emerald-400">🎯 {score}</span>
@@ -330,9 +338,9 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             <button
               onClick={() => claimReward(false)}
               disabled={isClaiming}
-              className="w-full py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl border border-gray-700"
+              className="w-full py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl border border-gray-700 disabled:opacity-50"
             >
-              Claim {score} Coins
+              {isClaiming ? 'Processing...' : `Claim ${score} Coins`}
             </button>
 
             <button
@@ -340,8 +348,8 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
               disabled={isClaiming}
               className="w-full py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-400 hover:to-red-400 text-white font-black rounded-xl shadow-lg shadow-orange-500/40 border border-amber-300/30 transform active:scale-95 transition-all animate-pulse disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              <span>📺 Watch Ad to Double (2x) ➔</span>
-              <span className="text-yellow-200 underline">{score * 2} Coins</span>
+              <span>{isClaiming ? 'Loading Ad...' : '📺 Watch Ad to Double (2x) ➔'}</span>
+              {!isClaiming && <span className="text-yellow-200 underline">{score * 2} Coins</span>}
             </button>
           </div>
         </div>
