@@ -53,7 +53,7 @@ export default function App() {
       tg.ready();
       tg.expand();
       try {
-        tg.enableClosingConfirmation(); // ভুল করে অ্যাপ বন্ধ হয়ে যাওয়া রোধ করতে
+        tg.disableClosingConfirmation();// ভুল করে অ্যাপ বন্ধ হয়ে যাওয়া রোধ করতে
       } catch (e) {
         // Ignored for unsupported older versions
       }
