@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const cron = require('node-cron');
-const axios = require('axios'); // ১. axios যুক্ত করা হলো আইপি ও ভিপিএন চেক করার জন্য
+const axios = require('axios');
 const { Telegraf } = require('telegraf'); 
 require('dotenv').config();
 
@@ -58,41 +58,42 @@ if (process.env.BOT_TOKEN) {
 
 app.use('/api/auth', authRoutes);
 
+// Helper function: Client IP & Country Detection (With 3s Timeout)
+const getClientIpAndCountry = async (req, frontendIp) => {
+  let clientIp = frontendIp || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  if (clientIp && clientIp.includes(',')) {
+    clientIp = clientIp.split(',')[0].trim();
+  }
+
+  if (clientIp === '::1' || clientIp === '127.0.0.1' || !clientIp) {
+    return { clientIp: '', countryName: 'Unknown', isVpnOrProxy: false };
+  }
+
+  try {
+    const ipResponse = await axios.get(`http://ip-api.com/json/${clientIp}?fields=status,country,proxy,hosting`, { timeout: 3000 });
+    if (ipResponse.data.status === 'success') {
+      return {
+        clientIp,
+        countryName: ipResponse.data.country || 'Unknown',
+        isVpnOrProxy: Boolean(ipResponse.data.proxy || ipResponse.data.hosting)
+      };
+    }
+  } catch (err) {
+    console.error("IP Check Error:", err.message);
+  }
+
+  return { clientIp, countryName: 'Unknown', isVpnOrProxy: false };
+};
+
 // ==================== API ENDPOINTS FOR FRONTEND ====================
 
-// নতুন: ইউজারের আইপি চেক করে কান্ট্রি ও ভিপিএন ডিটেক্ট এবং সেভ করার এন্ডপয়েন্ট
 app.post('/api/save-user-location', async (req, res) => {
   try {
     const { userId, clientIp: frontendIp } = req.body;
     if (!userId) return res.status(400).json({ error: 'User ID required' });
 
-    let clientIp = frontendIp || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (clientIp && clientIp.includes(',')) {
-      clientIp = clientIp.split(',')[0].trim();
-    }
+    const { countryName, isVpnOrProxy } = await getClientIpAndCountry(req, frontendIp);
 
-    if (clientIp === '::1' || clientIp === '127.0.0.1') {
-      clientIp = ''; // লোকালহোস্ট টেস্ট করার সময় আইপি ফাঁকা রাখা হলো
-    }
-
-    let countryName = "Unknown";
-    let isVpnOrProxy = false;
-
-    if (clientIp) {
-      try {
-        const ipResponse = await axios.get(`http://ip-api.com/json/${clientIp}?fields=status,country,proxy,hosting`);
-        if (ipResponse.data.status === 'success') {
-          countryName = ipResponse.data.country;
-          if (ipResponse.data.proxy || ipResponse.data.hosting) {
-            isVpnOrProxy = true;
-          }
-        }
-      } catch (ipErr) {
-        console.error("IP API error:", ipErr.message);
-      }
-    }
-
-    // ডাটাবেজে ইউজারের আপডেট বা তৈরি করা
     await User.findOneAndUpdate(
       { telegramId: userId },
       { 
@@ -110,7 +111,6 @@ app.post('/api/save-user-location', async (req, res) => {
   }
 });
 
-// ১. ইউজার তথ্য আনবে অথবা না থাকলে ডাটাবেজে তৈরি করবে (কান্ট্রি ডিটেকশনসহ)
 app.post('/api/user/sync', async (req, res) => {
   const { telegramId, firstName, username, photoUrl, referrerId, clientIp: frontendIp } = req.body;
 
@@ -119,28 +119,7 @@ app.post('/api/user/sync', async (req, res) => {
   }
 
   try {
-    // ইউজারের আইপি ও কান্টری ডিটেক্ট করা (ফ্রন্টএন্ডের আইপিকে প্রাধান্য দেওয়া)
-    let clientIp = frontendIp || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (clientIp && clientIp.includes(',')) {
-      clientIp = clientIp.split(',')[0].trim();
-    }
-
-    let countryName = 'Unknown';
-    let isVpnOrProxy = false;
-
-    if (clientIp && clientIp !== '::1' && clientIp !== '127.0.0.1') {
-      try {
-        const ipResponse = await axios.get(`http://ip-api.com/json/${clientIp}?fields=status,country,proxy,hosting`);
-        if (ipResponse.data.status === 'success') {
-          countryName = ipResponse.data.country;
-          if (ipResponse.data.proxy || ipResponse.data.hosting) {
-            isVpnOrProxy = true;
-          }
-        }
-      } catch (ipErr) {
-        console.log("Sync IP Check Error:", ipErr.message);
-      }
-    }
+    const { countryName, isVpnOrProxy } = await getClientIpAndCountry(req, frontendIp);
 
     let user = await User.findOne({ telegramId }).populate('referrals', 'firstName username photoUrl gamesPlayedForReferral');
 
@@ -166,16 +145,14 @@ app.post('/api/user/sync', async (req, res) => {
         );
       }
     } else {
-      // ইউজার আগে থেকেই থাকলে তার নাম, ছবি এবং কান্ট্রি/ভিপিএন আপডেট করে নেওয়া
       user.firstName = firstName || user.firstName;
       user.username = username || user.username;
       user.photoUrl = photoUrl || user.photoUrl;
-      user.country = countryName !== 'Unknown' ? countryName : user.country; // আগেরটা অজানা না থাকলে সেটাই রাখবে
+      user.country = countryName !== 'Unknown' ? countryName : user.country;
       user.isVpn = isVpnOrProxy;
       await user.save();
     }
 
-    // ৩টি টায়ার অনুযায়ী ইউজারের কয়েন রেট হিসাব করা
     const tier1Countries = ['United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'France', 'Switzerland', 'Norway', 'Sweden', 'Denmark', 'Netherlands'];
     const tier2Countries = ['United Arab Emirates', 'Saudi Arabia', 'Qatar', 'Kuwait', 'Singapore', 'Japan', 'South Korea', 'Malaysia', 'Spain', 'Italy', 'Brazil', 'Mexico'];
 
@@ -186,7 +163,6 @@ app.post('/api/user/sync', async (req, res) => {
       coinsPerDollar = 130000;
     }
 
-    // ইউজার অবজেক্টের সাথে কয়েন রেটটিও ফ্রন্টএন্ডে পাঠিয়ে দেওয়া
     const userResponse = {
       ...user.toObject(),
       coinsPerDollar: coinsPerDollar
@@ -198,14 +174,21 @@ app.post('/api/user/sync', async (req, res) => {
   }
 });
 
-// ৩. গেম খেলে রিওয়ার্ড ক্লেম করা ও রেফারেল বোনাস দেওয়া
+// ৩. গেম খেলে রিওয়ার্ড ক্লেইম (Anti-Cheat Validation Added)
 app.post('/api/game/reward', async (req, res) => {
   try {
     const { telegramId, coins } = req.body;
     const rewardCoins = Number(coins);
 
-    if (!telegramId || isNaN(rewardCoins)) {
+    if (!telegramId || isNaN(rewardCoins) || rewardCoins <= 0) {
       return res.status(400).json({ success: false, message: 'Invalid payload' });
+    }
+
+    // 🔒 Security Check: ১৫ সেকেন্ডে ডাবল এড সহ সর্বোচ্চ ৩০০ কয়েন সম্ভব
+    const MAX_ALLOWED_COINS = 300; 
+    if (rewardCoins > MAX_ALLOWED_COINS) {
+      console.warn(`🚨 Anti-Cheat Triggered for User: ${telegramId}. Attempted coins: ${rewardCoins}`);
+      return res.status(403).json({ success: false, message: 'Cheating detected! Reward denied.' });
     }
 
     let user = await User.findOne({ telegramId });
@@ -293,7 +276,7 @@ app.get('/api/monetag-postback', async (req, res) => {
   }
 });
 
-// ডেইলি টাইমার এন্ডপয়েন্ট
+// ডেইলি টাইমার এন্ডপয়েন্ট
 app.get('/api/contest/timer', (req, res) => {
   const now = new Date();
   const bdNowStr = now.toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
@@ -366,20 +349,13 @@ app.post('/api/user/withdraw', async (req, res) => {
       return res.status(404).json({ error: 'User not found!' });
     }
 
-    // ১. লাইভ ভিপিএন চেক
-    let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (clientIp && clientIp !== '::1' && clientIp !== '127.0.0.1') {
-      try {
-        const ipCheck = await axios.get(`http://ip-api.com/json/${clientIp}?fields=status,proxy,hosting,country`);
-        if (ipCheck.data.status === 'success') {
-          if (ipCheck.data.proxy || ipCheck.data.hosting) {
-            return res.status(403).json({ error: '❌ VPN or Proxy detected! Please disable your VPN to withdraw.' });
-          }
-          user.country = ipCheck.data.country;
-        }
-      } catch (ipErr) {
-        console.log("Withdraw IP Check Error:", ipErr.message);
-      }
+    const { countryName, isVpnOrProxy } = await getClientIpAndCountry(req);
+    if (isVpnOrProxy) {
+      return res.status(403).json({ error: '❌ VPN or Proxy detected! Please disable your VPN to withdraw.' });
+    }
+
+    if (countryName !== 'Unknown') {
+      user.country = countryName;
     }
 
     const reqAmount = parseFloat(amount);
@@ -392,7 +368,6 @@ app.post('/api/user/withdraw', async (req, res) => {
       return res.status(400).json({ error: 'Insufficient Bonus Balance!' });
     }
 
-    // ২. ৩টি টায়ারের দেশগুলোর তালিকা এবং রেট নির্ধারণ
     const tier1Countries = [
       'United States', 'United Kingdom', 'Canada', 'Australia', 
       'Germany', 'France', 'Switzerland', 'Norway', 'Sweden', 'Denmark', 'Netherlands'
@@ -403,7 +378,7 @@ app.post('/api/user/withdraw', async (req, res) => {
       'Singapore', 'Japan', 'South Korea', 'Malaysia', 'Spain', 'Italy', 'Brazil', 'Mexico'
     ];
 
-    let coinsPerDollar = 140000; // ডিফল্ট বা Tier 3 এর জন্য (যেমন: বাংলাদেশ, ভারত, পাকিস্তান ইত্যাদি)
+    let coinsPerDollar = 140000;
     let userTier = "Tier 3";
 
     if (tier1Countries.includes(user.country)) {
@@ -426,7 +401,6 @@ app.post('/api/user/withdraw', async (req, res) => {
     user.mainCoins -= requiredCoins;
     await user.save();
 
-    // ৩. এডমিনের টেলিগ্রাম নোটিফিকেশন
     try {
       const adminMessage = 
         `🚨<b>New Withdraw Request!</b>🚨\n\n` +
@@ -462,7 +436,7 @@ mongoose.connect(process.env.MONGO_URI)
 cron.schedule('0 0 * * *', async () => {
   console.log('🏆 Running Daily Contest Reset & Distributing Prizes...');
   try {
-    const topUsers = await User.find({}).sort({ dailyCoins: -1 }).limit(10);
+    const topUsers = await User.find({ dailyCoins: { $gt: 0 } }).sort({ dailyCoins: -1 }).limit(10);
     const prizes = [1, 0.80, 0.50, 0.30, 0.20, 0.10, 0.10, 0.10, 0.10, 0.10];
 
     for (let i = 0; i < topUsers.length; i++) {
@@ -474,7 +448,7 @@ cron.schedule('0 0 * * *', async () => {
       }
     }
 
-    await User.updateMany({}, { $set: { dailyCoins: 0 } });
+    await User.updateMany({ dailyCoins: { $gt: 0 } }, { $set: { dailyCoins: 0 } });
     console.log('✅ Daily Contest Reset Successfully!');
 
   } catch (error) {
