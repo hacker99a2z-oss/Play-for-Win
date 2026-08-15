@@ -27,7 +27,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   const clickedItemsRef = useRef(new Set());
   const spawnedMiceCount = useRef(0); // মোট কয়টি ইঁদুর বের হয়েছে তার হিসাব
 
-  // ১. ডেইলি ফ্রি খেলার লিমিট ও আইপি লোকেশন চেক
+  // ১. ডেইলি ফ্রি খেলার লিমিট ও আইপি লোকেশন চেক (Optimized)
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
     const lastFreePlayDate = localStorage.getItem('last_free_play_date');
@@ -48,27 +48,20 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       }
     }
 
-    const saveUserLocation = async () => {
-      try {
-        if (user?.telegramId && !sessionStorage.getItem('loc_saved')) {
-          const ipRes = await fetch('https://api.ipify.org?format=json');
-          const ipData = await ipRes.json();
-          const userIp = ipData.ip;
-
-          await fetch(`${BACKEND_URL}/api/save-user-location`, {
+    // ব্যাকগ্রাউন্ডে IP সেভ হবে (গেম লোডিং স্লো করবে না)
+    if (user?.telegramId && !sessionStorage.getItem('loc_saved')) {
+      fetch('https://api.ipify.org?format=json')
+        .then((res) => res.json())
+        .then((ipData) => {
+          fetch(`${BACKEND_URL}/api/save-user-location`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user.telegramId, clientIp: userIp })
+            body: JSON.stringify({ userId: user.telegramId, clientIp: ipData.ip }),
           });
-
           sessionStorage.setItem('loc_saved', 'true');
-        }
-      } catch (err) {
-        console.error("Location save error:", err);
-      }
-    };
-
-    saveUserLocation();
+        })
+        .catch((err) => console.error("Location save error:", err));
+    }
   }, [user]);
 
   // ২. অবজেক্ট (Mouse, Cat, Human) স্পনিং লজিক
