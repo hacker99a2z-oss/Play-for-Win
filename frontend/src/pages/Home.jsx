@@ -8,7 +8,8 @@ const GAME_ASSETS = {
   cat: 'https://i.postimg.cc/t49jnyks/gemini-2-5-flash-image-give-me-the-single-pic-of-cat-with-transparent-background-and-same-size-0-rem.png',
   human: 'https://i.postimg.cc/0N6HbHTz/gemini-2-5-flash-image-give-me-the-single-pic-of-human-with-transparent-background-and-same-size-0-r.png',
   field: 'https://i.postimg.cc/5t83DHDs/gemini-2-5-flash-image-give-me-the-pic-of-only-background-and-no-cat-no-mouse-no-human-with-same-siz.jpg',
-  hole: 'https://i.postimg.cc/c4QfxqX5/gemini-2-5-flash-image-now-give-me-just-a-single-hole-pic-0-removebg-preview.png'
+  hole: 'https://i.postimg.cc/c4QfxqX5/gemini-2-5-flash-image-now-give-me-just-a-single-hole-pic-0-removebg-preview.png',
+  hammer: 'https://i.postimg.cc/Bb9qhz90/Chat-GPT-Image-Aug-15-2026-11-38-33-PM-removebg-preview.png'
 };
 
 const Home = ({ user, onPlayAd, refreshUserData }) => {
@@ -20,6 +21,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [isCooldownActive, setIsCooldownActive] = useState(false);
+  const [hitIndex, setHitIndex] = useState(null);
 
   // ১৬টি গর্তের স্টেট
   const [holes, setHoles] = useState(Array(16).fill(null));
@@ -214,17 +216,24 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
     clickedItemsRef.current.add(item.id);
 
+    // ক্লিক করার সাথে সাথে হাতুড়ি সক্রিয় হবে
+    setHitIndex(index);
+
     if (item.type === 'mouse') {
       setScore((prevScore) => Math.min(prevScore + 10, 140));
     } else if (item.type === 'cat' || item.type === 'human') {
       setScore((prevScore) => Math.max(0, prevScore - 5));
     }
 
-    setHoles((prevHoles) => {
-      const newHoles = [...prevHoles];
-      newHoles[index] = null;
-      return newHoles;
-    });
+    // ২০০ মিলি-সেকেন্ড পর হাতুড়িটি গায়েব হয়ে যাবে
+    setTimeout(() => {
+      setHitIndex(null);
+      setHoles((prevHoles) => {
+        const newHoles = [...prevHoles];
+        newHoles[index] = null;
+        return newHoles;
+      });
+    }, 200);
   };
 
   // ৬. রিওয়ার্ড ক্লেইম লজিক
@@ -332,7 +341,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         </div>
       )}
 
-      {/* ২. PLAYING STATE (Image Based Field & Hole) */}
+      {/* ২. PLAYING STATE (Image Based Field & Hole with Hammer Hit Effect) */}
       {gameState === 'playing' && (
         <div className="w-full max-w-sm mx-auto p-2">
           {/* স্কোরবার */}
@@ -361,7 +370,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
                 {/* ২. ইঁদুর, বিড়াল ও মানুষের ছবি (গর্তের ওপরে রেন্ডার হবে) */}
                 {item ? (
-                  <div className="z-10 animate-pop-up flex items-center justify-center">
+                  <div className="z-10 animate-pop-up flex items-center justify-center relative">
                     {item.type === 'mouse' && (
                       <img
                         src={GAME_ASSETS.mouse}
@@ -383,6 +392,15 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                         className="w-18 h-18 object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.6)]"
                       />
                     )}
+
+                    {/* হাতুড়ির হিট অ্যানিমেশন (ক্লিক করার পর ভেসে উঠবে) */}
+                    {hitIndex === index && (
+                      <img
+                        src={GAME_ASSETS.hammer}
+                        alt="hammer"
+                        className="absolute -top-6 -right-2 w-16 h-16 z-30 pointer-events-none transform -rotate-45 transition-all duration-100 scale-110 drop-shadow-[0_8px_10px_rgba(0,0,0,0.8)]"
+                      />
+                    )}
                   </div>
                 ) : null}
               </div>
@@ -390,7 +408,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           </div>
         </div>
       )}
-
+      
       {/* ৩. GAME OVER SCREEN */}
       {gameState === 'ended' && (
         <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl mt-4">
