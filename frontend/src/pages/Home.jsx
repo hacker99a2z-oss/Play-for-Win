@@ -18,7 +18,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   // ট্র্যাকিং রেফারেন্স
   const activeTimeouts = useRef([]);
   const clickedItemsRef = useRef(new Set());
-  const spawnedMiceCount = useRef(0); // মোট কয়টি ইঁদুর বের হয়েছে তার হিসাব
+  const spawnedMiceCount = useRef(0); // মোট কয়টি ইঁদুর বের হয়েছে তার হিসাব
 
   // ১. ডেইলি ফ্রি খেলার লিমিট ও আইপি লোকেশন চেক
   useEffect(() => {
@@ -64,7 +64,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     saveUserLocation();
   }, [user]);
 
-  // ২. র্যান্ডম অবজেক্ট (Mouse, Cat, Human) স্পনিং লজিক
+  // ২. অবজেক্ট (Mouse, Cat, Human) স্পনিং লজিক
   useEffect(() => {
     let spawnInterval;
 
@@ -79,10 +79,12 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
           if (emptyHoleIndexes.length === 0) return prevHoles;
 
-          // একসাথে ১ থেকে ৩টি অবজেক্ট র্যান্ডমলি স্পন করানোর লজিক
+          // একসাথে ১ থেকে ৩টি অবজেক্ট র্যান্ডমলি স্পন হওয়ার লজিক
           const batchSize = Math.floor(Math.random() * 3) + 1; 
           const availableIndices = [...emptyHoleIndexes];
           const newHoles = [...prevHoles];
+
+          let mouseSpawnedInThisBatch = false; // এই ব্যাচে ইঁদুর অলরেডি এসেছে কিনা চেক করার ফ্লাগ
 
           for (let i = 0; i < batchSize; i++) {
             if (availableIndices.length === 0) break;
@@ -91,23 +93,22 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             const targetHoleIndex = availableIndices.splice(randIndexPos, 1)[0];
             const itemId = Date.now() + Math.random();
 
-            // টাইপ নির্ধারণ (mouse, cat, human)
-            let itemType = 'mouse';
-            const canSpawnMouse = spawnedMiceCount.current < 14;
+            let itemType = 'cat';
+            const canSpawnMouse = spawnedMiceCount.current < 14 && !mouseSpawnedInThisBatch;
 
             if (canSpawnMouse) {
-              // ইঁদুর, বিড়াল ও মানুষের র্যান্ডম চান্স
               const randVal = Math.random();
               if (randVal < 0.6) {
                 itemType = 'mouse';
                 spawnedMiceCount.current += 1;
+                mouseSpawnedInThisBatch = true; // নিশ্চিত করা হচ্ছে যেন এই ব্যাচে আর ইঁদুর না আসে
               } else if (randVal < 0.8) {
                 itemType = 'cat';
               } else {
                 itemType = 'human';
               }
             } else {
-              // ১৪টি ইঁদুর শেষ হয়ে গেলে শুধু বিড়াল বা মানুষ আসবে
+              // ইঁদুর অলরেডি ব্যাচে চলে আসলে বা ১৪টির লিমিট পূর্ণ হলে কেবল বিড়াল বা মানুষ আসবে
               itemType = Math.random() < 0.5 ? 'cat' : 'human';
             }
 
@@ -205,7 +206,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     setGameState('playing');
   };
 
-  // ৫. আইটেমে ক্লিকের লজিক (+১০ ইঁদুরের জন্য, -৫ বিড়াল/মানুষের জন্য)
+  // ৫. আইটেমে ক্লিকের লজিক (+১০ ইঁদুরের জন্য, -৫ বিড়াল/মানুষের জন্য)
   const handleHitItem = (index) => {
     if (gameState !== 'playing') return;
 
@@ -215,10 +216,10 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     clickedItemsRef.current.add(item.id);
 
     if (item.type === 'mouse') {
-      // সর্বোচ্চ ১৪০ পয়েন্ট (১৪টি ইঁদুর x ১০ পয়েন্ট)
+      // সর্বোচ্চ ১৪০ পয়েন্ট (১৪টি ইঁদুর x ১০ পয়েন্ট)
       setScore((prevScore) => Math.min(prevScore + 10, 140));
     } else if (item.type === 'cat' || item.type === 'human') {
-      // বিড়াল বা মানুষের উপর ক্লিক করলে -৫ পয়েন্ট (০ এর নিচে নামবে না)
+      // বিড়াল বা মানুষের উপর ক্লিক করলে -৫ পয়েন্ট (০ এর নিচে নামবে না)
       setScore((prevScore) => Math.max(0, prevScore - 5));
     }
 
@@ -229,7 +230,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     });
   };
 
-  // ৬. রিওয়ার্ড ক্লেইম লজিক
+  // ৬. রিওয়ার্ড ক্লেইম লজিক
   const claimReward = async (isDouble = false) => {
     if (score === 0) {
       setGameState('idle');
