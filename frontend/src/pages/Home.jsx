@@ -2,6 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const BACKEND_URL = 'https://play-for-win.onrender.com';
 
+// অনলাইন ৩D ইমেজের লিংক (আপনার সুবিধার্থে যুক্ত করা হয়েছে)
+const GAME_ASSETS = {
+  mouse: 'https://img.icons8.com/isometric/96/mouse.png',
+  cat: 'https://img.icons8.com/isometric/96/cat.png',
+  human: 'https://img.icons8.com/isometric/96/standing-man.png'
+};
+
 const Home = ({ user, onPlayAd, refreshUserData }) => {
   const [gameState, setGameState] = useState('idle'); // idle, playing, ended
   const [score, setScore] = useState(0);
@@ -64,14 +71,13 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     saveUserLocation();
   }, [user]);
 
-  // ২. অবজেক্ট (Mouse, Cat, Human) স্পনিং লজিক (২.২s গ্যাপে ইঁদুর বের হবে)
+  // ২. অবজেক্ট (Mouse, Cat, Human) স্পনিং লজিক
   useEffect(() => {
     let spawnInterval;
 
     if (gameState === 'playing') {
       clickedItemsRef.current.clear();
       
-      // প্রতি ২২০০ মিলি-সেকেন্ড (২.২ সেকেন্ড) পর পর স্পনিং হবে
       spawnInterval = setInterval(() => {
         setHoles((prevHoles) => {
           const emptyHoleIndexes = prevHoles
@@ -80,12 +86,11 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
           if (emptyHoleIndexes.length === 0) return prevHoles;
 
-          // একসাথে ১ থেকে ৩টি অবজেক্ট বের হওয়ার সম্ভাবনা
           const batchSize = Math.floor(Math.random() * 3) + 1; 
           const availableIndices = [...emptyHoleIndexes];
           const newHoles = [...prevHoles];
 
-          let mouseSpawnedInThisBatch = false; // এই ব্যাচে ইঁদুর অলরেডি এসেছে কিনা চেক
+          let mouseSpawnedInThisBatch = false;
 
           for (let i = 0; i < batchSize; i++) {
             if (availableIndices.length === 0) break;
@@ -99,24 +104,21 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
             if (canSpawnMouse) {
               const randVal = Math.random();
-              // ইঁদুর বের হওয়ার সুযোগ বাড়ানো হয়েছে
               if (randVal < 0.75) {
                 itemType = 'mouse';
                 spawnedMiceCount.current += 1;
-                mouseSpawnedInThisBatch = true; // এই ব্যাচে কেবল ১টি ইঁদুর নিশ্চিতকরণ
+                mouseSpawnedInThisBatch = true;
               } else if (randVal < 0.9) {
                 itemType = 'cat';
               } else {
                 itemType = 'human';
               }
             } else {
-              // ইঁদুর অলরেডি ব্যাচে চলে আসলে বা ১৪টির লিমিট পূর্ণ হলে কেবল বিড়াল বা মানুষ আসবে
               itemType = Math.random() < 0.5 ? 'cat' : 'human';
             }
 
             newHoles[targetHoleIndex] = { id: itemId, type: itemType };
 
-            // ০.৮ সেকেন্ড ধরে গর্তে দৃশ্যমান থাকবে
             const timeoutId = setTimeout(() => {
               setHoles((currHoles) => {
                 const updated = [...currHoles];
@@ -132,7 +134,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
           return newHoles;
         });
-      }, 2400); // ২.২ সেকেন্ড ফ্রিকোয়েন্সি
+      }, 2400);
     } else {
       activeTimeouts.current.forEach(clearTimeout);
       activeTimeouts.current = [];
@@ -194,21 +196,21 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     } catch (error) {
       console.error("Game start error:", error);
       alert("Something went wrong. Please try again.");
-    } finally {
+    } fontally {
       setIsLoading(false);
     }
   };
 
   const startGame = () => {
     setScore(0);
-    setTimeLeft(35); // ৩৫ সেকেন্ড সেট
+    setTimeLeft(35);
     setHoles(Array(16).fill(null));
     clickedItemsRef.current.clear();
-    spawnedMiceCount.current = 0; // ইঁদুর কাউন্টার রিসেট
+    spawnedMiceCount.current = 0;
     setGameState('playing');
   };
 
-  // ৫. আইটেমে ক্লিকের লজিক (+১০ ইঁদুরের জন্য, -৫ বিড়াল/মানুষের জন্য)
+  // ৫. আইটেমে ক্লিকের লজিক
   const handleHitItem = (index) => {
     if (gameState !== 'playing') return;
 
@@ -218,10 +220,8 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     clickedItemsRef.current.add(item.id);
 
     if (item.type === 'mouse') {
-      // সর্বোচ্চ ১৪০ পয়েন্ট (১৪টি ইঁদুর x ১০ পয়েন্ট)
       setScore((prevScore) => Math.min(prevScore + 10, 140));
     } else if (item.type === 'cat' || item.type === 'human') {
-      // বিড়াল বা মানুষের উপর ক্লিক করলে -৫ পয়েন্ট (০ এর নিচে নামবে না)
       setScore((prevScore) => Math.max(0, prevScore - 5));
     }
 
@@ -337,33 +337,52 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         </div>
       )}
 
-      {/* ২. PLAYING STATE (4x4 Grid Arena) */}
+      {/* ২. PLAYING STATE (4x4 Grid Arena with Animated Images) */}
       {gameState === 'playing' && (
-        <div className="w-full">
-          <div className="flex justify-between items-center bg-gray-900 px-4 py-3 rounded-xl border border-gray-800 mb-3 font-bold text-lg">
-            <span className="text-amber-400">⏱️ {timeLeft}s</span>
-            <span className="text-emerald-400">🎯 {score}</span>
+        <div className="w-full max-w-sm mx-auto">
+          {/* নতুন স্টাইলিশ স্কোরবার */}
+          <div className="flex justify-between items-center bg-[#0e1726]/80 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-700/50 mb-4 font-bold text-lg shadow-lg">
+            <span className="text-[#a8dadc] flex items-center gap-2">⏱️ {timeLeft}s</span>
+            <span className="text-amber-400 flex items-center gap-2">🎯 {score}</span>
           </div>
 
-          <div className="grid grid-cols-4 gap-3 bg-slate-900 border-2 border-gray-800 p-3 rounded-2xl touch-manipulation">
+          {/* ১৮ ও ১৯ নম্বর ইমেজের মতো অ্যানিমেটেড গ্রিড গর্ত */}
+          <div className="grid grid-cols-4 gap-3 bg-[#090d16] border-2 border-slate-800 p-3 rounded-3xl shadow-2xl touch-manipulation">
             {holes.map((item, index) => (
               <div
                 key={index}
                 onClick={() => item && handleHitItem(index)}
-                className="h-16 bg-slate-950 rounded-2xl border border-gray-800 flex items-center justify-center relative overflow-hidden cursor-pointer active:scale-95 transition-all shadow-inner"
+                className="h-20 bg-[#131b2e] rounded-2xl border border-slate-800/80 flex items-end justify-center relative overflow-hidden cursor-pointer active:scale-95 transition-transform shadow-[inset_0_6px_12px_rgba(0,0,0,0.8)]"
               >
-                <div className="absolute inset-x-2 bottom-1 h-3 bg-black/60 rounded-full"></div>
+                {/* গর্তের শ্যাডো */}
+                <div className="absolute inset-x-1 bottom-1 h-5 bg-black/70 rounded-full blur-[2px]"></div>
 
                 {item ? (
-                  <div className="flex flex-col items-center justify-center z-10 animate-bounce">
-                    <span className="text-2xl leading-none">
-                      {item.type === 'mouse' && '🐭'}
-                      {item.type === 'cat' && '🐱'}
-                      {item.type === 'human' && '👨'}
-                    </span>
+                  <div className="z-10 pb-1 animate-pop-up flex items-center justify-center">
+                    {item.type === 'mouse' && (
+                      <img
+                        src={GAME_ASSETS.mouse}
+                        alt="mouse"
+                        className="w-14 h-14 object-contain drop-shadow-[0_4px_8px_rgba(234,179,8,0.5)]"
+                      />
+                    )}
+                    {item.type === 'cat' && (
+                      <img
+                        src={GAME_ASSETS.cat}
+                        alt="cat"
+                        className="w-14 h-14 object-contain drop-shadow-[0_4px_8px_rgba(244,63,94,0.5)]"
+                      />
+                    )}
+                    {item.type === 'human' && (
+                      <img
+                        src={GAME_ASSETS.human}
+                        alt="human"
+                        className="w-14 h-14 object-contain drop-shadow-[0_4px_8px_rgba(59,130,246,0.5)]"
+                      />
+                    )}
                   </div>
                 ) : (
-                  <span className="text-xs text-gray-700">🕳️</span>
+                  <div className="w-6 h-1.5 bg-black/40 rounded-full mb-2"></div>
                 )}
               </div>
             ))}
