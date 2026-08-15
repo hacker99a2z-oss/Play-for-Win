@@ -196,7 +196,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     } catch (error) {
       console.error("Game start error:", error);
       alert("Something went wrong. Please try again.");
-    } fontally {
+    } finally {
       setIsLoading(false);
     }
   };
