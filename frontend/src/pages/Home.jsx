@@ -4,9 +4,9 @@ const BACKEND_URL = 'https://play-for-win.onrender.com';
 
 // অনলাইন ৩D ইমেজের লিংক (আপনার সুবিধার্থে যুক্ত করা হয়েছে)
 const GAME_ASSETS = {
-  mouse: 'https://img.icons8.com/isometric/96/mouse.png',
-  cat: 'https://img.icons8.com/isometric/96/cat.png',
-  human: 'https://img.icons8.com/isometric/96/standing-man.png'
+  mouse: 'https://i.postimg.cc/mrwWynd6/gemini-2-5-flash-image-give-me-the-single-pic-of-mouse-with-transparent-background-and-same-size-0-r.png',
+  cat: 'https://i.postimg.cc/t49jnyks/gemini-2-5-flash-image-give-me-the-single-pic-of-cat-with-transparent-background-and-same-size-0-rem.png',
+  human: 'https://i.postimg.cc/0N6HbHTz/gemini-2-5-flash-image-give-me-the-single-pic-of-human-with-transparent-background-and-same-size-0-r.png'
 };
 
 const Home = ({ user, onPlayAd, refreshUserData }) => {
