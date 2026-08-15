@@ -337,25 +337,25 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         </div>
       )}
 
-      {/* ২. PLAYING STATE (4x4 Grid Arena with Animated Images) */}
+      {/* ২. PLAYING STATE (4x4 Cartoon Grass Arena) */}
       {gameState === 'playing' && (
         <div className="w-full max-w-sm mx-auto">
-          {/* নতুন স্টাইলিশ স্কোরবার */}
+          {/* স্কোরবার */}
           <div className="flex justify-between items-center bg-[#0e1726]/80 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-700/50 mb-4 font-bold text-lg shadow-lg">
             <span className="text-[#a8dadc] flex items-center gap-2">⏱️ {timeLeft}s</span>
             <span className="text-amber-400 flex items-center gap-2">🎯 {score}</span>
           </div>
 
-          {/* ১৮ ও ১৯ নম্বর ইমেজের মতো অ্যানিমেটেড গ্রিড গর্ত */}
-          <div className="grid grid-cols-4 gap-3 bg-[#090d16] border-2 border-slate-800 p-3 rounded-3xl shadow-2xl touch-manipulation">
+          {/* কার্টুন ঘাসের মাঠ ও ৩D মাটির গর্ত */}
+          <div className="grid grid-cols-4 gap-3 bg-[#80b938] border-4 border-[#5d8b24] p-3.5 rounded-3xl shadow-2xl relative touch-manipulation">
             {holes.map((item, index) => (
               <div
                 key={index}
                 onClick={() => item && handleHitItem(index)}
-                className="h-20 bg-[#131b2e] rounded-2xl border border-slate-800/80 flex items-end justify-center relative overflow-hidden cursor-pointer active:scale-95 transition-transform shadow-[inset_0_6px_12px_rgba(0,0,0,0.8)]"
+                className="h-20 bg-[#4a3319] rounded-full border-4 border-[#332210] flex items-end justify-center relative overflow-hidden cursor-pointer active:scale-95 transition-transform shadow-[inset_0_8px_14px_rgba(0,0,0,0.9)]"
               >
-                {/* গর্তের শ্যাডো */}
-                <div className="absolute inset-x-1 bottom-1 h-5 bg-black/70 rounded-full blur-[2px]"></div>
+                {/* গর্তের ভেতর গভীরতার ছায়া */}
+                <div className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none rounded-full"></div>
 
                 {item ? (
                   <div className="z-10 pb-1 animate-pop-up flex items-center justify-center">
@@ -363,27 +363,25 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                       <img
                         src={GAME_ASSETS.mouse}
                         alt="mouse"
-                        className="w-14 h-14 object-contain drop-shadow-[0_4px_8px_rgba(234,179,8,0.5)]"
+                        className="w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]"
                       />
                     )}
                     {item.type === 'cat' && (
                       <img
                         src={GAME_ASSETS.cat}
                         alt="cat"
-                        className="w-14 h-14 object-contain drop-shadow-[0_4px_8px_rgba(244,63,94,0.5)]"
+                        className="w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]"
                       />
                     )}
                     {item.type === 'human' && (
                       <img
                         src={GAME_ASSETS.human}
                         alt="human"
-                        className="w-14 h-14 object-contain drop-shadow-[0_4px_8px_rgba(59,130,246,0.5)]"
+                        className="w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]"
                       />
                     )}
                   </div>
-                ) : (
-                  <div className="w-6 h-1.5 bg-black/40 rounded-full mb-2"></div>
-                )}
+                ) : null}
               </div>
             ))}
           </div>
