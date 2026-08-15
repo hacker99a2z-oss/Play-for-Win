@@ -120,7 +120,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                 }
                 return updated;
               });
-            }, 600);
+            }, 700);
 
             activeTimeouts.current.push(timeoutId);
           }
@@ -356,21 +356,21 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                       <img
                         src={GAME_ASSETS.mouse}
                         alt="mouse"
-                        className="w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]"
+                        className="w-20 h-20 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]"
                       />
                     )}
                     {item.type === 'cat' && (
                       <img
                         src={GAME_ASSETS.cat}
                         alt="cat"
-                        className="w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]"
+                        className="w-20 h-20 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]"
                       />
                     )}
                     {item.type === 'human' && (
                       <img
                         src={GAME_ASSETS.human}
                         alt="human"
-                        className="w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]"
+                        className="w-20 h-20 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]"
                       />
                     )}
                   </div>
