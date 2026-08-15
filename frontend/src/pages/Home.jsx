@@ -350,10 +350,15 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             <span className="text-amber-400 flex items-center gap-2">🎯 {score}</span>
           </div>
 
-          {/* ইমেজ দিয়ে তৈরি ঘাসের মাঠ */}
+          {/* ইমেজ দিয়ে তৈরি ঘাসের মাঠ (non-transparent field fixed) */}
           <div 
-            className="grid grid-cols-4 gap-2.5 p-3.5 rounded-3xl shadow-2xl relative touch-manipulation bg-cover bg-center border-4 border-lime-800"
-            style={{ backgroundImage: `url(${GAME_ASSETS.field})` }}
+            className="grid grid-cols-4 gap-2.5 p-3.5 rounded-3xl shadow-2xl relative touch-manipulation bg-green-700 border-4 border-lime-800 overflow-hidden w-full"
+            style={{ 
+              backgroundImage: `url(${GAME_ASSETS.field})`,
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center'
+            }}
           >
             {holes.map((item, index) => (
               <div
