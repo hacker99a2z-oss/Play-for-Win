@@ -9,7 +9,7 @@ const GAME_ASSETS = {
   human: 'https://i.postimg.cc/0N6HbHTz/gemini-2-5-flash-image-give-me-the-single-pic-of-human-with-transparent-background-and-same-size-0-r.png',
   field: 'https://i.postimg.cc/Kjh1KNNM/Chat-GPT-Image-Aug-15-2026-11-55-07-PM.png',
   hole: 'https://i.postimg.cc/c4QfxqX5/gemini-2-5-flash-image-now-give-me-just-a-single-hole-pic-0-removebg-preview.png',
-  hammer: 'https://i.postimg.cc/Bb9qhz90/Chat-GPT-Image-Aug-15-2026-11-38-33-PM-removebg-preview.png'
+  hammer: 'https://i.postimg.cc/Bb9qhz90/Chat-GPT-Image-Aug-15-2026-11-38-33-PM-removebg-preview.png',
 };
 
 const Home = ({ user, onPlayAd, refreshUserData }) => {
