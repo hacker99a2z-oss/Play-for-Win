@@ -259,10 +259,10 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           setGameState('idle');
           setScore(0);
           
-          const cooldownTarget = Date.now() + 20 * 1000;
+          const cooldownTarget = Date.now() + 35 * 1000;
           localStorage.setItem('gameCooldownTarget', cooldownTarget.toString());
           
-          setCooldown(20);
+          setCooldown(35);
           setIsCooldownActive(true);
         } else {
           alert(data.message || "Error claiming coins. Please try again.");
