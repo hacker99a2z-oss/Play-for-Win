@@ -64,13 +64,14 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     saveUserLocation();
   }, [user]);
 
-  // ২. অবজেক্ট (Mouse, Cat, Human) স্পনিং লজিক
+  // ২. অবজেক্ট (Mouse, Cat, Human) স্পনিং লজিক (২.২s গ্যাপে ইঁদুর বের হবে)
   useEffect(() => {
     let spawnInterval;
 
     if (gameState === 'playing') {
       clickedItemsRef.current.clear();
       
+      // প্রতি ২২০০ মিলি-সেকেন্ড (২.২ সেকেন্ড) পর পর স্পনিং হবে
       spawnInterval = setInterval(() => {
         setHoles((prevHoles) => {
           const emptyHoleIndexes = prevHoles
@@ -79,12 +80,12 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
           if (emptyHoleIndexes.length === 0) return prevHoles;
 
-          // একসাথে ১ থেকে ৩টি অবজেক্ট র্যান্ডমলি স্পন হওয়ার লজিক
+          // একসাথে ১ থেকে ৩টি অবজেক্ট বের হওয়ার সম্ভাবনা
           const batchSize = Math.floor(Math.random() * 3) + 1; 
           const availableIndices = [...emptyHoleIndexes];
           const newHoles = [...prevHoles];
 
-          let mouseSpawnedInThisBatch = false; // এই ব্যাচে ইঁদুর অলরেডি এসেছে কিনা চেক করার ফ্লাগ
+          let mouseSpawnedInThisBatch = false; // এই ব্যাচে ইঁদুর অলরেডি এসেছে কিনা চেক
 
           for (let i = 0; i < batchSize; i++) {
             if (availableIndices.length === 0) break;
@@ -98,11 +99,12 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
             if (canSpawnMouse) {
               const randVal = Math.random();
-              if (randVal < 0.6) {
+              // ইঁদুর বের হওয়ার সুযোগ বাড়ানো হয়েছে
+              if (randVal < 0.75) {
                 itemType = 'mouse';
                 spawnedMiceCount.current += 1;
-                mouseSpawnedInThisBatch = true; // নিশ্চিত করা হচ্ছে যেন এই ব্যাচে আর ইঁদুর না আসে
-              } else if (randVal < 0.8) {
+                mouseSpawnedInThisBatch = true; // এই ব্যাচে কেবল ১টি ইঁদুর নিশ্চিতকরণ
+              } else if (randVal < 0.9) {
                 itemType = 'cat';
               } else {
                 itemType = 'human';
@@ -114,7 +116,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
             newHoles[targetHoleIndex] = { id: itemId, type: itemType };
 
-            // ০.৭ সেকেন্ড পর গর্তের অবজেক্ট গায়েব হবে
+            // ০.৮ সেকেন্ড ধরে গর্তে দৃশ্যমান থাকবে
             const timeoutId = setTimeout(() => {
               setHoles((currHoles) => {
                 const updated = [...currHoles];
@@ -123,14 +125,14 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                 }
                 return updated;
               });
-            }, 700);
+            }, 600);
 
             activeTimeouts.current.push(timeoutId);
           }
 
           return newHoles;
         });
-      }, 1200);
+      }, 2400); // ২.২ সেকেন্ড ফ্রিকোয়েন্সি
     } else {
       activeTimeouts.current.forEach(clearTimeout);
       activeTimeouts.current = [];
