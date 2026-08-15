@@ -5,19 +5,20 @@ const BACKEND_URL = 'https://play-for-win.onrender.com';
 const Home = ({ user, onPlayAd, refreshUserData }) => {
   const [gameState, setGameState] = useState('idle'); // idle, playing, ended
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(15);
+  const [timeLeft, setTimeLeft] = useState(35); // ৩৫ সেকেন্ডের গেম টাইমার
   const [isClaiming, setIsClaiming] = useState(false);
   const [hasFreePlay, setHasFreePlay] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [isCooldownActive, setIsCooldownActive] = useState(false);
 
-  // ১৬টি গর্তের স্টেট (null থাকলে ফাঁকা গর্ত, অবজেক্ট থাকলে ইঁদুর অবস্থান করছে)
+  // ১৬টি গর্তের স্টেট
   const [holes, setHoles] = useState(Array(16).fill(null));
   
-  // মেমরি লিক ও মাল্টিপল ক্লিক প্রতিরোধ ট্র্যাকিং রেফারেন্স
+  // ট্র্যাকিং রেফারেন্স
   const activeTimeouts = useRef([]);
-  const clickedMiceRef = useRef(new Set());
+  const clickedItemsRef = useRef(new Set());
+  const spawnedMiceCount = useRef(0); // মোট কয়টি ইঁদুর বের হয়েছে তার হিসাব
 
   // ১. ডেইলি ফ্রি খেলার লিমিট ও আইপি লোকেশন চেক
   useEffect(() => {
@@ -40,7 +41,6 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       }
     }
 
-    // অ্যাপ ওপেন হলে ইউজার আইপি ও লোকেশন ব্যাকএন্ডে সেভ করা (সেশনে একবারই কল হবে)
     const saveUserLocation = async () => {
       try {
         if (user?.telegramId && !sessionStorage.getItem('loc_saved')) {
@@ -64,12 +64,13 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     saveUserLocation();
   }, [user]);
 
-  // ২. ইঁদুর স্পনিং ও ০.৬ সেকেন্ড টাইমার লজিক
+  // ২. র্যান্ডম অবজেক্ট (Mouse, Cat, Human) স্পনিং লজিক
   useEffect(() => {
     let spawnInterval;
 
     if (gameState === 'playing') {
-      clickedMiceRef.current.clear();
+      clickedItemsRef.current.clear();
+      
       spawnInterval = setInterval(() => {
         setHoles((prevHoles) => {
           const emptyHoleIndexes = prevHoles
@@ -78,30 +79,58 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
           if (emptyHoleIndexes.length === 0) return prevHoles;
 
-          const randomIndex = emptyHoleIndexes[Math.floor(Math.random() * emptyHoleIndexes.length)];
-          const mouseId = Date.now() + Math.random();
-
+          // একসাথে ১ থেকে ৩টি অবজেক্ট র্যান্ডমলি স্পন করানোর লজিক
+          const batchSize = Math.floor(Math.random() * 3) + 1; 
+          const availableIndices = [...emptyHoleIndexes];
           const newHoles = [...prevHoles];
-          newHoles[randomIndex] = { id: mouseId };
 
-          // ০.৬ সেকেন্ড পর ইঁদুর অটো গায়েব হওয়ার টাইমার
-          const timeoutId = setTimeout(() => {
-            setHoles((currHoles) => {
-              const updated = [...currHoles];
-              if (updated[randomIndex] && updated[randomIndex].id === mouseId) {
-                updated[randomIndex] = null;
+          for (let i = 0; i < batchSize; i++) {
+            if (availableIndices.length === 0) break;
+
+            const randIndexPos = Math.floor(Math.random() * availableIndices.length);
+            const targetHoleIndex = availableIndices.splice(randIndexPos, 1)[0];
+            const itemId = Date.now() + Math.random();
+
+            // টাইপ নির্ধারণ (mouse, cat, human)
+            let itemType = 'mouse';
+            const canSpawnMouse = spawnedMiceCount.current < 14;
+
+            if (canSpawnMouse) {
+              // ইঁদুর, বিড়াল ও মানুষের র্যান্ডম চান্স
+              const randVal = Math.random();
+              if (randVal < 0.6) {
+                itemType = 'mouse';
+                spawnedMiceCount.current += 1;
+              } else if (randVal < 0.8) {
+                itemType = 'cat';
+              } else {
+                itemType = 'human';
               }
-              return updated;
-            });
-          }, 600);
+            } else {
+              // ১৪টি ইঁদুর শেষ হয়ে গেলে শুধু বিড়াল বা মানুষ আসবে
+              itemType = Math.random() < 0.5 ? 'cat' : 'human';
+            }
 
-          activeTimeouts.current.push(timeoutId);
+            newHoles[targetHoleIndex] = { id: itemId, type: itemType };
+
+            // ০.৭ সেকেন্ড পর গর্তের অবজেক্ট গায়েব হবে
+            const timeoutId = setTimeout(() => {
+              setHoles((currHoles) => {
+                const updated = [...currHoles];
+                if (updated[targetHoleIndex] && updated[targetHoleIndex].id === itemId) {
+                  updated[targetHoleIndex] = null;
+                }
+                return updated;
+              });
+            }, 700);
+
+            activeTimeouts.current.push(timeoutId);
+          }
 
           return newHoles;
         });
-      }, 1150);
+      }, 1200);
     } else {
-      // খেলার বাইরে থাকলে টাইমার ক্লিয়ার করা
       activeTimeouts.current.forEach(clearTimeout);
       activeTimeouts.current = [];
       setHoles(Array(16).fill(null));
@@ -114,7 +143,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     };
   }, [gameState]);
 
-  // ৩. ১৫ সেকেন্ড কাউন্টডাউন টাইমার
+  // ৩. ৩৫ সেকেন্ড কাউন্টডাউন টাইমার
   useEffect(() => {
     let timer;
     if (gameState === 'playing' && timeLeft > 0) {
@@ -153,41 +182,46 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         startGame();
       } else {
         const adWatched = await onPlayAd();
-        
         if (!adWatched) {
           setIsLoading(false);
           return; 
         }
-
         startGame();
       }
     } catch (error) {
       console.error("Game start error:", error);
       alert("Something went wrong. Please try again.");
-    } font-bold {
+    } finally {
       setIsLoading(false);
     }
   };
 
   const startGame = () => {
     setScore(0);
-    setTimeLeft(15);
+    setTimeLeft(35); // ৩৫ সেকেন্ড সেট
     setHoles(Array(16).fill(null));
-    clickedMiceRef.current.clear();
+    clickedItemsRef.current.clear();
+    spawnedMiceCount.current = 0; // ইঁদুর কাউন্টার রিসেট
     setGameState('playing');
   };
 
-  // ৫. ইঁদুরে ক্লিক (+১০ পয়েন্ট, সর্বোচ্চ ১৫০ লিমিট ও অ্যান্টি-ডাবল ক্লিক প্রটেকশন)
-  const handleHitMouse = (index) => {
+  // ৫. আইটেমে ক্লিকের লজিক (+১০ ইঁদুরের জন্য, -৫ বিড়াল/মানুষের জন্য)
+  const handleHitItem = (index) => {
     if (gameState !== 'playing') return;
 
-    const mouse = holes[index];
-    if (!mouse || clickedMiceRef.current.has(mouse.id)) return;
+    const item = holes[index];
+    if (!item || clickedItemsRef.current.has(item.id)) return;
 
-    // ইঁদুরটিতে একবারই ক্লিক কাউন্ট হবে
-    clickedMiceRef.current.add(mouse.id);
+    clickedItemsRef.current.add(item.id);
 
-    setScore((prevScore) => Math.min(prevScore + 10, 150));
+    if (item.type === 'mouse') {
+      // সর্বোচ্চ ১৪০ পয়েন্ট (১৪টি ইঁদুর x ১০ পয়েন্ট)
+      setScore((prevScore) => Math.min(prevScore + 10, 140));
+    } else if (item.type === 'cat' || item.type === 'human') {
+      // বিড়াল বা মানুষের উপর ক্লিক করলে -৫ পয়েন্ট (০ এর নিচে নামবে না)
+      setScore((prevScore) => Math.max(0, prevScore - 5));
+    }
+
     setHoles((prevHoles) => {
       const newHoles = [...prevHoles];
       newHoles[index] = null;
@@ -195,7 +229,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     });
   };
 
-  // ৬. রিওয়ার্ড ক্লেইম লজিক (Single & Double Claim)
+  // ৬. রিওয়ার্ড ক্লেইম লজিক
   const claimReward = async (isDouble = false) => {
     if (score === 0) {
       setGameState('idle');
@@ -240,12 +274,10 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
     if (isDouble) {
       const adWatched = await onPlayAd();
-      
       if (!adWatched) {
         setIsClaiming(false);
         return;
       }
-
       await sendScoreToBackend(score * 2);
     } else {
       await sendScoreToBackend(score);
@@ -263,10 +295,16 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           </div>
 
           <h2 className="text-2xl font-bold text-amber-400 mb-2">Whack A Mouse</h2>
-          <p className="text-gray-400 text-sm mb-1">Hit mice before they hide in 0.6s!</p>
-          <p className="text-xs text-amber-300 bg-amber-950/40 px-3 py-1 rounded-full border border-amber-500/20 mb-6">
-            ✨ Destroy 1 Mouse = +10 Coins
-          </p>
+          <p className="text-gray-400 text-sm mb-1">Hit 14 mice in 35s! Avoid Cats & Humans!</p>
+          
+          <div className="flex flex-wrap justify-center gap-2 mb-6 mt-2">
+            <span className="text-xs text-emerald-300 bg-emerald-950/40 px-3 py-1 rounded-full border border-emerald-500/20">
+              🐭 Mouse = +10 Coins
+            </span>
+            <span className="text-xs text-rose-300 bg-rose-950/40 px-3 py-1 rounded-full border border-rose-500/20">
+              🐱/👨 Cat/Human = -5 Coins
+            </span>
+          </div>
 
           <button
             onClick={handleStartGame}
@@ -296,30 +334,30 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         </div>
       )}
 
-      {/* ২. PLAYING STATE (4x4 Grid Holes Arena) */}
+      {/* ২. PLAYING STATE (4x4 Grid Arena) */}
       {gameState === 'playing' && (
         <div className="w-full">
-          {/* টাইমার ও পয়েন্ট ডিসপ্লে */}
           <div className="flex justify-between items-center bg-gray-900 px-4 py-3 rounded-xl border border-gray-800 mb-3 font-bold text-lg">
             <span className="text-amber-400">⏱️ {timeLeft}s</span>
             <span className="text-emerald-400">🎯 {score}</span>
           </div>
 
-          {/* ৪x৪ ১৬টি গর্তের গ্রিড */}
           <div className="grid grid-cols-4 gap-3 bg-slate-900 border-2 border-gray-800 p-3 rounded-2xl touch-manipulation">
-            {holes.map((mouse, index) => (
+            {holes.map((item, index) => (
               <div
                 key={index}
-                onClick={() => mouse && handleHitMouse(index)}
+                onClick={() => item && handleHitItem(index)}
                 className="h-16 bg-slate-950 rounded-2xl border border-gray-800 flex items-center justify-center relative overflow-hidden cursor-pointer active:scale-95 transition-all shadow-inner"
               >
-                {/* গর্তের চিহ্নিত শেড */}
                 <div className="absolute inset-x-2 bottom-1 h-3 bg-black/60 rounded-full"></div>
 
-                {/* ইঁদুর থাকলে দেখাবে */}
-                {mouse ? (
-                  <div className="flex flex-col items-center justify-center z-10 animate-pulse">
-                    <span className="text-2xl leading-none">🐭</span>
+                {item ? (
+                  <div className="flex flex-col items-center justify-center z-10 animate-bounce">
+                    <span className="text-2xl leading-none">
+                      {item.type === 'mouse' && '🐭'}
+                      {item.type === 'cat' && '🐱'}
+                      {item.type === 'human' && '👨'}
+                    </span>
                   </div>
                 ) : (
                   <span className="text-xs text-gray-700">🕳️</span>
