@@ -6,7 +6,9 @@ const BACKEND_URL = 'https://play-for-win.onrender.com';
 const GAME_ASSETS = {
   mouse: 'https://i.postimg.cc/mrwWynd6/gemini-2-5-flash-image-give-me-the-single-pic-of-mouse-with-transparent-background-and-same-size-0-r.png',
   cat: 'https://i.postimg.cc/t49jnyks/gemini-2-5-flash-image-give-me-the-single-pic-of-cat-with-transparent-background-and-same-size-0-rem.png',
-  human: 'https://i.postimg.cc/0N6HbHTz/gemini-2-5-flash-image-give-me-the-single-pic-of-human-with-transparent-background-and-same-size-0-r.png'
+  human: 'https://i.postimg.cc/0N6HbHTz/gemini-2-5-flash-image-give-me-the-single-pic-of-human-with-transparent-background-and-same-size-0-r.png',
+  field: 'https://i.postimg.cc/5t83DHDs/gemini-2-5-flash-image-give-me-the-pic-of-only-background-and-no-cat-no-mouse-no-human-with-same-siz.jpg',
+  hole: 'https://i.postimg.cc/c4QfxqX5/gemini-2-5-flash-image-now-give-me-just-a-single-hole-pic-0-removebg-preview.png'
 };
 
 const Home = ({ user, onPlayAd, refreshUserData }) => {
@@ -330,48 +332,55 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         </div>
       )}
 
-      {/* ২. PLAYING STATE (4x4 Cartoon Grass Arena) */}
+      {/* ২. PLAYING STATE (Image Based Field & Hole) */}
       {gameState === 'playing' && (
         <div className="w-full max-w-sm mx-auto p-2">
           {/* স্কোরবার */}
-          <div className="flex justify-between items-center bg-[#0e1726]/80 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-700/50 mb-4 font-bold text-lg shadow-lg">
-            <span className="text-[#a8dadc] flex items-center gap-2">⏱️ {timeLeft}s</span>
+          <div className="flex justify-between items-center bg-slate-900/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-700 mb-4 font-bold text-lg shadow-lg">
+            <span className="text-cyan-300 flex items-center gap-2">⏱️ {timeLeft}s</span>
             <span className="text-amber-400 flex items-center gap-2">🎯 {score}</span>
           </div>
 
-          {/* কার্টুন ঘাসের মাঠ ও মাটির গর্ত */}
-          <div className="grid grid-cols-4 gap-3 bg-[#aacc00] border-4 border-[#80b918] p-4 rounded-3xl shadow-2xl relative touch-manipulation">
+          {/* ইমেজ দিয়ে তৈরি ঘাসের মাঠ */}
+          <div 
+            className="grid grid-cols-4 gap-3 p-4 rounded-3xl shadow-2xl relative touch-manipulation bg-cover bg-center border-4 border-lime-800"
+            style={{ backgroundImage: `url(${GAME_ASSETS.field})` }}
+          >
             {holes.map((item, index) => (
               <div
                 key={index}
                 onClick={() => item && handleHitItem(index)}
-                className="h-20 bg-[#582f0e] rounded-full border-4 border-[#331800] flex items-center justify-center relative cursor-pointer active:scale-95 transition-transform shadow-[inset_0_6px_10px_rgba(0,0,0,0.8)]"
+                className="h-20 relative flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
               >
-                {/* গর্তের ভেতর গভীরতার ছায়া */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none rounded-full"></div>
+                {/* ১. গর্তের ব্যাকগ্রাউন্ড ইমেজ */}
+                <img
+                  src={GAME_ASSETS.hole}
+                  alt="hole"
+                  className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                />
 
-                {/* ইঁদুর, বিড়াল ও মানুষের ছবি (গর্তের ওপর ভেসে উঠবে) */}
+                {/* ২. ইঁদুর, বিড়াল ও মানুষের ছবি (গর্তের ওপরে রেন্ডার হবে) */}
                 {item ? (
-                  <div className="z-20 animate-pop-up flex items-center justify-center">
+                  <div className="z-10 animate-pop-up flex items-center justify-center">
                     {item.type === 'mouse' && (
                       <img
                         src={GAME_ASSETS.mouse}
                         alt="mouse"
-                        className="w-16 h-16 object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.6)]"
+                        className="w-20 h-20 object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.6)]"
                       />
                     )}
                     {item.type === 'cat' && (
                       <img
                         src={GAME_ASSETS.cat}
                         alt="cat"
-                        className="w-16 h-16 object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.6)]"
+                        className="w-18 h-18 object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.6)]"
                       />
                     )}
                     {item.type === 'human' && (
                       <img
                         src={GAME_ASSETS.human}
                         alt="human"
-                        className="w-16 h-16 object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.6)]"
+                        className="w-18 h-18 object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.6)]"
                       />
                     )}
                   </div>
