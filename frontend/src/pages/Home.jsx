@@ -15,8 +15,9 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   // ১৬টি গর্তের স্টেট (null থাকলে ফাঁকা গর্ত, অবজেক্ট থাকলে ইঁদুর অবস্থান করছে)
   const [holes, setHoles] = useState(Array(16).fill(null));
   
-  // মেমরি লিক বন্ধ করতে টাইমার ট্র্যাকিং রেফারেন্স
+  // মেমরি লিক ও মাল্টিপল ক্লিক প্রতিরোধ ট্র্যাকিং রেফারেন্স
   const activeTimeouts = useRef([]);
+  const clickedMiceRef = useRef(new Set());
 
   // ১. ডেইলি ফ্রি খেলার লিমিট ও আইপি লোকেশন চেক
   useEffect(() => {
@@ -30,7 +31,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
     const savedCooldownTarget = localStorage.getItem('gameCooldownTarget');
     if (savedCooldownTarget) {
-      const remaining = Math.ceil((parseInt(savedCooldownTarget) - Date.now()) / 1000);
+      const remaining = Math.ceil((parseInt(savedCooldownTarget, 10) - Date.now()) / 1000);
       if (remaining > 0) {
         setCooldown(remaining);
         setIsCooldownActive(true);
@@ -63,11 +64,12 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     saveUserLocation();
   }, [user]);
 
-  // ২. ইঁদুর স্পনিং ও ১.২ সেকেন্ড টাইমার লজিক
+  // ২. ইঁদুর স্পনিং ও ০.৬ সেকেন্ড টাইমার লজিক
   useEffect(() => {
     let spawnInterval;
 
     if (gameState === 'playing') {
+      clickedMiceRef.current.clear();
       spawnInterval = setInterval(() => {
         setHoles((prevHoles) => {
           const emptyHoleIndexes = prevHoles
@@ -82,7 +84,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           const newHoles = [...prevHoles];
           newHoles[randomIndex] = { id: mouseId };
 
-          // টাইমার সেট করা ও রিকভারির জন্য ট্র্যাকিংয়ে রাখা
+          // ০.৬ সেকেন্ড পর ইঁদুর অটো গায়েব হওয়ার টাইমার
           const timeoutId = setTimeout(() => {
             setHoles((currHoles) => {
               const updated = [...currHoles];
@@ -91,7 +93,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
               }
               return updated;
             });
-          }, 600); // ০.৬ সেকেন্ড ইঁদুর থাকবে
+          }, 600);
 
           activeTimeouts.current.push(timeoutId);
 
@@ -99,7 +101,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         });
       }, 1150);
     } else {
-      // খেলার বাইরে থাকলে টাইমার ক্লিয়ার করা
+      // খেলার বাইরে থাকলে টাইমার ক্লিয়ার করা
       activeTimeouts.current.forEach(clearTimeout);
       activeTimeouts.current = [];
       setHoles(Array(16).fill(null));
@@ -126,7 +128,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     return () => clearInterval(timer);
   }, [gameState, timeLeft]);
 
-  // ৪. ২০ সেকেন্ডের কুলডাউন টাইমার
+  // ৪. কুলডাউন টাইমার
   useEffect(() => {
     let timer;
     if (isCooldownActive && cooldown > 0) {
@@ -140,7 +142,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   }, [isCooldownActive, cooldown]);
 
   const handleStartGame = async () => {
-    if (isLoading) return;
+    if (isLoading || isCooldownActive) return;
     setIsLoading(true);
 
     try {
@@ -162,7 +164,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     } catch (error) {
       console.error("Game start error:", error);
       alert("Something went wrong. Please try again.");
-    } finally {
+    } font-bold {
       setIsLoading(false);
     }
   };
@@ -171,23 +173,24 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     setScore(0);
     setTimeLeft(15);
     setHoles(Array(16).fill(null));
+    clickedMiceRef.current.clear();
     setGameState('playing');
   };
 
-  // ৫. ইঁদুরে ক্লিক (+১০ পয়েন্ট, সর্বোচ্চ ১৫০ লিমিট)
+  // ৫. ইঁদুরে ক্লিক (+১০ পয়েন্ট, সর্বোচ্চ ১৫০ লিমিট ও অ্যান্টি-ডাবল ক্লিক প্রটেকশন)
   const handleHitMouse = (index) => {
     if (gameState !== 'playing') return;
 
-    setHoles((prevHoles) => {
-      const mouse = prevHoles[index];
-      if (!mouse) return prevHoles;
+    const mouse = holes[index];
+    if (!mouse || clickedMiceRef.current.has(mouse.id)) return;
 
-      // Anti-cheat limit: ১৫ সেকেন্ডের গেমে সর্বোচ্চ ১৫০ কয়েন সম্ভব
-      setScore((prevScore) => Math.min(prevScore + 10, 150));
-      
+    // ইঁদুরটিতে একবারই ক্লিক কাউন্ট হবে
+    clickedMiceRef.current.add(mouse.id);
+
+    setScore((prevScore) => Math.min(prevScore + 10, 150));
+    setHoles((prevHoles) => {
       const newHoles = [...prevHoles];
       newHoles[index] = null;
-
       return newHoles;
     });
   };
@@ -220,7 +223,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           setScore(0);
           
           const cooldownTarget = Date.now() + 20 * 1000;
-          localStorage.setItem('gameCooldownTarget', cooldownTarget);
+          localStorage.setItem('gameCooldownTarget', cooldownTarget.toString());
           
           setCooldown(20);
           setIsCooldownActive(true);
@@ -296,14 +299,14 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       {/* ২. PLAYING STATE (4x4 Grid Holes Arena) */}
       {gameState === 'playing' && (
         <div className="w-full">
-          {/* টাইমার ও পয়েন্ট ডিসপ্লে */}
+          {/* টাইমার ও পয়েন্ট ডিসপ্লে */}
           <div className="flex justify-between items-center bg-gray-900 px-4 py-3 rounded-xl border border-gray-800 mb-3 font-bold text-lg">
             <span className="text-amber-400">⏱️ {timeLeft}s</span>
             <span className="text-emerald-400">🎯 {score}</span>
           </div>
 
           {/* ৪x৪ ১৬টি গর্তের গ্রিড */}
-          <div className="grid grid-cols-4 gap-3 bg-slate-900 border-2 border-gray-800 p-3 rounded-2xl">
+          <div className="grid grid-cols-4 gap-3 bg-slate-900 border-2 border-gray-800 p-3 rounded-2xl touch-manipulation">
             {holes.map((mouse, index) => (
               <div
                 key={index}
