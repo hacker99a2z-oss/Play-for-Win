@@ -6,9 +6,9 @@ import mouseGamma from '../assets/mouse-gamma.png';
 
 const Fighting = ({ onPlayAd }) => {
   const [mice, setMice] = useState([
-    { id: 'alpha', name: 'MOUSE ALPHA', power: 6250, img: mouseAlpha },
-    { id: 'beta', name: 'MOUSE BETA', power: 5500, img: mouseBeta },
-    { id: 'gamma', name: 'MOUSE GAMMA', power: 7000, img: mouseGamma },
+    { id: 'alpha', power: 6250, color: 'text-sky-400', img: mouseAlpha },
+    { id: 'beta', power: 5500, color: 'text-amber-500', img: mouseBeta },
+    { id: 'gamma', power: 7000, color: 'text-emerald-400', img: mouseGamma },
   ]);
 
   const totalPower = mice.reduce((acc, curr) => acc + curr.power, 0);
@@ -45,25 +45,24 @@ const Fighting = ({ onPlayAd }) => {
         </span>
       </div>
 
-      {/* ২. মাঝের ৩টি কার্ড ও বুস্ট বাটন (Responsive Grid) */}
+      {/* ২. মাঝের ৩টি কার্ড ও বুস্ট বাটন (অতিরিক্ত টেক্সট ফাকা করে ওভারলে করা হয়েছে) */}
       <div className="grid grid-cols-3 gap-1.5 my-auto py-2">
         {mice.map((mouse) => (
           <div key={mouse.id} className="flex flex-col gap-1.5 items-center">
             
-            {/* মাউসের PNG ছবি */}
-            <div className="w-full bg-black/40 border border-white/30 rounded-xl p-1 backdrop-blur-sm flex flex-col items-center">
+            {/* মাউসের PNG ছবি ও ডায়নামিক নম্বর */}
+            <div className="w-full relative flex flex-col items-center justify-center">
               <img 
                 src={mouse.img} 
-                alt={mouse.name} 
-                className="w-full h-auto max-h-[110px] object-contain drop-shadow-md"
+                alt="Mouse Card" 
+                className="w-full h-auto object-contain drop-shadow-md"
               />
               
-              {/* পাওয়ারের হিসাব */}
-              <div className="w-full bg-black/60 rounded-lg p-1 mt-1 text-center border border-white/10">
-                <p className="text-[8px] font-black text-slate-300 truncate">{mouse.name}</p>
-                <p className="text-[9px] font-black text-sky-400">
-                  POWER: <span className="text-white">{mouse.power.toLocaleString()}</span>
-                </p>
+              {/* ছবির ওপর শুধু পাওয়ারের সংখ্যাটি দেখাবে */}
+              <div className="absolute bottom-[6%] w-full text-center">
+                <span className={`font-black text-xs tracking-wider ${mouse.color} drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]`}>
+                  {mouse.power.toLocaleString()}
+                </span>
               </div>
             </div>
 
@@ -85,7 +84,7 @@ const Fighting = ({ onPlayAd }) => {
       {/* ৩. নিচের FIGHT! বাটন */}
       <div className="w-full px-2 mb-2">
         <button
-          onClick={() => alert(`⚔️ Battle Started!`)}
+          onClick={() => alert(`⚔️ Battle Started with Total Power: ${totalPower.toLocaleString()}`)}
           className="w-full bg-gradient-to-r from-red-600 via-orange-500 to-red-600 hover:brightness-110 text-yellow-300 font-black text-xl py-3 rounded-xl border-2 border-yellow-400 shadow-2xl tracking-widest flex items-center justify-center gap-2 active:scale-95 transition"
         >
           <span>⚔️</span>
