@@ -377,7 +377,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                     height: '100px', 
                     maxWidth: 'none', 
                     maxHeight: 'none', 
-                    transform: 'scale(1.8)' 
+                    transform: 'scale(2.4)' 
                   }}
                   className="absolute object-contain opacity-95 pointer-events-none z-0"
                 />
