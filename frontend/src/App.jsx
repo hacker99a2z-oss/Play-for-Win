@@ -3,6 +3,7 @@ import Header from './components/Header';
 import Navigation from './components/Navigation';
 import Home from './pages/Home';
 import Fighting from './pages/Fighting';
+import Battle from './pages/Battle';
 import Referral from './pages/Referral';
 import Contest from './pages/Contest';
 import Withdraw from './pages/Withdraw';
@@ -149,6 +150,15 @@ export default function App() {
           <Fighting 
             user={user} 
             onPlayAd={handlePlayAd} 
+            refreshUserData={syncUserData} 
+            onNavigate={setActiveTab}
+          />
+        )}
+
+        {/* 🔴 Battle পেজের কন্ডিশন না থাকলে এটি যুক্ত করে নিন */}
+        {activeTab === 'battle' && (
+          <Battle 
+            user={user} 
             refreshUserData={syncUserData} 
           />
         )}
