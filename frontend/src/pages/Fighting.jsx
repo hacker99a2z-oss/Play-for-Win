@@ -61,7 +61,7 @@ const Fighting = ({ onPlayAd }) => {
               
               {/* 🔴 পাওয়ারের সংখ্যা নিখুঁতভাবে বসানোর জন্য আপডেট পজিশনিং */}
               <div 
-                className="absolute font-black text-[10px] sm:text-xs tracking-wider bottom-[8%] right-[10%] translate-x-1"
+                className="absolute font-black text-[10px] sm:text-xs tracking-wider bottom-[15%] right-[50%] translate-x-1"
                 style={{
                   color: mouse.color,
                   textShadow: '0px 2px 4px rgba(0,0,0,0.95)'
