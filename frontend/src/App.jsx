@@ -76,7 +76,7 @@ export default function App() {
       if (window.Adsgram) {
         try {
           const AdController = window.Adsgram.init({
-            blockId: "int-41387",
+            blockId: "41655",
             userId: String(currentTelegramId)
           });
 
