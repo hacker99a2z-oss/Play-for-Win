@@ -27,7 +27,7 @@ const Fighting = ({ onPlayAd }) => {
       color: '#34d399', 
       img: mouseGamma,
       // 🟢 Gamma (সবুজ) টেক্সটের পজিশন
-      textPos: { bottom: '5%', left: '47%' }
+      textPos: { bottom: '4.8%', left: '46.8%' }
     },
   ]);
 
