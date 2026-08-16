@@ -82,11 +82,12 @@ const Fighting = ({ onPlayAd }) => {
               
               {/* 🔴 ডায়নামিকভাবে আলাদা আলাদা টেক্সট পজিশনিং */}
               <div 
-                className="absolute font-black text-[8px] sm:text-[10px] tracking-wider whitespace-nowrap"
+                className="absolute font-black tracking-wider whitespace-nowrap"
                 style={{
                   bottom: mouse.textPos.bottom,
                   left: mouse.textPos.left,
                   color: mouse.color,
+                  fontSize: '6px', // 🔴 এখানে সরাসরি ফন্ট সাইজ কমান (প্রয়োজনে 7px বা 6px দিন)
                   textShadow: '0px 2px 4px rgba(0,0,0,0.95)'
                 }}
               >
