@@ -347,9 +347,9 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           <div 
             style={{ 
               width: '100%',
-              height: '350px',
-              minHeight: '350px',
-              maxHeight: '350px',
+              height: '500px',
+              minHeight: '500px',
+              maxHeight: '500px',
               backgroundImage: `url(${GAME_ASSETS.field})`,
               backgroundSize: '100% 100%',
               backgroundRepeat: 'no-repeat'
