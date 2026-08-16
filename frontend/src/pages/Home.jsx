@@ -334,7 +334,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         </div>
       )}
 
-      {/* ২. PLAYING STATE */}
+      {/* ২. PLAYING STATE (Fixed Layout Jump & Overflow) */}
       {gameState === 'playing' && (
         <div className="w-full max-w-sm mx-auto p-2">
           {/* স্কোরবার */}
@@ -343,9 +343,9 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             <span className="text-amber-400 flex items-center gap-2">🎯 {score}</span>
           </div>
 
-          {/* প্লেন ঘাসের মাঠ কন্টেইনার */}
+          {/* ফিক্সড সাইজ গেম বোর্ড কন্টেইনার */}
           <div 
-            className="grid grid-cols-4 gap-2.5 p-4 rounded-3xl shadow-2xl relative touch-manipulation bg-green-700 border-4 border-lime-800 aspect-square w-full"
+            className="grid grid-cols-4 gap-2 p-3 rounded-3xl shadow-2xl relative touch-manipulation bg-green-700 border-4 border-lime-800 w-full h-[320px]"
             style={{ 
               backgroundImage: `url(${GAME_ASSETS.field})`,
               backgroundSize: '100% 100%',
@@ -357,46 +357,39 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
               <div
                 key={index}
                 onClick={() => item && handleHitItem(index)}
-                className="relative flex items-end justify-center cursor-pointer active:scale-95 transition-transform h-full"
+                className="relative flex items-center justify-center cursor-pointer h-full w-full"
               >
-                {/* ১. গর্তের ছবি (১৬টি ঘরেই ব্যাকগ্রাউন্ডে দৃশ্যমান থাকবে) */}
-                <img
-                  src={GAME_ASSETS.hole}
-                  alt="hole"
-                  className="absolute bottom-1 w-full h-8 object-contain pointer-events-none z-0 opacity-95"
-                />
-
-                {/* ২. পপ-আপ ক্যারেক্টার ও হাতুড়ি */}
+                {/* ক্যারেক্টার ও হাতুড়ি পপ-আপ */}
                 {item ? (
-                  <div className="z-10 animate-pop-up flex items-center justify-center relative pb-2 pointer-events-auto">
+                  <div className="z-10 animate-pop-up flex items-center justify-center relative w-full h-full">
                     {item.type === 'mouse' && (
                       <img
                         src={GAME_ASSETS.mouse}
                         alt="mouse"
-                        className="w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                        className="w-12 h-12 sm:w-14 sm:h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                       />
                     )}
                     {item.type === 'cat' && (
                       <img
                         src={GAME_ASSETS.cat}
                         alt="cat"
-                        className="w-13 h-13 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                        className="w-11 h-11 sm:w-13 sm:h-13 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                       />
                     )}
                     {item.type === 'human' && (
                       <img
                         src={GAME_ASSETS.human}
                         alt="human"
-                        className="w-13 h-13 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                        className="w-11 h-11 sm:w-13 sm:h-13 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                       />
                     )}
 
-                    {/* হাতুড়ির আঘাত অ্যানিমেশন (জাস্ট হিট বক্সে হাতুড়ি ভেসে উঠবে) */}
+                    {/* হাতুড়ির হিট অ্যানিমেশন */}
                     {hitIndex === index && (
                       <img
                         src={GAME_ASSETS.hammer}
                         alt="hammer"
-                        className="absolute -top-6 -right-4 w-14 h-14 z-30 pointer-events-none transform -rotate-45 transition-all duration-100 scale-125 drop-shadow-[0_8px_12px_rgba(0,0,0,0.9)]"
+                        className="absolute -top-3 -right-2 w-12 h-12 z-30 pointer-events-none transform -rotate-45 transition-all scale-110 drop-shadow-[0_6px_10px_rgba(0,0,0,0.9)]"
                       />
                     )}
                   </div>
