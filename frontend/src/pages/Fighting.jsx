@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import mouseAlpha from '../assets/mouse-alpha.png';
 import mouseBeta from '../assets/mouse-beta.png';
 import mouseGamma from '../assets/mouse-gamma.png';
+import adsBoostImg from '../assets/ADS-boost.png';
+import fightBtnImg from '../assets/FIGHT.png';
 
 const Fighting = ({ onPlayAd }) => {
   const [mice, setMice] = useState([
@@ -93,30 +95,32 @@ const Fighting = ({ onPlayAd }) => {
               </div>
             </div>
 
-            {/* Boost Button */}
+            {/* 🔴 ২. Boost Button-এ লেখার বদলে ADS-boost.png বসানো হয়েছে */}
             <button
               onClick={() => handleBoostSingleMouse(mouse.id)}
-              className="w-[95%] bg-black/60 hover:bg-black/80 border border-white/40 rounded-xl py-1.5 px-1 text-center backdrop-blur-sm shadow-md active:scale-95 transition flex flex-col items-center justify-center mt-1"
+              className="w-[98%] active:scale-95 transition hover:brightness-110 mt-1 cursor-pointer"
             >
-              <div className="flex items-center gap-1 text-[9px] font-black">
-                <span>📺</span>
-                <span className="text-yellow-400">+100</span>
-              </div>
-              <span className="text-[8px] font-bold uppercase text-slate-200">BOOST</span>
+              <img 
+                src={adsBoostImg} 
+                alt="Ads Boost" 
+                className="w-full h-auto object-contain drop-shadow-md"
+              />
             </button>
           </div>
         ))}
       </div>
 
-      {/* ৩. FIGHT! বাটন */}
-      <div className="w-full px-2 mt-4 mb-6">
+      {/* 🔴 ৩. FIGHT! Button-এ লেখার বদলে FIGHT.png বসানো হয়েছে */}
+      <div className="w-full px-2 mt-4 mb-6 flex justify-center">
         <button
           onClick={() => alert(`⚔️ Battle Started with Total Power: ${totalPower.toLocaleString()}`)}
-          className="w-full bg-gradient-to-r from-red-600 via-orange-500 to-red-600 hover:brightness-110 text-yellow-300 font-black text-xl py-3 rounded-xl border-2 border-yellow-400 shadow-2xl tracking-widest flex items-center justify-center gap-2 active:scale-95 transition"
+          className="w-full active:scale-95 transition hover:brightness-110 cursor-pointer"
         >
-          <span>⚔️</span>
-          <span className="drop-shadow-md uppercase">FIGHT!</span>
-          <span>⚔️</span>
+          <img 
+            src={fightBtnImg} 
+            alt="Fight" 
+            className="w-full h-auto object-contain drop-shadow-2xl max-h-20"
+          />
         </button>
       </div>
     </div>
