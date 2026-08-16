@@ -19,7 +19,7 @@ const Fighting = ({ onPlayAd }) => {
       color: '#f59e0b', 
       img: mouseBeta,
       // 🟡 Beta (হলুদ) টেক্সটের পজিশন
-      textPos: { bottom: '6%', left: '52%' }
+      textPos: { bottom: '6.5%', left: '52%' }
     },
     { 
       id: 'gamma', 
