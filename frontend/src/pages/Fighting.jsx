@@ -45,25 +45,26 @@ const Fighting = ({ onPlayAd }) => {
         </span>
       </div>
 
-      {/* ২. ইঁদুরের কার্ড এবং পাওয়ারের পজিশন */}
-      <div className="grid grid-cols-3 gap-1 px-1 my-auto py-2">
+      {/* ২. ইঁদুরের বড় কার্ড এবং পাওয়ারের পজিশন */}
+      {/* gap-0.5 এবং px-0 দিয়ে কার্ডগুলোর জায়গা বাড়িয়ে বড় করা হয়েছে */}
+      <div className="grid grid-cols-3 gap-0.5 px-0 my-auto py-2">
         {mice.map((mouse) => (
           <div key={mouse.id} className="flex flex-col gap-2 items-center">
             
-            {/* ছবির কন্টেইনার - ডানে/বামে ও নিচে পজিশন সেট */}
-            <div className="w-full relative inline-block">
+            {/* ছবির কন্টেইনার (scale-105 বাড়িয়ে মাউসগুলো বড় করা হয়েছে) */}
+            <div className="w-full relative inline-block transform scale-105 origin-center">
               <img 
                 src={mouse.img} 
                 alt="Mouse Card" 
                 className="w-full h-auto block object-contain"
               />
               
-              {/* ছবির পাওয়ার বার অনুযায়ী পজিশন (প্রয়োজনমতো right ও bottom পিক্সেল পরিবর্তন করতে পারেন) */}
+              {/* পাওয়ারের টেক্সট */}
               <div 
                 className="absolute font-black text-[11px] sm:text-xs tracking-wider"
                 style={{
-                  bottom: '10px', // উপর-নিচে করার জন্য
-                  right: '12px',  // ডানে-বামে করার জন্য
+                  bottom: '10px', 
+                  right: '12px',  
                   color: mouse.color,
                   textShadow: '0px 2px 4px rgba(0,0,0,0.9)'
                 }}
@@ -75,7 +76,7 @@ const Fighting = ({ onPlayAd }) => {
             {/* Boost Button */}
             <button
               onClick={() => handleBoostSingleMouse(mouse.id)}
-              className="w-full bg-black/60 hover:bg-black/80 border border-white/40 rounded-xl py-1.5 px-1 text-center backdrop-blur-sm shadow-md active:scale-95 transition flex flex-col items-center justify-center"
+              className="w-[95%] bg-black/60 hover:bg-black/80 border border-white/40 rounded-xl py-1.5 px-1 text-center backdrop-blur-sm shadow-md active:scale-95 transition flex flex-col items-center justify-center mt-1"
             >
               <div className="flex items-center gap-1 text-[9px] font-black">
                 <span>📺</span>
