@@ -41,11 +41,16 @@ const Fighting = ({ onPlayAd }) => {
         </span>
       </div>
 
-      {/* ২. ইঁদুরের বড় কার্ড এবং পাওয়ার পজিশনিং */}
+      {/* ২. ইঁদুরের কার্ড এবং পাওয়ার পজিশনিং */}
       <div className="grid grid-cols-3 gap-1 px-0 my-auto py-2">
         {mice.map((mouse) => (
-          <div key={mouse.id} className="flex flex-col gap-2 items-center">
-            
+          <div 
+            key={mouse.id} 
+            /* 🔴 gamma (সবুজ ইঁদুর) হলে translate-x-3 দিয়ে ডানে সরানো হলো */
+            className={`flex flex-col gap-2 items-center transform transition-transform ${
+              mouse.id === 'gamma' ? 'translate-x-3' : ''
+            }`}
+          >
             {/* ছবির কন্টেইনার */}
             <div className="w-full relative inline-block transform scale-105 origin-center">
               <img 
@@ -54,12 +59,10 @@ const Fighting = ({ onPlayAd }) => {
                 className="w-full h-auto block object-contain"
               />
               
-              {/* পাওয়ারের সংখ্যাটি নিখুঁতভাবে বসানোর জন্য পজিশন */}
+              {/* 🔴 পাওয়ারের সংখ্যা নিখুঁতভাবে বসানোর জন্য আপডেট পজিশনিং */}
               <div 
-                className="absolute font-black text-[10px] sm:text-xs tracking-wider"
+                className="absolute font-black text-[10px] sm:text-xs tracking-wider bottom-[8%] right-[10%] translate-x-1"
                 style={{
-                  bottom: '4%',
-                  left: '52%',
                   color: mouse.color,
                   textShadow: '0px 2px 4px rgba(0,0,0,0.95)'
                 }}
@@ -83,7 +86,7 @@ const Fighting = ({ onPlayAd }) => {
         ))}
       </div>
 
-      {/* ৩. FIGHT! বাটন (নেভিগেশনের উপরে রাখার জন্য Margin অ্যাডজাস্ট করা হয়েছে) */}
+      {/* ৩. FIGHT! বাটন */}
       <div className="w-full px-2 mt-4 mb-6">
         <button
           onClick={() => alert(`⚔️ Battle Started with Total Power: ${totalPower.toLocaleString()}`)}
