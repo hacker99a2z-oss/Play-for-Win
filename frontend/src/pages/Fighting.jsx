@@ -110,16 +110,17 @@ const Fighting = ({ onPlayAd }) => {
         ))}
       </div>
 
-      {/* 🔴 ৩. FIGHT! Button-এ লেখার বদলে FIGHT.png বসানো হয়েছে */}
-      <div className="w-full px-2 mt-6 mb-6 flex justify-center">
+      {/* 🔴 FIGHT! Image Button - উচ্চতা কমানো এবং নিচে নামানোর আপডেট কোড */}
+      <div className="w-full px-4 mt-10 mb-4 flex justify-center">
         <button
           onClick={() => alert(`⚔️ Battle Started with Total Power: ${totalPower.toLocaleString()}`)}
-          className="w-full transform scale-110 active:scale-105 transition hover:brightness-110 cursor-pointer"
+          className="w-full active:scale-95 transition hover:brightness-110 flex justify-center cursor-pointer"
         >
           <img 
             src={fightBtnImg} 
             alt="Fight" 
-            className="w-full h-auto object-contain drop-shadow-2xl max-h-28 mx-auto"
+            /* scale-y-90 দিয়ে উচ্চতা কমানো হয়েছে এবং max-h-14 দিয়ে সাইজ ফিক্স করা হয়েছে */
+            className="w-[75%] max-h-14 transform scale-y-70 h-auto block object-contain drop-shadow-2xl"
           />
         </button>
       </div>
