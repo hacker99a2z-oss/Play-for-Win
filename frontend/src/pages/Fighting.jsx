@@ -5,7 +5,7 @@ import mouseGamma from '../assets/mouse-gamma.png';
 import adsBoostImg from '../assets/ADS-boost.png';
 import fightBtnImg from '../assets/FIGHT.png';
 
-const Fighting = ({ onPlayAd }) => {
+const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
   const [mice, setMice] = useState([
     { 
       id: 'alpha', 
