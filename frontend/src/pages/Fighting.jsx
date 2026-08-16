@@ -103,7 +103,7 @@ const Fighting = ({ onPlayAd }) => {
               <img 
                 src={adsBoostImg} 
                 alt="Ads Boost" 
-                className="w-[90px] h-auto block object-contain drop-shadow-md"
+                className="w-[60px] h-auto block object-contain drop-shadow-md"
               />
             </button>
           </div>
