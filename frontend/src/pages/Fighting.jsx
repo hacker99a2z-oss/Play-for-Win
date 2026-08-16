@@ -67,11 +67,8 @@ const Fighting = ({ onPlayAd }) => {
       <div className="grid grid-cols-3 gap-1 px-0 my-auto py-2">
         {mice.map((mouse) => (
           <div 
-            key={mouse.id} 
-            /* 🔴 gamma (সবুজ ইঁদুর) হলে translate-x-3 দিয়ে ডানে সরানো হলো */
-            className={`flex flex-col gap-2 items-center transform transition-transform ${
-              mouse.id === 'gamma' ? 'translate-x-1' : ''
-            }`}
+            key={mouse.id}
+            className={`flex flex-col gap-2 items-center transform transition-transform ${mouse.cardPos || ''}`}
           >
             {/* ছবির কন্টেইনার */}
             <div className="w-full relative inline-block transform scale-105 origin-center">
