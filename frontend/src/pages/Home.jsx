@@ -356,61 +356,63 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             }}
             className="rounded-3xl shadow-2xl relative border-4 border-lime-800 bg-green-700 block"
           >
-            {/* ১৬টি স্থির স্থান */}
-            <div 
-              style={{ width: '100%', height: '100%' }}
-              className="absolute inset-0 grid grid-cols-4 grid-rows-4 p-3 gap-1"
-            >
-              {holes.map((item, index) => (
-                <div
-                  key={index}
-                  onClick={() => item && handleHitItem(index)}
-                  style={{ width: '100%', height: '100%' }}
-                  className="flex items-center justify-center cursor-pointer relative"
-                >
-                  {/* ১. প্রতিটি ঘরে সর্বদাই ব্যাকগ্রাউন্ড গর্ত (Hole) থাকবে */}
-                  <img
-                    src={GAME_ASSETS.hole}
-                    alt="hole"
-                    className="absolute bottom-0 w-[85%] h-10 object-contain opacity-95 pointer-events-none z-0"
-                  />
-                  {item && (
-                    <div className="z-10 animate-pop-up flex items-center justify-center w-full h-full relative">
-                      {item.type === 'mouse' && (
-                        <img
-                          src={GAME_ASSETS.mouse}
-                          alt="mouse"
-                          className="w-12 h-12 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
-                        />
-                      )}
-                      {item.type === 'cat' && (
-                        <img
-                          src={GAME_ASSETS.cat}
-                          alt="cat"
-                          className="w-11 h-11 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
-                        />
-                      )}
-                      {item.type === 'human' && (
-                        <img
-                          src={GAME_ASSETS.human}
-                          alt="human"
-                          className="w-11 h-11 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
-                        />
-                      )}
+          {/* ১৬টি স্থির স্থান */}
+          <div 
+            style={{ width: '100%', height: '100%' }}
+            className="absolute inset-0 grid grid-cols-4 grid-rows-4 p-2 gap-2"
+          >
+            {holes.map((item, index) => (
+              <div
+                key={index}
+                onClick={() => item && handleHitItem(index)}
+                style={{ width: '100%', height: '100%' }}
+                className="flex items-center justify-center cursor-pointer relative"
+              >
+                {/* ১. ফুল-সাইজ বড় গর্ত (Hole) */}
+                <img
+                  src={GAME_ASSETS.hole}
+                  alt="hole"
+                  className="absolute inset-0 w-full h-full object-contain opacity-95 pointer-events-none z-0 scale-125"
+                />
 
-                      {/* হাতুড়ির আঘাত */}
-                      {hitIndex === index && (
-                        <img
-                          src={GAME_ASSETS.hammer}
-                          alt="hammer"
-                          className="absolute -top-2 -right-1 w-12 h-12 z-30 pointer-events-none transform -rotate-45 transition-all scale-110 drop-shadow-[0_6px_10px_rgba(0,0,0,0.9)]"
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                {/* ২. গর্ত থেকে ক্যারেক্টার বের হওয়া */}
+                {item && (
+                  <div className="z-10 animate-pop-up flex items-center justify-center w-full h-full relative -translate-y-1">
+                    {item.type === 'mouse' && (
+                      <img
+                        src={GAME_ASSETS.mouse}
+                        alt="mouse"
+                        className="w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                      />
+                    )}
+                    {item.type === 'cat' && (
+                      <img
+                        src={GAME_ASSETS.cat}
+                        alt="cat"
+                        className="w-13 h-13 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                      />
+                    )}
+                    {item.type === 'human' && (
+                      <img
+                        src={GAME_ASSETS.human}
+                        alt="human"
+                        className="w-13 h-13 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                      />
+                    )}
+
+                    {/* হাতুড়ির আঘাত */}
+                    {hitIndex === index && (
+                      <img
+                        src={GAME_ASSETS.hammer}
+                        alt="hammer"
+                        className="absolute -top-3 -right-1 w-12 h-12 z-30 pointer-events-none transform -rotate-45 transition-all scale-110 drop-shadow-[0_6px_10px_rgba(0,0,0,0.9)]"
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
           </div>
         </div>
       )}
