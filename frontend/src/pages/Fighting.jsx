@@ -82,7 +82,7 @@ const Fighting = ({ onPlayAd }) => {
               
               {/* 🔴 ডায়নামিকভাবে আলাদা আলাদা টেক্সট পজিশনিং */}
               <div 
-                className="absolute font-black text-[10px] sm:text-xs tracking-wider whitespace-nowrap"
+                className="absolute font-black text-[8px] sm:text-[10px] tracking-wider whitespace-nowrap"
                 style={{
                   bottom: mouse.textPos.bottom,
                   left: mouse.textPos.left,
