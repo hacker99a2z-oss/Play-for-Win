@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import bgArena from '../fighting-bg.jpg';
+import bgArena from '../assets/fighting-bg.jpg';
 
 const Fighting = ({ onPlayAd }) => {
   const [mice, setMice] = useState([
