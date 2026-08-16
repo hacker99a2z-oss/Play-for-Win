@@ -6,9 +6,9 @@ import mouseGamma from '../assets/mouse-gamma.png';
 
 const Fighting = ({ onPlayAd }) => {
   const [mice, setMice] = useState([
-    { id: 'alpha', power: 6250, color: 'text-sky-400', img: mouseAlpha },
-    { id: 'beta', power: 5500, color: 'text-amber-500', img: mouseBeta },
-    { id: 'gamma', power: 7000, color: 'text-emerald-400', img: mouseGamma },
+    { id: 'alpha', power: 6250, color: '#38bdf8', img: mouseAlpha },
+    { id: 'beta', power: 5500, color: '#f59e0b', img: mouseBeta },
+    { id: 'gamma', power: 7000, color: '#34d399', img: mouseGamma },
   ]);
 
   const totalPower = mice.reduce((acc, curr) => acc + curr.power, 0);
@@ -45,24 +45,30 @@ const Fighting = ({ onPlayAd }) => {
         </span>
       </div>
 
-      {/* ২. ইঁদুরের কার্ড এবং পাওয়ার পজিশনিং */}
-      <div className="grid grid-cols-3 gap-1.5 my-auto py-2">
+      {/* ২. ইঁদুরের কার্ড এবং পাওয়ারের পজিশন */}
+      <div className="grid grid-cols-3 gap-1 px-1 my-auto py-2">
         {mice.map((mouse) => (
-          <div key={mouse.id} className="flex flex-col gap-1.5 items-center">
+          <div key={mouse.id} className="flex flex-col gap-2 items-center">
             
-            {/* ছবির কন্টেইনার */}
+            {/* ছবির কন্টেইনার - ডানে/বামে ও নিচে পজিশন সেট */}
             <div className="w-full relative inline-block">
               <img 
                 src={mouse.img} 
                 alt="Mouse Card" 
-                className="w-full h-auto block object-contain drop-shadow-md"
+                className="w-full h-auto block object-contain"
               />
               
-              {/* পাওয়ারের সংখ্যাটি এখন ঠিক নিচে POWER: লেখার ডানে পজিশন করা হলো */}
-              <div className="absolute bottom-[12%] right-[12%] z-10">
-                <span className={`font-black text-[11px] sm:text-xs tracking-wider ${mouse.color} drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]`}>
-                  {mouse.power.toLocaleString()}
-                </span>
+              {/* ছবির পাওয়ার বার অনুযায়ী পজিশন (প্রয়োজনমতো right ও bottom পিক্সেল পরিবর্তন করতে পারেন) */}
+              <div 
+                className="absolute font-black text-[11px] sm:text-xs tracking-wider"
+                style={{
+                  bottom: '10px', // উপর-নিচে করার জন্য
+                  right: '12px',  // ডানে-বামে করার জন্য
+                  color: mouse.color,
+                  textShadow: '0px 2px 4px rgba(0,0,0,0.9)'
+                }}
+              >
+                {mouse.power.toLocaleString()}
               </div>
             </div>
 
@@ -84,7 +90,7 @@ const Fighting = ({ onPlayAd }) => {
       {/* ৩. নিচের FIGHT! বাটন */}
       <div className="w-full px-2 mb-2">
         <button
-          onClick={() => alert(`⚔️ Battle Started with Total Power: ${totalPower.toLocaleString()}`)}
+          onClick={() => alert(`⚔️ Battle Started!`)}
           className="w-full bg-gradient-to-r from-red-600 via-orange-500 to-red-600 hover:brightness-110 text-yellow-300 font-black text-xl py-3 rounded-xl border-2 border-yellow-400 shadow-2xl tracking-widest flex items-center justify-center gap-2 active:scale-95 transition"
         >
           <span>⚔️</span>
