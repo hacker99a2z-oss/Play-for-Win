@@ -63,8 +63,8 @@ const Fighting = ({ onPlayAd }) => {
               <div 
                 className="absolute font-black text-[10px] sm:text-xs tracking-wider whitespace-nowrap"
                 style={{
-                  bottom: '8%', // ↕️ উপরে-নিচে: % বাড়ালে উপরে উঠবে (যেমন: 10%), কমালে নিচে নামবে (যেমন: 5%)
-                  left: '60%',   // ↔️ ডানে-বামে: % বাড়ালে ডানে যাবে (যেমন: 65%), কমালে বামে যাবে (যেমন: 50%)
+                  bottom: '4%', // ↕️ উপরে-নিচে: % বাড়ালে উপরে উঠবে (যেমন: 10%), কমালে নিচে নামবে (যেমন: 5%)
+                  left: '52%',   // ↔️ ডানে-বামে: % বাড়ালে ডানে যাবে (যেমন: 65%), কমালে বামে যাবে (যেমন: 50%)
                   color: mouse.color,
                   textShadow: '0px 2px 4px rgba(0,0,0,0.95)'
                 }}
