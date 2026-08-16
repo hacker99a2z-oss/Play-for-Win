@@ -10,7 +10,7 @@ export default function Navigation({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-950/90 backdrop-blur-md border-t border-gray-800 px-4 py-2 flex justify-around items-center z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-gray-950/90 backdrop-blur-md border-t border-gray-800 flex justify-around py-2 z-50">
       {tabs.map((tab) => (
         <button
           key={tab.id}
