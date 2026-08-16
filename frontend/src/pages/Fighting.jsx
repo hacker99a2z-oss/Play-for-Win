@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import mouseAlpha from '../assets/mouse-alpha.png';
 import mouseBeta from '../assets/mouse-beta.png';
 import mouseGamma from '../assets/mouse-gamma.png';
@@ -12,7 +12,6 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
       power: 6250000, 
       color: '#38bdf8', 
       img: mouseAlpha,
-      // 🔵 Alpha (নীল) টেক্সটের পজিশন
       textPos: { bottom: '6.1%', left: '52%' }
     },
     { 
@@ -20,7 +19,6 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
       power: 5500000, 
       color: '#f59e0b', 
       img: mouseBeta,
-      // 🟡 Beta (হলুদ) টেক্সটের পজিশন
       textPos: { bottom: '6.5%', left: '52%' }
     },
     { 
@@ -28,31 +26,77 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
       power: 7000000, 
       color: '#34d399', 
       img: mouseGamma,
-      // 🟢 Gamma (সবুজ) টেক্সটের পজিশন
       textPos: { bottom: '7%', left: '46.6%' },
       cardPos: 'translate-y-0.9 translate-x-1'
     },
   ]);
 
+  const [cooldown, setCooldown] = useState(0);
+  const [isCooldownActive, setIsCooldownActive] = useState(false);
+  const [loadingMouseId, setLoadingMouseId] = useState(null);
+
+  // ১. টাইমার লোড ও কন্ট্রোল লজিক
+  useEffect(() => {
+    const savedCooldownTarget = localStorage.getItem('boostCooldownTarget');
+    if (savedCooldownTarget) {
+      const remaining = Math.ceil((parseInt(savedCooldownTarget, 10) - Date.now()) / 1000);
+      if (remaining > 0) {
+        setCooldown(remaining);
+        setIsCooldownActive(true);
+      } else {
+        localStorage.removeItem('boostCooldownTarget');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    let timer;
+    if (isCooldownActive && cooldown > 0) {
+      timer = setInterval(() => {
+        setCooldown((prev) => prev - 1);
+      }, 1000);
+    } else if (cooldown === 0 && isCooldownActive) {
+      setIsCooldownActive(false);
+      localStorage.removeItem('boostCooldownTarget');
+    }
+    return () => clearInterval(timer);
+  }, [isCooldownActive, cooldown]);
+
   const totalPower = mice.reduce((acc, curr) => acc + curr.power, 0);
 
+  // ২. অ্যাড দেখে পাওয়ার বাড়ানোর লজিক
   const handleBoostSingleMouse = async (mouseId) => {
-    if (onPlayAd) {
-      const isWatched = await onPlayAd();
+    if (isCooldownActive || loadingMouseId) return;
+
+    setLoadingMouseId(mouseId);
+
+    try {
+      let isWatched = false;
+      if (onPlayAd) {
+        isWatched = await onPlayAd();
+      }
+
+      // অ্যাড সফলভাবে দেখা শেষ হলে
       if (isWatched) {
         setMice((prev) =>
-          prev.map((m) => (m.id === mouseId ? { ...m, power: m.power + 100 } : m))
+          prev.map((m) => (m.id === mouseId ? { ...m, power: m.power + 1000 } : m))
         );
+
+        // ৬০ সেকেন্ডের কুলডাউন সেট করা
+        const cooldownTarget = Date.now() + 60 * 1000;
+        localStorage.setItem('boostCooldownTarget', cooldownTarget.toString());
+        setCooldown(60);
+        setIsCooldownActive(true);
       }
-    } else {
-      setMice((prev) =>
-        prev.map((m) => (m.id === mouseId ? { ...m, power: m.power + 100 } : m))
-      );
+    } catch (error) {
+      console.error("Boost Ad Error:", error);
+    } finally {
+      setLoadingMouseId(null);
     }
   };
 
   return (
-    <div className="w-full flex flex-col justify-between py-2 pb-10">
+    <div className="w-full flex flex-col justify-between py-2 pb-10 select-none">
       {/* ১. TOTAL POWER Header */}
       <div className="bg-black/60 backdrop-blur-md rounded-xl p-2.5 border border-white/20 flex justify-between items-center shadow-lg mb-4">
         <div className="flex items-center gap-1.5">
@@ -60,7 +104,7 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
           <span className="text-[10px] font-bold uppercase tracking-wide text-slate-200">TOTAL POWER:</span>
           <span className="text-yellow-400 font-extrabold text-sm">{totalPower.toLocaleString()}</span>
         </div>
-        <span className="border border-white/40 rounded-lg px-2.5 py-1 text-[9px] font-black uppercase bg-black/40">
+        <span className="border border-white/40 rounded-lg px-2.5 py-1 text-[9px] font-black uppercase bg-black/40 text-white">
           ARENA
         </span>
       </div>
@@ -80,14 +124,14 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
                 className="w-full h-auto block object-contain"
               />
               
-              {/* 🔴 ডায়নামিকভাবে আলাদা আলাদা টেক্সট পজিশনিং */}
+              {/* ডায়নামিক পাওয়ার টেক্সট */}
               <div 
                 className="absolute font-black tracking-wider whitespace-nowrap"
                 style={{
                   bottom: mouse.textPos.bottom,
                   left: mouse.textPos.left,
                   color: mouse.color,
-                  fontSize: '9px', // 🔴 এখানে সরাসরি ফন্ট সাইজ কমান (প্রয়োজনে 7px বা 6px দিন)
+                  fontSize: '9px',
                   textShadow: '0px 2px 4px rgba(0,0,0,0.95)'
                 }}
               >
@@ -95,22 +139,38 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
               </div>
             </div>
 
-            {/* 🔴 Boost Image Button - পূর্বের বাটনের মতো সমান Width ও Height বজায় রাখা হয়েছে */}
+            {/* Boost Button (Adsgram Ad) */}
             <button
               onClick={() => handleBoostSingleMouse(mouse.id)}
-              className="w-full active:scale-95 transition hover:brightness-110 mt-2 flex justify-center cursor-pointer"
+              disabled={isCooldownActive || loadingMouseId !== null}
+              className={`w-full max-w-[120px] mt-2 flex justify-center items-center cursor-pointer transition rounded-xl ${
+                isCooldownActive || loadingMouseId !== null
+                  ? 'opacity-60 cursor-not-allowed'
+                  : 'active:scale-95 hover:brightness-110'
+              }`}
             >
-              <img 
-                src={adsBoostImg} 
-                alt="Ads Boost" 
-                className="w-full max-w-[120px] h-auto block object-contain drop-shadow-md"
-              />
+              {loadingMouseId === mouse.id ? (
+                <div className="bg-black/80 text-yellow-400 text-[10px] font-bold py-2 px-3 rounded-xl border border-yellow-500/30 flex items-center gap-1">
+                  <div className="w-3 h-3 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span>Loading...</span>
+                </div>
+              ) : isCooldownActive ? (
+                <div className="bg-black/80 text-gray-300 text-[10px] font-bold py-1.5 px-2 rounded-xl border border-white/20 w-full text-center">
+                  ⏳ {cooldown}s
+                </div>
+              ) : (
+                <img 
+                  src={adsBoostImg} 
+                  alt="Ads Boost" 
+                  className="w-full h-auto block object-contain drop-shadow-md"
+                />
+              )}
             </button>
           </div>
         ))}
       </div>
 
-      {/* 🔴 FIGHT! Image Button - উচ্চতা কমানো এবং নিচে নামানোর আপডেট কোড */}
+      {/* ৩. FIGHT! Image Button */}
       <div className="w-full px-4 mt-12 mb-4 flex justify-center">
         <button
           onClick={() => {
@@ -123,7 +183,6 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
           <img 
             src={fightBtnImg} 
             alt="Fight" 
-            /* scale-y-90 দিয়ে উচ্চতা কমানো হয়েছে এবং max-h-14 দিয়ে সাইজ ফিক্স করা হয়েছে */
             className="w-full max-w-[280px] h-auto block object-contain drop-shadow-2xl"
           />
         </button>
