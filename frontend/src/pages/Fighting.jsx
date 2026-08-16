@@ -35,7 +35,7 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
   const [isCooldownActive, setIsCooldownActive] = useState(false);
   const [loadingMouseId, setLoadingMouseId] = useState(null);
 
-  // ১. টাইমার লোড ও কন্ট্রোল লজিক
+  // ১. কুলডাউন লোড ও কাউন্টডাউন
   useEffect(() => {
     const savedCooldownTarget = localStorage.getItem('boostCooldownTarget');
     if (savedCooldownTarget) {
@@ -64,7 +64,7 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
 
   const totalPower = mice.reduce((acc, curr) => acc + curr.power, 0);
 
-  // ২. অ্যাড দেখে পাওয়ার বাড়ানোর লজিক
+  // ২. Adsgram অ্যাড ভ্যালিডেশন এবং পাওয়ার বুস্ট
   const handleBoostSingleMouse = async (mouseId) => {
     if (isCooldownActive || loadingMouseId) return;
 
@@ -73,16 +73,17 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
     try {
       let isWatched = false;
       if (onPlayAd) {
+        // Adsgram অ্যাড শেষ পর্যন্ত সম্পূর্ণ দেখলে কেবল true রিটার্ন পাবে
         isWatched = await onPlayAd();
       }
 
-      // অ্যাড সফলভাবে দেখা শেষ হলে
+      // অ্যাড সফল ও সম্পূর্ণ হলে তবেই ১০০ পাওয়ার বাড়বে
       if (isWatched) {
         setMice((prev) =>
           prev.map((m) => (m.id === mouseId ? { ...m, power: m.power + 100 } : m))
         );
 
-        // ৬০ সেকেন্ডের কুলডাউন সেট করা
+        // অ্যাড দেখা শেষ হলে ৬০ সেকেন্ডের টাইমার চালু হবে
         const cooldownTarget = Date.now() + 60 * 1000;
         localStorage.setItem('boostCooldownTarget', cooldownTarget.toString());
         setCooldown(60);
@@ -109,7 +110,7 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
         </span>
       </div>
 
-      {/* ২. ইঁদুরের কার্ড এবং পাওয়ার পজিশনিং */}
+      {/* ২. মাউস কার্ডস ও বুস্ট বাটন্স */}
       <div className="grid grid-cols-3 gap-1 px-0 my-auto py-2">
         {mice.map((mouse) => (
           <div 
@@ -124,7 +125,7 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
                 className="w-full h-auto block object-contain"
               />
               
-              {/* ডায়নামিক পাওয়ার টেক্সট */}
+              {/* পাওয়ার টেক্সট */}
               <div 
                 className="absolute font-black tracking-wider whitespace-nowrap"
                 style={{
@@ -139,7 +140,7 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
               </div>
             </div>
 
-            {/* Boost Button (Adsgram Ad) */}
+            {/* Boost Button (Adsgram) */}
             <button
               onClick={() => handleBoostSingleMouse(mouse.id)}
               disabled={isCooldownActive || loadingMouseId !== null}
@@ -170,7 +171,7 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
         ))}
       </div>
 
-      {/* ৩. FIGHT! Image Button */}
+      {/* ৩. FIGHT Button */}
       <div className="w-full px-4 mt-12 mb-4 flex justify-center">
         <button
           onClick={() => {
