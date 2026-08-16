@@ -334,18 +334,18 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         </div>
       )}
 
-      {/* ২. PLAYING STATE (Fixed Cell Height Lock) */}
+      {/* ২. PLAYING STATE (Full Screen Layout Fix) */}
       {gameState === 'playing' && (
-        <div className="w-full max-w-sm mx-auto p-2">
+        <div className="w-full max-w-sm mx-auto p-2 flex flex-col flex-1 h-full">
           {/* স্কোরবার */}
-          <div className="flex justify-between items-center bg-slate-900/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-700 mb-4 font-bold text-lg shadow-lg">
+          <div className="flex justify-between items-center bg-slate-900/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-700 mb-3 font-bold text-lg shadow-lg shrink-0">
             <span className="text-cyan-300 flex items-center gap-2">⏱️ {timeLeft}s</span>
             <span className="text-amber-400 flex items-center gap-2">🎯 {score}</span>
           </div>
 
-          {/* ফিক্সড গেম বোর্ড */}
+          {/* ফুল সাইজ ও ফিক্সড গেম বোর্ড */}
           <div 
-            className="grid grid-cols-4 grid-rows-4 gap-2 p-4 rounded-3xl shadow-2xl relative touch-manipulation bg-green-700 border-4 border-lime-800 w-full h-[320px] min-h-[320px]"
+            className="grid grid-cols-4 grid-rows-4 gap-2 p-4 rounded-3xl shadow-2xl relative touch-manipulation bg-green-700 border-4 border-lime-800 w-full h-[450px] shrink-0"
             style={{ 
               backgroundImage: `url(${GAME_ASSETS.field})`,
               backgroundSize: '100% 100%',
@@ -357,7 +357,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
               <div
                 key={index}
                 onClick={() => item && handleHitItem(index)}
-                className="relative flex items-center justify-center cursor-pointer w-full h-full min-h-[65px]"
+                className="relative flex items-center justify-center cursor-pointer w-full h-full min-h-[95px]"
               >
                 {/* ক্যারেক্টার ও হাতুড়ি পপ-আপ */}
                 {item ? (
@@ -366,30 +366,30 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                       <img
                         src={GAME_ASSETS.mouse}
                         alt="mouse"
-                        className="w-12 h-12 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                        className="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                       />
                     )}
                     {item.type === 'cat' && (
                       <img
                         src={GAME_ASSETS.cat}
                         alt="cat"
-                        className="w-11 h-11 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                        className="w-13 h-13 sm:w-15 sm:h-15 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                       />
                     )}
                     {item.type === 'human' && (
                       <img
                         src={GAME_ASSETS.human}
                         alt="human"
-                        className="w-11 h-11 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                        className="w-13 h-13 sm:w-15 sm:h-15 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                       />
                     )}
 
-                    {/* হাতুড়ির হিট অ্যানিমেশন */}
+                    {/* হাতুড়ির আঘাত অ্যানিমেশন */}
                     {hitIndex === index && (
                       <img
                         src={GAME_ASSETS.hammer}
                         alt="hammer"
-                        className="absolute -top-3 -right-2 w-12 h-12 z-30 pointer-events-none transform -rotate-45 transition-all scale-110 drop-shadow-[0_6px_10px_rgba(0,0,0,0.9)]"
+                        className="absolute -top-3 -right-2 w-14 h-14 z-30 pointer-events-none transform -rotate-45 transition-all scale-110 drop-shadow-[0_6px_10px_rgba(0,0,0,0.9)]"
                       />
                     )}
                   </div>
