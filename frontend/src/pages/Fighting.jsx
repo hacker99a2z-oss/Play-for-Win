@@ -11,7 +11,7 @@ const Fighting = ({ onPlayAd }) => {
       color: '#38bdf8', 
       img: mouseAlpha,
       // 🔵 Alpha (নীল) টেক্সটের পজিশন
-      textPos: { bottom: '3.8%', left: '52%' }
+      textPos: { bottom: '5%', left: '52%' }
     },
     { 
       id: 'beta', 
@@ -19,7 +19,7 @@ const Fighting = ({ onPlayAd }) => {
       color: '#f59e0b', 
       img: mouseBeta,
       // 🟡 Beta (হলুদ) টেক্সটের পজিশন
-      textPos: { bottom: '4%', left: '52%' }
+      textPos: { bottom: '5%', left: '52%' }
     },
     { 
       id: 'gamma', 
@@ -27,7 +27,7 @@ const Fighting = ({ onPlayAd }) => {
       color: '#34d399', 
       img: mouseGamma,
       // 🟢 Gamma (সবুজ) টেক্সটের পজিশন
-      textPos: { bottom: '4.6%', left: '46.6%' }
+      textPos: { bottom: '5%', left: '46.6%' }
     },
   ]);
 
