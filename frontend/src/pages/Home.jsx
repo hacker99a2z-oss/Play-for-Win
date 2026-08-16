@@ -382,7 +382,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                       <img
                         src={GAME_ASSETS.mouse}
                         alt="mouse"
-                        className="w-20 h-20 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                        className="w-26 h-26 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                       />
                     )}
                     {item.type === 'cat' && (
