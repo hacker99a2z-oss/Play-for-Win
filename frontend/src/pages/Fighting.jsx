@@ -87,7 +87,7 @@ const Fighting = ({ onPlayAd }) => {
                   bottom: mouse.textPos.bottom,
                   left: mouse.textPos.left,
                   color: mouse.color,
-                  fontSize: '6px', // 🔴 এখানে সরাসরি ফন্ট সাইজ কমান (প্রয়োজনে 7px বা 6px দিন)
+                  fontSize: '8px', // 🔴 এখানে সরাসরি ফন্ট সাইজ কমান (প্রয়োজনে 7px বা 6px দিন)
                   textShadow: '0px 2px 4px rgba(0,0,0,0.95)'
                 }}
               >
