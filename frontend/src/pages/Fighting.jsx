@@ -79,7 +79,7 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
       // অ্যাড সফলভাবে দেখা শেষ হলে
       if (isWatched) {
         setMice((prev) =>
-          prev.map((m) => (m.id === mouseId ? { ...m, power: m.power + 1000 } : m))
+          prev.map((m) => (m.id === mouseId ? { ...m, power: m.power + 100 } : m))
         );
 
         // ৬০ সেকেন্ডের কুলডাউন সেট করা
