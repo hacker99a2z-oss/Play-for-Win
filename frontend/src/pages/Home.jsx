@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const BACKEND_URL = 'https://play-for-win.onrender.com';
 
-// অনলাইন ৩D ইমেজের লিংক (আপনার সুবিধার্থে যুক্ত করা হয়েছে)
 const GAME_ASSETS = {
   mouse: 'https://i.postimg.cc/mrwWynd6/gemini-2-5-flash-image-give-me-the-single-pic-of-mouse-with-transparent-background-and-same-size-0-r.png',
   cat: 'https://i.postimg.cc/t49jnyks/gemini-2-5-flash-image-give-me-the-single-pic-of-cat-with-transparent-background-and-same-size-0-rem.png',
@@ -15,7 +14,7 @@ const GAME_ASSETS = {
 const Home = ({ user, onPlayAd, refreshUserData }) => {
   const [gameState, setGameState] = useState('idle'); // idle, playing, ended
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(35); // ৩৫ সেকেন্ডের গেম টাইমার
+  const [timeLeft, setTimeLeft] = useState(35);
   const [isClaiming, setIsClaiming] = useState(false);
   const [hasFreePlay, setHasFreePlay] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,15 +22,13 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   const [isCooldownActive, setIsCooldownActive] = useState(false);
   const [hitIndex, setHitIndex] = useState(null);
 
-  // ১৬টি গর্তের স্টেট
   const [holes, setHoles] = useState(Array(16).fill(null));
   
-  // ট্র্যাকিং রেফারেন্স
   const activeTimeouts = useRef([]);
   const clickedItemsRef = useRef(new Set());
-  const spawnedMiceCount = useRef(0); // মোট কয়টি ইঁদুর বের হয়েছে তার হিসাব
+  const spawnedMiceCount = useRef(0);
 
-  // ১. ডেইলি ফ্রি খেলার লিমিট ও আইপি লোকেশন চেক (Optimized)
+  // ১. ডেইলি ফ্রি প্লে ও কুলডাউন লজিক
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
     const lastFreePlayDate = localStorage.getItem('last_free_play_date');
@@ -52,7 +49,6 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       }
     }
 
-    // ব্যাকগ্রাউন্ডে IP সেভ হবে (গেম লোডিং স্লো করবে না)
     if (user?.telegramId && !sessionStorage.getItem('loc_saved')) {
       fetch('https://api.ipify.org?format=json')
         .then((res) => res.json())
@@ -68,7 +64,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     }
   }, [user]);
 
-  // ২. অবজেক্ট (Mouse, Cat, Human) স্পনিং লজিক
+  // ২. অবজেক্ট স্পনিং লজিক
   useEffect(() => {
     let spawnInterval;
 
@@ -124,14 +120,14 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                 }
                 return updated;
               });
-            }, 700);
+            }, 800);
 
             activeTimeouts.current.push(timeoutId);
           }
 
           return newHoles;
         });
-      }, 2400);
+      }, 2000);
     } else {
       activeTimeouts.current.forEach(clearTimeout);
       activeTimeouts.current = [];
@@ -145,7 +141,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     };
   }, [gameState]);
 
-  // ৩. ৩৫ সেকেন্ড কাউন্টডাউন টাইমার
+  // ৩. টাইমার লজিক
   useEffect(() => {
     let timer;
     if (gameState === 'playing' && timeLeft > 0) {
@@ -207,7 +203,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     setGameState('playing');
   };
 
-  // ৫. আইটেমে ক্লিকের লজিক
+  // ৫. আইটেম হিট লজিক
   const handleHitItem = (index) => {
     if (gameState !== 'playing') return;
 
@@ -215,8 +211,6 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     if (!item || clickedItemsRef.current.has(item.id)) return;
 
     clickedItemsRef.current.add(item.id);
-
-    // ক্লিক করার সাথে সাথে হাতুড়ি সক্রিয় হবে
     setHitIndex(index);
 
     if (item.type === 'mouse') {
@@ -225,7 +219,6 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       setScore((prevScore) => Math.max(0, prevScore - 5));
     }
 
-    // ২০০ মিলি-সেকেন্ড পর হাতুড়িটি গায়েব হয়ে যাবে
     setTimeout(() => {
       setHitIndex(null);
       setHoles((prevHoles) => {
@@ -341,7 +334,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         </div>
       )}
 
-      {/* ২. PLAYING STATE (Realistic Underground Emergence) */}
+      {/* ২. PLAYING STATE */}
       {gameState === 'playing' && (
         <div className="w-full max-w-sm mx-auto p-2">
           {/* স্কোরবার */}
@@ -350,12 +343,13 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             <span className="text-amber-400 flex items-center gap-2">🎯 {score}</span>
           </div>
 
-          {/* ইমেজ দিয়ে তৈরি প্লেন ঘাসের মাঠ */}
+          {/* প্লেন ঘাসের মাঠ কন্টেইনার */}
           <div 
-            className="grid grid-cols-4 gap-3 p-4 rounded-3xl shadow-2xl relative touch-manipulation bg-green-700 border-4 border-lime-800 aspect-square"
+            className="grid grid-cols-4 gap-2.5 p-4 rounded-3xl shadow-2xl relative touch-manipulation bg-green-700 border-4 border-lime-800 aspect-square w-full"
             style={{ 
               backgroundImage: `url(${GAME_ASSETS.field})`,
-              backgroundSize: 'cover',
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat',
               backgroundPosition: 'center'
             }}
           >
@@ -363,46 +357,46 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
               <div
                 key={index}
                 onClick={() => item && handleHitItem(index)}
-                className="relative flex items-end justify-center cursor-pointer active:scale-95 transition-transform overflow-hidden rounded-full"
+                className="relative flex items-end justify-center cursor-pointer active:scale-95 transition-transform h-full"
               >
-                {/* ১. ব্যাকগ্রাউন্ড গর্ত (১৬টি ঘরেই সবসময় মাটির ওপর আঁকা থাকবে) */}
+                {/* ১. গর্তের ছবি (১৬টি ঘরেই ব্যাকগ্রাউন্ডে দৃশ্যমান থাকবে) */}
                 <img
                   src={GAME_ASSETS.hole}
                   alt="hole"
-                  className="absolute bottom-0 w-full h-12 object-contain pointer-events-none z-0"
+                  className="absolute bottom-1 w-full h-8 object-contain pointer-events-none z-0 opacity-95"
                 />
 
-                {/* ২. ইঁদুর, বিড়াল ও মানুষ (গর্তের ভেতর থেকে ভেসে উঠবে) */}
+                {/* ২. পপ-আপ ক্যারেক্টার ও হাতুড়ি */}
                 {item ? (
-                  <div className="z-10 animate-pop-up flex items-center justify-center relative pb-1">
+                  <div className="z-10 animate-pop-up flex items-center justify-center relative pb-2 pointer-events-auto">
                     {item.type === 'mouse' && (
                       <img
                         src={GAME_ASSETS.mouse}
                         alt="mouse"
-                        className="w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.7)]"
+                        className="w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                       />
                     )}
                     {item.type === 'cat' && (
                       <img
                         src={GAME_ASSETS.cat}
                         alt="cat"
-                        className="w-13 h-13 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.7)]"
+                        className="w-13 h-13 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                       />
                     )}
                     {item.type === 'human' && (
                       <img
                         src={GAME_ASSETS.human}
                         alt="human"
-                        className="w-13 h-13 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.7)]"
+                        className="w-13 h-13 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                       />
                     )}
 
-                    {/* হাতুড়ির হিট অ্যানিমেশন */}
+                    {/* হাতুড়ির আঘাত অ্যানিমেশন (জাস্ট হিট বক্সে হাতুড়ি ভেসে উঠবে) */}
                     {hitIndex === index && (
                       <img
                         src={GAME_ASSETS.hammer}
                         alt="hammer"
-                        className="absolute -top-4 -right-2 w-12 h-12 z-30 pointer-events-none transform -rotate-45 transition-all duration-100 scale-110 drop-shadow-[0_6px_10px_rgba(0,0,0,0.9)]"
+                        className="absolute -top-6 -right-4 w-14 h-14 z-30 pointer-events-none transform -rotate-45 transition-all duration-100 scale-125 drop-shadow-[0_8px_12px_rgba(0,0,0,0.9)]"
                       />
                     )}
                   </div>
