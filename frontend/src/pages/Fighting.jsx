@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import bgArena from '../assets/fighting-bg.jpg';
 import mouseAlpha from '../assets/mouse-alpha.png';
 import mouseBeta from '../assets/mouse-beta.png';
 import mouseGamma from '../assets/mouse-gamma.png';
@@ -29,12 +28,9 @@ const Fighting = ({ onPlayAd }) => {
   };
 
   return (
-    <div
-      className="w-full max-w-md mx-auto min-h-screen pb-24 p-2 flex flex-col justify-between bg-cover bg-center text-white select-none overflow-x-hidden"
-      style={{ backgroundImage: `url(${bgArena})` }}
-    >
-      {/* ১. টপ হেডার (Total Power) */}
-      <div className="bg-black/60 backdrop-blur-md rounded-xl p-2.5 border border-white/20 flex justify-between items-center shadow-lg mt-1">
+    <div className="w-full flex flex-col justify-between py-2 pb-10">
+      {/* ১. TOTAL POWER Header */}
+      <div className="bg-black/60 backdrop-blur-md rounded-xl p-2.5 border border-white/20 flex justify-between items-center shadow-lg mb-4">
         <div className="flex items-center gap-1.5">
           <span className="text-yellow-400 text-lg">⚡</span>
           <span className="text-[10px] font-bold uppercase tracking-wide text-slate-200">TOTAL POWER:</span>
@@ -45,13 +41,12 @@ const Fighting = ({ onPlayAd }) => {
         </span>
       </div>
 
-      {/* ২. ইঁদুরের বড় কার্ড এবং পাওয়ারের পজিশন */}
-      {/* gap-0.5 এবং px-0 দিয়ে কার্ডগুলোর জায়গা বাড়িয়ে বড় করা হয়েছে */}
-      <div className="grid grid-cols-3 gap-0.5 px-0 my-auto py-2">
+      {/* ২. ইঁদুরের বড় কার্ড এবং পাওয়ার পজিশনিং */}
+      <div className="grid grid-cols-3 gap-1 px-0 my-auto py-2">
         {mice.map((mouse) => (
           <div key={mouse.id} className="flex flex-col gap-2 items-center">
             
-            {/* ছবির কন্টেইনার (scale-105 বাড়িয়ে মাউসগুলো বড় করা হয়েছে) */}
+            {/* ছবির কন্টেইনার */}
             <div className="w-full relative inline-block transform scale-105 origin-center">
               <img 
                 src={mouse.img} 
@@ -59,14 +54,14 @@ const Fighting = ({ onPlayAd }) => {
                 className="w-full h-auto block object-contain"
               />
               
-              {/* পাওয়ারের টেক্সট */}
+              {/* পাওয়ারের সংখ্যাটি নিখুঁতভাবে বসানোর জন্য পজিশন */}
               <div 
-                className="absolute font-black text-[11px] sm:text-xs tracking-wider"
+                className="absolute font-black text-[10px] sm:text-xs tracking-wider"
                 style={{
-                  bottom: '10px', 
-                  right: '12px',  
+                  bottom: '9%',
+                  left: '62%',
                   color: mouse.color,
-                  textShadow: '0px 2px 4px rgba(0,0,0,0.9)'
+                  textShadow: '0px 2px 4px rgba(0,0,0,0.95)'
                 }}
               >
                 {mouse.power.toLocaleString()}
@@ -88,10 +83,10 @@ const Fighting = ({ onPlayAd }) => {
         ))}
       </div>
 
-      {/* ৩. নিচের FIGHT! বাটন */}
-      <div className="w-full px-2 mb-2">
+      {/* ৩. FIGHT! বাটন (নেভিগেশনের উপরে রাখার জন্য Margin অ্যাডজাস্ট করা হয়েছে) */}
+      <div className="w-full px-2 mt-4 mb-6">
         <button
-          onClick={() => alert(`⚔️ Battle Started!`)}
+          onClick={() => alert(`⚔️ Battle Started with Total Power: ${totalPower.toLocaleString()}`)}
           className="w-full bg-gradient-to-r from-red-600 via-orange-500 to-red-600 hover:brightness-110 text-yellow-300 font-black text-xl py-3 rounded-xl border-2 border-yellow-400 shadow-2xl tracking-widest flex items-center justify-center gap-2 active:scale-95 transition"
         >
           <span>⚔️</span>
