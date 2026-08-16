@@ -4,9 +4,18 @@ body {
   min-height: 100vh;
   margin: 0;
 }
+
+/* নীল ট্যাপ হাইলাইট এবং টেক্সট সিলেক্ট বন্ধ করার জন্য */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @keyframes molePopUp {
   0% { transform: translateY(100%) scale(0.5); opacity: 0; }
   60% { transform: translateY(-10%) scale(1.1); opacity: 1; }
