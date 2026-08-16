@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import Navigation from './components/Navigation';
 import Home from './pages/Home';
+import Fighting from './pages/Fighting';
 import Referral from './pages/Referral';
 import Contest from './pages/Contest';
 import Withdraw from './pages/Withdraw';
@@ -128,6 +129,15 @@ export default function App() {
       <main className="max-w-md mx-auto px-2">
         {activeTab === 'home' && (
           <Home 
+            user={user} 
+            onPlayAd={handlePlayAd} 
+            refreshUserData={syncUserData} 
+          />
+        )}
+
+        {/* 👇 এই লাইনটি যুক্ত করুন */}
+        {activeTab === 'fighting' && (
+          <Fighting 
             user={user} 
             onPlayAd={handlePlayAd} 
             refreshUserData={syncUserData} 
