@@ -8,7 +8,7 @@ const Fighting = ({ onPlayAd }) => {
   const [mice, setMice] = useState([
     { id: 'alpha', power: 6250, color: 'text-sky-400', img: mouseAlpha },
     { id: 'beta', power: 5500, color: 'text-amber-500', img: mouseBeta },
-    { id: 'gamma', color: 'text-emerald-400', power: 7000, img: mouseGamma },
+    { id: 'gamma', power: 7000, color: 'text-emerald-400', img: mouseGamma },
   ]);
 
   const totalPower = mice.reduce((acc, curr) => acc + curr.power, 0);
@@ -50,17 +50,17 @@ const Fighting = ({ onPlayAd }) => {
         {mice.map((mouse) => (
           <div key={mouse.id} className="flex flex-col gap-1.5 items-center">
             
-            {/* ছবির সাথে পাওয়ার পজিশন সেট */}
-            <div className="w-full relative flex flex-col items-center justify-center">
+            {/* ছবির কন্টেইনার */}
+            <div className="w-full relative inline-block">
               <img 
                 src={mouse.img} 
                 alt="Mouse Card" 
-                className="w-full h-auto object-contain drop-shadow-md"
+                className="w-full h-auto block object-contain drop-shadow-md"
               />
               
-              {/* পাওয়ারের সংখ্যাটি এখন ঠিক POWER: লেখার সোজাসুজি বসবে */}
-              <div className="absolute bottom-[3%] right-[8%] sm:right-[12%] flex items-center justify-end">
-                <span className={`font-black text-[10px] sm:text-xs tracking-wide ${mouse.color} drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]`}>
+              {/* পাওয়ারের সংখ্যাটি এখন ঠিক নিচে POWER: লেখার ডানে পজিশন করা হলো */}
+              <div className="absolute bottom-[12%] right-[12%] z-10">
+                <span className={`font-black text-[11px] sm:text-xs tracking-wider ${mouse.color} drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]`}>
                   {mouse.power.toLocaleString()}
                 </span>
               </div>
