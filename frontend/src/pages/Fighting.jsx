@@ -6,24 +6,25 @@ import adsBoostImg from '../assets/ADS-boost.png';
 import fightBtnImg from '../assets/FIGHT.png';
 
 const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
+  // 🟢 ডেমো পাওয়ার সরিয়ে পাওয়ার প্রাথমিক মান 0 করে দেওয়া হয়েছে
   const [mice, setMice] = useState([
     { 
       id: 'alpha', 
-      power: 6250000, 
+      power: 0, 
       color: '#38bdf8', 
       img: mouseAlpha,
       textPos: { bottom: '6.1%', left: '52%' }
     },
     { 
       id: 'beta', 
-      power: 5500000, 
+      power: 0, 
       color: '#f59e0b', 
       img: mouseBeta,
       textPos: { bottom: '6.5%', left: '52%' }
     },
     { 
       id: 'gamma', 
-      power: 7000000, 
+      power: 0, 
       color: '#34d399', 
       img: mouseGamma,
       textPos: { bottom: '7%', left: '46.6%' },
@@ -35,7 +36,7 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
   const [isCooldownActive, setIsCooldownActive] = useState(false);
   const [loadingMouseId, setLoadingMouseId] = useState(null);
 
-  // ১. কুলডাউন লোড ও কাউন্টডাউন
+  // ১. কুলডাউন চেক ও টাইমার
   useEffect(() => {
     const savedCooldownTarget = localStorage.getItem('boostCooldownTarget');
     if (savedCooldownTarget) {
@@ -64,7 +65,7 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
 
   const totalPower = mice.reduce((acc, curr) => acc + curr.power, 0);
 
-  // ২. Adsgram অ্যাড ভ্যালিডেশন এবং পাওয়ার বুস্ট
+  // ২. Adsgram অ্যাড ভ্যালিডেশন এবং ১০০ পাওয়ার বৃদ্ধি
   const handleBoostSingleMouse = async (mouseId) => {
     if (isCooldownActive || loadingMouseId) return;
 
@@ -73,17 +74,16 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
     try {
       let isWatched = false;
       if (onPlayAd) {
-        // Adsgram অ্যাড শেষ পর্যন্ত সম্পূর্ণ দেখলে কেবল true রিটার্ন পাবে
         isWatched = await onPlayAd();
       }
 
-      // অ্যাড সফল ও সম্পূর্ণ হলে তবেই ১০০ পাওয়ার বাড়বে
+      // অ্যাড সফলভাবে দেখা শেষ হলে ১০০ পাওয়ার যুক্ত হবে
       if (isWatched) {
         setMice((prev) =>
           prev.map((m) => (m.id === mouseId ? { ...m, power: m.power + 100 } : m))
         );
 
-        // অ্যাড দেখা শেষ হলে ৬০ সেকেন্ডের টাইমার চালু হবে
+        // ৬০ সেকেন্ডের কুলডাউন চালু হবে
         const cooldownTarget = Date.now() + 60 * 1000;
         localStorage.setItem('boostCooldownTarget', cooldownTarget.toString());
         setCooldown(60);
@@ -110,7 +110,7 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
         </span>
       </div>
 
-      {/* ২. মাউস কার্ডস ও বুস্ট বাটন্স */}
+      {/* ২. মাউস কার্ডস ও পাওয়ার প্রদর্শনী */}
       <div className="grid grid-cols-3 gap-1 px-0 my-auto py-2">
         {mice.map((mouse) => (
           <div 
