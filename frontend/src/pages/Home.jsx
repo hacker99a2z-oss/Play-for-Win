@@ -285,7 +285,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   };
 
   return (
-    <div className="p-4 text-center min-h-[75vh] flex flex-col justify-between select-none">
+    <div className="p-4 text-center min-h-[75vh] flex flex-col justify-between select-none w-full max-w-sm mx-auto">
       
       {/* ১. IDLE STATE */}
       {gameState === 'idle' && (
@@ -334,58 +334,65 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         </div>
       )}
 
-      {/* ২. PLAYING STATE (Absolute Matrix - Guaranteed Fix) */}
+      {/* ২. PLAYING STATE - অরিজিনাল থিম + ফিক্সড ৩৫০px বোর্ড */}
       {gameState === 'playing' && (
-        <div className="w-full max-w-sm mx-auto p-2 flex flex-col justify-center">
-          {/* স্কোরবার */}
-          <div className="flex justify-between items-center bg-slate-900/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-700 mb-4 font-bold text-lg shadow-lg">
+        <div className="w-full flex flex-col items-center my-auto">
+          {/* স্কোরবার (অরিজিনাল ডার্ক স্টাইল) */}
+          <div className="w-full flex justify-between items-center bg-slate-900/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-700 mb-4 font-bold text-lg shadow-lg">
             <span className="text-cyan-300 flex items-center gap-2">⏱️ {timeLeft}s</span>
             <span className="text-amber-400 flex items-center gap-2">🎯 {score}</span>
           </div>
 
-          {/* ফিক্সড ১:১ স্কয়ার ব্যাকগ্রাউন্ড বোর্ড (সাইজ কখনো বদলাবে না) */}
+          {/* ফিক্সড ৩৫০px মাঠ (কখনো সাইজ ছোট বা লাফাবে না) */}
           <div 
-            className="w-full aspect-square rounded-3xl shadow-2xl relative border-4 border-lime-800 bg-green-700 overflow-hidden"
             style={{ 
+              width: '100%',
+              height: '350px',
+              minHeight: '350px',
+              maxHeight: '350px',
               backgroundImage: `url(${GAME_ASSETS.field})`,
               backgroundSize: '100% 100%',
               backgroundRepeat: 'no-repeat'
             }}
+            className="rounded-3xl shadow-2xl relative border-4 border-lime-800 bg-green-700 block"
           >
-            {/* ১৬টি স্থির স্থান - Absolute Layout */}
-            <div className="absolute inset-0 grid grid-cols-4 grid-rows-4 gap-2 p-3">
+            {/* ১৬টি স্থির স্থান */}
+            <div 
+              style={{ width: '100%', height: '100%' }}
+              className="absolute inset-0 grid grid-cols-4 grid-rows-4 p-3 gap-1"
+            >
               {holes.map((item, index) => (
                 <div
                   key={index}
                   onClick={() => item && handleHitItem(index)}
-                  className="relative w-full h-full flex items-center justify-center cursor-pointer select-none"
+                  style={{ width: '100%', height: '100%' }}
+                  className="flex items-center justify-center cursor-pointer relative"
                 >
-                  {/* ক্যারেক্টার থাকুক বা না থাকুক, এর জায়গা ১০০% ফিক্সড থাকবে */}
                   {item && (
-                    <div className="z-10 animate-pop-up flex items-center justify-center w-full h-full">
+                    <div className="z-10 animate-pop-up flex items-center justify-center w-full h-full relative">
                       {item.type === 'mouse' && (
                         <img
                           src={GAME_ASSETS.mouse}
                           alt="mouse"
-                          className="w-12 h-12 max-w-full max-h-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                          className="w-12 h-12 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                         />
                       )}
                       {item.type === 'cat' && (
                         <img
                           src={GAME_ASSETS.cat}
                           alt="cat"
-                          className="w-11 h-11 max-w-full max-h-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                          className="w-11 h-11 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                         />
                       )}
                       {item.type === 'human' && (
                         <img
                           src={GAME_ASSETS.human}
                           alt="human"
-                          className="w-11 h-11 max-w-full max-h-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                          className="w-11 h-11 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                         />
                       )}
 
-                      {/* হাতুড়ির হিট অ্যানিমেশন */}
+                      {/* হাতুড়ির আঘাত */}
                       {hitIndex === index && (
                         <img
                           src={GAME_ASSETS.hammer}
@@ -404,7 +411,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       
       {/* ৩. GAME OVER SCREEN */}
       {gameState === 'ended' && (
-        <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl mt-4">
+        <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl mt-4 w-full">
           <h3 className="text-xl font-bold text-white mb-2">🎉 Match Finished!</h3>
           <p className="text-gray-400 text-sm mb-1">Total Coins Earned:</p>
           <p className="text-3xl font-black text-amber-400 mb-6">{score} Coins</p>
