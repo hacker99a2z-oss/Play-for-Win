@@ -368,6 +368,12 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                   style={{ width: '100%', height: '100%' }}
                   className="flex items-center justify-center cursor-pointer relative"
                 >
+                  {/* ১. প্রতিটি ঘরে সর্বদাই ব্যাকগ্রাউন্ড গর্ত (Hole) থাকবে */}
+                  <img
+                    src={GAME_ASSETS.hole}
+                    alt="hole"
+                    className="absolute w-12 h-12 object-contain opacity-90 pointer-events-none bottom-1"
+                  />
                   {item && (
                     <div className="z-10 animate-pop-up flex items-center justify-center w-full h-full relative">
                       {item.type === 'mouse' && (
