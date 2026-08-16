@@ -372,7 +372,14 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                 <img
                   src={GAME_ASSETS.hole}
                   alt="hole"
-                  className="absolute inset-0 w-full h-full object-contain opacity-95 pointer-events-none z-0 scale-150"
+                  style={{ 
+                    width: '180px', 
+                    height: '100px', 
+                    maxWidth: 'none', 
+                    maxHeight: 'none', 
+                    transform: 'scale(1.8)' 
+                  }}
+                  className="absolute object-contain opacity-95 pointer-events-none z-0"
                 />
 
                 {/* ২. গর্ত থেকে ক্যারেক্টার বের হওয়া */}
