@@ -1,120 +1,102 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 
-const Fighting = () => {
-  // ইঁদুরদের প্রাথমিক পাওয়ার
+const Fighting = ({ onPlayAd }) => {
+  // ৩টি ইঁদুরের স্টেট
   const [mice, setMice] = useState([
-    { id: 1, name: 'Mouse Alpha', power: 50, emoji: '🐭' },
-    { id: 2, name: 'Mouse Beta', power: 75, emoji: '🐭' },
-    { id: 3, name: 'Mouse Gamma', power: 100, emoji: '🐭' },
+    { id: 'alpha', name: 'MOUSE ALPHA', power: 6250, color: 'text-blue-400' },
+    { id: 'beta', name: 'MOUSE BETA', power: 5500, color: 'text-amber-400' },
+    { id: 'gamma', name: 'MOUSE GAMMA', power: 7000, color: 'text-emerald-400' }
   ]);
 
-  // ৩টি প্লেয়ারের মোট পাওয়ার
+  // মোট পাওয়ার হিসাব
   const totalPower = mice.reduce((acc, curr) => acc + curr.power, 0);
 
-  // Adsgram Ad দেখে পাওয়ার ১০০ বাড়ানোর লজিক
-  const handleBoostPower = () => {
-    // Adsgram Controller Integration
-    if (window.AdController) {
-      window.AdController.show()
-        ? setMice((prevMice) =>
-            prevMice.map((mouse) => ({
-              ...mouse,
-              power: mouse.power + 100,
-            }))
+  // ইন্ডিভিজুয়াল ইঁদুরের জন্য Adsgram পাওয়ার বাড়ানো
+  const handleBoostSingleMouse = async (mouseId) => {
+    if (onPlayAd) {
+      const isWatched = await onPlayAd();
+      if (isWatched) {
+        setMice((prevMice) =>
+          prevMice.map((mouse) =>
+            mouse.id === mouseId ? { ...mouse, power: mouse.power + 100 } : mouse
           )
-        : alert('Ad loading failed!');
+        );
+      }
     } else {
-      // Adsgram না থাকলে টেস্ট করার জন্য ডাইরেক্ট পাওয়ার বাড়বে
+      // Adsgram না থাকলে টেস্ট করার জন্য
       setMice((prevMice) =>
-        prevMice.map((mouse) => ({
-          ...mouse,
-          power: mouse.power + 100,
-        }))
+        prevMice.map((mouse) =>
+          mouse.id === mouseId ? { ...mouse, power: mouse.power + 100 } : mouse
+        )
       );
     }
   };
 
-  const handleFight = () => {
-    alert('Fight Started!');
-    // পরবর্তী লজিক এখানে যুক্ত হবে
-  };
-
   return (
-    <div style={{ padding: '20px', color: '#fff', textAlign: 'center', minHeight: '100vh', background: '#121212' }}>
+    <div className="w-full max-w-md mx-auto min-h-screen bg-slate-950 text-white p-2">
       
-      {/* উপরে বাম পাশে মোট পাওয়ার শো করবে */}
-      <div style={{ textAlign: 'left', marginBottom: '20px' }}>
-        <h2 style={{ margin: 0, color: '#f39c12' }}>⚡ Total Power: {totalPower}</h2>
+      {/* ১. টপ হেডার (Total Power) */}
+      <div className="flex justify-between items-center bg-slate-900/90 p-3 rounded-xl border border-slate-800 mb-4 shadow-lg">
+        <div className="flex items-center gap-2">
+          <span className="text-amber-400 text-lg">⚡</span>
+          <span className="text-xs text-slate-400 font-bold">Total Power:</span>
+          <span className="text-amber-400 font-black text-base">{totalPower.toLocaleString()}</span>
+        </div>
+        <span className="text-xs font-bold text-slate-400">Fighting Arena</span>
       </div>
 
-      <h1 style={{ marginBottom: '30px' }}>Fighting Arena</h1>
+      {/* ২. মেইন গেম ইন্টারফেস Area */}
+      <div className="relative w-full rounded-2xl overflow-hidden border border-amber-500/30 bg-slate-900 p-3">
+        
+        {/* ৩টি কার্ডের গ্রিড */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          {mice.map((mouse) => (
+            <div key={mouse.id} className="flex flex-col gap-2">
+              
+              {/* ইঁদুরের ইন্ডিভিজুয়াল কার্ড */}
+              <div className="bg-slate-950/80 border border-slate-700/60 rounded-xl p-2 text-center flex flex-col justify-between min-h-[170px] shadow-md relative overflow-hidden">
+                
+                {/* অ্যানিমেটেড ইঁদুর চ্যারেক্টর (আপনার প্রজেক্টের ইমেজ বা ইমোজি) */}
+                <div className="text-4xl my-auto animate-bounce">
+                  {mouse.id === 'alpha' && '🐭⚔️'}
+                  {mouse.id === 'beta' && '🐭🗡️'}
+                  {mouse.id === 'gamma' && '🐭🔮'}
+                </div>
 
-      {/* ৩টি অ্যানিমেটেড ইঁদুর কার্ড */}
-      <div style={{ display: 'flex', justifyContent: 'space-around', gap: '15px', marginBottom: '30px' }}>
-        {mice.map((mouse) => (
-          <motion.div
-            key={mouse.id}
-            animate={{ y: [0, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
-            style={{
-              background: '#1e1e1e',
-              padding: '15px',
-              borderRadius: '12px',
-              border: '1px solid #333',
-              width: '30%',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
-            }}
+                {/* ডাইনামিক নাম ও পাওয়ার */}
+                <div className="mt-2">
+                  <h4 className="text-[10px] font-bold text-slate-300 tracking-tighter">{mouse.name}</h4>
+                  <p className={`text-[11px] font-black ${mouse.color} mt-0.5`}>
+                    POWER: <span className="text-white">{mouse.power.toLocaleString()}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* ইন্ডিভিজুয়াল Adsgram Booster Button */}
+              <button
+                onClick={() => handleBoostSingleMouse(mouse.id)}
+                className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:brightness-110 text-black font-black text-[9px] py-2 px-1 rounded-lg border border-amber-300/40 shadow-md flex items-center justify-center gap-1 active:scale-95 transition"
+              >
+                <span>📺</span>
+                <span>+100 BOOST</span>
+              </button>
+
+            </div>
+          ))}
+        </div>
+
+        {/* ৩. নিচে বড় FIGHT! বাটন */}
+        <div className="mt-2">
+          <button
+            onClick={() => alert('⚔️ Fight Started!')}
+            className="w-full bg-gradient-to-r from-red-700 via-orange-600 to-red-700 hover:opacity-95 text-yellow-300 font-black text-xl py-3.5 rounded-xl border-2 border-amber-400/80 shadow-lg shadow-red-950/80 tracking-widest flex items-center justify-center gap-2 active:scale-95 transition"
           >
-            {/* ইঁদুরের অ্যানিমেশন/ইমোজি */}
-            <div style={{ fontSize: '40px', marginBottom: '10px' }}>{mouse.emoji}</div>
-            <h3 style={{ margin: '5px 0', fontSize: '16px' }}>{mouse.name}</h3>
-            
-            {/* নিচে ব্যক্তিগত পাওয়ার */}
-            <p style={{ margin: 0, color: '#2ecc71', fontWeight: 'bold' }}>
-              Power: {mouse.power}
-            </p>
-          </motion.div>
-        ))}
-      </div>
+            <span>⚔️</span>
+            <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">FIGHT!</span>
+            <span>⚔️</span>
+          </button>
+        </div>
 
-      {/* Adsgram পাওয়ার বাড়ানোর বাটন */}
-      <div style={{ marginBottom: '20px' }}>
-        <button
-          onClick={handleBoostPower}
-          style={{
-            padding: '12px 24px',
-            fontSize: '16px',
-            backgroundColor: '#e67e22',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '25px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-          }}
-        >
-          📺 Watch Ad (+100 Power)
-        </button>
-      </div>
-
-      {/* নিচে Fight বাটন */}
-      <div>
-        <button
-          onClick={handleFight}
-          style={{
-            padding: '15px 40px',
-            fontSize: '20px',
-            backgroundColor: '#e74c3c',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '30px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            boxShadow: '0 4px 15px rgba(231, 76, 60, 0.4)',
-          }}
-        >
-          ⚔️ FIGHT ⚔️
-        </button>
       </div>
     </div>
   );
