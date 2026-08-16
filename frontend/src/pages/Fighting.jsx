@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import bgArena from '../assets/fighting-bg.jpg';
+import mouseAlpha from '../assets/mouse-alpha.png';
+import mouseBeta from '../assets/mouse-beta.png';
+import mouseGamma from '../assets/mouse-gamma.png';
 
 const Fighting = ({ onPlayAd }) => {
   const [mice, setMice] = useState([
