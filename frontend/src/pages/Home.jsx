@@ -334,7 +334,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         </div>
       )}
 
-      {/* ২. PLAYING STATE (Stable Field Size) */}
+      {/* ২. PLAYING STATE (Height Fix applied) */}
       {gameState === 'playing' && (
         <div className="w-full max-w-sm mx-auto p-2">
           {/* স্কোরবার */}
@@ -343,12 +343,13 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             <span className="text-amber-400 flex items-center gap-2">🎯 {score}</span>
           </div>
 
-          {/* স্টেবল ঘাসের মাঠ কন্টেইনার */}
+          {/* ফিক্সড ফিল্ড কন্টেইনার */}
           <div 
-            className="grid grid-cols-4 gap-2 p-4 rounded-3xl shadow-2xl relative touch-manipulation bg-green-700 border-4 border-lime-800 w-full aspect-square min-h-[340px]"
+            className="grid grid-cols-4 gap-2 p-3 rounded-3xl shadow-2xl relative touch-manipulation bg-green-700 border-4 border-lime-800 w-full h-[340px]"
             style={{ 
               backgroundImage: `url(${GAME_ASSETS.field})`,
-              backgroundSize: 'cover',
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat',
               backgroundPosition: 'center'
             }}
           >
@@ -356,7 +357,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
               <div
                 key={index}
                 onClick={() => item && handleHitItem(index)}
-                className="relative flex items-center justify-center cursor-pointer w-full h-full"
+                className="relative flex items-center justify-center cursor-pointer h-[70px] w-full"
               >
                 {/* ক্যারেক্টার ও হাতুড়ি পপ-আপ */}
                 {item ? (
@@ -383,7 +384,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                       />
                     )}
 
-                    {/* হাতুড়ির হিট অ্যানিমেশন */}
+                    {/* হাতুড়ির আঘাত অ্যানিমেশন */}
                     {hitIndex === index && (
                       <img
                         src={GAME_ASSETS.hammer}
