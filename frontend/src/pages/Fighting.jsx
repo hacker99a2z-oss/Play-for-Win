@@ -8,7 +8,7 @@ const Fighting = ({ onPlayAd }) => {
   const [mice, setMice] = useState([
     { id: 'alpha', power: 6250, color: 'text-sky-400', img: mouseAlpha },
     { id: 'beta', power: 5500, color: 'text-amber-500', img: mouseBeta },
-    { id: 'gamma', power: 7000, color: 'text-emerald-400', img: mouseGamma },
+    { id: 'gamma', color: 'text-emerald-400', power: 7000, img: mouseGamma },
   ]);
 
   const totalPower = mice.reduce((acc, curr) => acc + curr.power, 0);
@@ -45,12 +45,12 @@ const Fighting = ({ onPlayAd }) => {
         </span>
       </div>
 
-      {/* ২. মাঝের ৩টি কার্ড ও বুস্ট বাটন (অতিরিক্ত টেক্সট ফাকা করে ওভারলে করা হয়েছে) */}
+      {/* ২. ইঁদুরের কার্ড এবং পাওয়ার পজিশনিং */}
       <div className="grid grid-cols-3 gap-1.5 my-auto py-2">
         {mice.map((mouse) => (
           <div key={mouse.id} className="flex flex-col gap-1.5 items-center">
             
-            {/* মাউসের PNG ছবি ও ডায়নামিক নম্বর */}
+            {/* ছবির সাথে পাওয়ার পজিশন সেট */}
             <div className="w-full relative flex flex-col items-center justify-center">
               <img 
                 src={mouse.img} 
@@ -58,15 +58,15 @@ const Fighting = ({ onPlayAd }) => {
                 className="w-full h-auto object-contain drop-shadow-md"
               />
               
-              {/* ছবির ওপর শুধু পাওয়ারের সংখ্যাটি দেখাবে */}
-              <div className="absolute bottom-[6%] w-full text-center">
-                <span className={`font-black text-xs tracking-wider ${mouse.color} drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]`}>
+              {/* পাওয়ারের সংখ্যাটি এখন ঠিক POWER: লেখার সোজাসুজি বসবে */}
+              <div className="absolute bottom-[3%] right-[8%] sm:right-[12%] flex items-center justify-end">
+                <span className={`font-black text-[10px] sm:text-xs tracking-wide ${mouse.color} drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]`}>
                   {mouse.power.toLocaleString()}
                 </span>
               </div>
             </div>
 
-            {/* +100 Boost Button */}
+            {/* Boost Button */}
             <button
               onClick={() => handleBoostSingleMouse(mouse.id)}
               className="w-full bg-black/60 hover:bg-black/80 border border-white/40 rounded-xl py-1.5 px-1 text-center backdrop-blur-sm shadow-md active:scale-95 transition flex flex-col items-center justify-center"
