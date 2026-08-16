@@ -4,116 +4,152 @@ import mouseAlpha from '../assets/mouse-alpha.png';
 import mouseBeta from '../assets/mouse-beta.png';
 import mouseGamma from '../assets/mouse-gamma.png';
 
+// Icons for bottom navigation (simplified)
+const HomeIcon = () => <span>🏠</span>;
+const FightingIcon = () => <span>⚔️</span>;
+const ReferralIcon = () => <span>👥</span>;
+const ContestIcon = () => <span>🏆</span>;
+const WithdrawIcon = () => <span>💸</span>;
+
 const Fighting = ({ onPlayAd }) => {
-  // ১. স্টেটে ছবিগুলো (img) যুক্ত করা হয়েছে
   const [mice, setMice] = useState([
-    { 
-      id: 'alpha', 
-      name: 'MOUSE ALPHA', 
-      power: 6250, 
-      color: 'text-blue-400', 
-      border: 'border-blue-500/50', 
-      shadow: 'shadow-blue-500/30', 
-      img: mouseAlpha 
-    },
-    { 
-      id: 'beta', 
-      name: 'MOUSE BETA', 
-      power: 5500, 
-      color: 'text-amber-400', 
-      border: 'border-amber-500/50', 
-      shadow: 'shadow-amber-500/30', 
-      img: mouseBeta 
-    },
-    { 
-      id: 'gamma', 
-      name: 'MOUSE GAMMA', 
-      power: 7000, 
-      color: 'text-emerald-400', 
-      border: 'border-emerald-500/50', 
-      shadow: 'shadow-emerald-500/30', 
-      img: mouseGamma 
-    }
+    { id: 'alpha', name: 'MOUSE ALPHA', power: 6250, img: mouseAlpha },
+    { id: 'beta', name: 'MOUSE BETA', power: 5500, img: mouseBeta },
+    { id: 'gamma', name: 'MOUSE GAMMA', power: 7000, img: mouseGamma },
   ]);
 
-  // ২. মোট পাওয়ার ক্যালকুলেশন লজিক
   const totalPower = mice.reduce((acc, curr) => acc + curr.power, 0);
 
-  // ৩. সিঙ্গেল মাউস পাওয়ার বুস্ট করার এডসগ্রাম লজিক
   const handleBoostSingleMouse = async (mouseId) => {
     if (onPlayAd) {
       const isWatched = await onPlayAd();
       if (isWatched) {
-        setMice(prev => prev.map(m => m.id === mouseId ? { ...m, power: m.power + 100 } : m));
+        setMice((prev) =>
+          prev.map((m) => (m.id === mouseId ? { ...m, power: m.power + 100 } : m))
+        );
       }
     } else {
-      setMice(prev => prev.map(m => m.id === mouseId ? { ...m, power: m.power + 100 } : m));
+      // For testing without actual ads logic
+      setMice((prev) =>
+        prev.map((m) => (m.id === mouseId ? { ...m, power: m.power + 100 } : m))
+      );
     }
   };
 
+  const navItems = [
+    { name: 'Home', icon: HomeIcon },
+    { name: 'Fighting', icon: FightingIcon, active: true },
+    { name: 'Referral', icon: ReferralIcon },
+    { name: 'Contest', icon: ContestIcon },
+    { name: 'Withdraw', icon: WithdrawIcon },
+  ];
+
   return (
-    <div 
-      className="w-full max-w-md mx-auto min-h-screen p-4 flex flex-col justify-between bg-cover bg-center bg-no-repeat selection:bg-none"
+    <div
+      className="w-full max-w-md mx-auto min-h-screen flex flex-col justify-between bg-cover bg-center text-white font-sans selection:bg-none relative"
       style={{ backgroundImage: `url(${bgArena})` }}
     >
-      {/* টপ হেডার (Total Power) */}
-      <div className="flex justify-between items-center bg-slate-900/85 p-3.5 rounded-2xl border border-slate-700/80 backdrop-blur-md shadow-2xl">
-        <div className="flex items-center gap-2">
-          <span className="text-amber-400 text-xl animate-bounce">⚡</span>
-          <span className="text-xs text-slate-300 font-bold uppercase tracking-wider">Total Power:</span>
-          <span className="text-amber-400 font-black text-lg tracking-wide">{totalPower.toLocaleString()}</span>
-        </div>
-        <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700">Arena</span>
-      </div>
-
-      {/* মাঝের ৩টি কার্ড ও এডসগ্রাম বুস্টার বাটন */}
-      <div className="grid grid-cols-3 gap-2.5 my-auto">
-        {mice.map((mouse) => (
-          <div key={mouse.id} className="flex flex-col gap-2">
-            
-            {/* আসল ইঁদুরের PNG কার্ড */}
-            <div className={`bg-slate-900/80 border-2 ${mouse.border} shadow-xl ${mouse.shadow} rounded-2xl p-2 text-center flex flex-col justify-between min-h-[210px] backdrop-blur-md transition-all duration-300 hover:scale-[1.02]`}>
-              
-              {/* Image Container */}
-              <div className="my-auto flex items-center justify-center p-1">
-                <img 
-                  src={mouse.img} 
-                  alt={mouse.name} 
-                  className="w-full h-auto max-h-[110px] object-contain drop-shadow-[0_8px_8px_rgba(0,0,0,0.7)]" 
-                />
-              </div>
-
-              {/* Title & Power */}
-              <div className="bg-slate-950/60 p-1.5 rounded-xl border border-white/5">
-                <h4 className="text-[9px] font-black text-slate-300 tracking-wider truncate">{mouse.name}</h4>
-                <p className={`text-[10px] font-black ${mouse.color} mt-0.5`}>
-                  POWER: <span className="text-white font-bold">{mouse.power.toLocaleString()}</span>
-                </p>
-              </div>
+      {/* 1. Header (Total Power & Arena) */}
+      <div className="p-4 pt-6">
+        <div className="border border-white/70 rounded-3xl px-5 py-4 flex justify-between items-center bg-black/10 backdrop-blur-sm shadow-xl">
+          <div className="flex items-center gap-3">
+            <span className="text-yellow-400 text-3xl animate-pulse">⚡</span>
+            <div className='flex items-baseline gap-1.5'>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-100">Total Power:</span>
+              <span className="text-white font-extrabold text-2xl tracking-tight">{totalPower.toLocaleString()}</span>
             </div>
-
-            {/* +100 ADS BOOST Button */}
-            <button
-              onClick={() => handleBoostSingleMouse(mouse.id)}
-              className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-[9px] py-2 px-1 rounded-xl shadow-lg border border-amber-300/60 flex items-center justify-center gap-1 active:scale-95 transition-all"
-            >
-              <span className="text-xs">📺</span>
-              <span>+100 BOOST</span>
-            </button>
           </div>
-        ))}
+          <button className="border border-white rounded-full px-5 py-2.5 text-xs font-extrabold uppercase tracking-widest hover:bg-white hover:text-black transition">
+            Arena
+          </button>
+        </div>
       </div>
 
-      {/* নিচের বড় FIGHT বাটন */}
-      <div className="mb-2">
-        <button
-          onClick={() => alert(`⚔️ Battle Started with Total Power: ${totalPower.toLocaleString()}`)}
-          className="w-full bg-gradient-to-r from-red-700 via-orange-600 to-red-700 hover:brightness-110 text-yellow-300 font-black text-2xl py-3.5 rounded-2xl border-2 border-amber-400/80 shadow-[0_10px_25px_rgba(185,28,28,0.5)] tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all"
-        >
-          <span>⚔️</span>
-          <span className="drop-shadow-[0_3px_3px_rgba(0,0,0,0.9)] uppercase">FIGHT!</span>
-          <span>⚔️</span>
-        </button>
+      {/* 2. Main Content Area */}
+      <div className="flex-grow flex items-center justify-center p-3 mb-10">
+        <div className="grid grid-cols-3 gap-3 w-full">
+          {mice.map((mouse) => (
+            <div key={mouse.id} className="flex flex-col gap-3">
+              {/* Card with Image and Inner Boxes */}
+              <div className="border-2 border-white rounded-3xl p-3 bg-black/15 shadow-2xl flex flex-col gap-3 transition-transform hover:scale-105">
+                {/* Image Area */}
+                <div className="aspect-[3/4] flex items-center justify-center p-1 relative">
+                    <img 
+                      src={mouse.img} 
+                      alt={mouse.name} 
+                      className="w-full h-full object-contain drop-shadow-[0_10px_10px_rgba(0,0,0,0.8)]"
+                    />
+                </div>
+                
+                {/* Text Inner Boxes */}
+                <div className="space-y-2">
+                    <div className="border border-white rounded-xl p-2.5 text-center bg-black/20">
+                        <h4 className="text-[10px] font-black text-white uppercase tracking-wider truncate">{mouse.name}</h4>
+                    </div>
+                    <div className="border border-white rounded-xl p-2.5 text-center bg-black/20">
+                        <p className={`text-[11px] font-black text-sky-400 mt-0.5`}>
+                          POWER:
+                        </p>
+                        <p className="text-white font-extrabold text-sm mt-1">{mouse.power.toLocaleString()}</p>
+                    </div>
+                </div>
+              </div>
+
+              {/* +100 Boost Button */}
+              <button
+                onClick={() => handleBoostSingleMouse(mouse.id)}
+                className="border-2 border-white rounded-3xl p-4 w-full bg-black/15 shadow-lg flex flex-col items-center justify-center gap-1.5 text-white active:scale-95 transition hover:bg-white/5"
+              >
+                <div className="flex items-center gap-1.5">
+                    <span className="text-xl">📺</span>
+                    <span className="font-extrabold text-sm tracking-tight">+100</span>
+                </div>
+                <span className="font-black text-sm uppercase tracking-wider">Boost</span>
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 3. Fight Button & Bottom Navigation */}
+      <div className="w-full relative">
+        {/* Fight Button (Positioned over the nav) */}
+        <div className="absolute left-1/2 -translate-x-1/2 -top-12 z-10 w-[80%] max-w-sm">
+          <button
+            onClick={() => alert(`⚔️ Battle Started with Total Power: ${totalPower.toLocaleString()}`)}
+            className="w-full bg-red-600 hover:bg-red-700 text-yellow-300 font-extrabold text-2xl py-5 rounded-2xl border-4 border-yellow-300 shadow-[0_15px_30px_rgba(185,28,28,0.6)] tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all"
+          >
+            <span>⚔️</span>
+            <span className="drop-shadow-[0_3px_3px_rgba(0,0,0,0.9)] uppercase">Fight!</span>
+            <span>⚔️</span>
+          </button>
+        </div>
+
+        {/* Bottom Nav Bar */}
+        <div className="bg-slate-950 border-t border-slate-800 px-4 pt-10 pb-4 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+          <div className="grid grid-cols-5 gap-1 items-end">
+            {navItems.map((item, index) => (
+              <div key={index} className={`flex flex-col items-center justify-center gap-1.5 pb-1 ${item.active ? 'relative' : ''}`}>
+                {item.active && (
+                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-12 h-12 border-2 border-yellow-300 rounded-lg flex items-center justify-center p-1.5 bg-slate-900 shadow-xl">
+                      <item.icon />
+                   </div>
+                )}
+                
+                {!item.active && (
+                    <div className="text-xl opacity-60">
+                        <item.icon />
+                    </div>
+                )}
+
+                <span className={`text-[10px] font-bold ${item.active ? 'text-yellow-300 pt-10' : 'text-slate-400'} uppercase tracking-wider`}>
+                    {item.name}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-3 text-[10px] text-slate-600">@playersfordestiny_bot</div>
+        </div>
       </div>
     </div>
   );
