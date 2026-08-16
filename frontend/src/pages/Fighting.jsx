@@ -61,8 +61,10 @@ const Fighting = ({ onPlayAd }) => {
               
               {/* 🔴 পাওয়ারের সংখ্যা নিখুঁতভাবে বসানোর জন্য আপডেট পজিশনিং */}
               <div 
-                className="absolute font-black text-[10px] sm:text-xs tracking-wider bottom-[15%] right-[80%] translate-x-1"
+                className="absolute font-black text-[10px] sm:text-xs tracking-wider whitespace-nowrap"
                 style={{
+                  bottom: '8%', // ↕️ উপরে-নিচে: % বাড়ালে উপরে উঠবে (যেমন: 10%), কমালে নিচে নামবে (যেমন: 5%)
+                  left: '60%',   // ↔️ ডানে-বামে: % বাড়ালে ডানে যাবে (যেমন: 65%), কমালে বামে যাবে (যেমন: 50%)
                   color: mouse.color,
                   textShadow: '0px 2px 4px rgba(0,0,0,0.95)'
                 }}
