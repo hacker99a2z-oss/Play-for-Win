@@ -48,7 +48,7 @@ const Fighting = ({ onPlayAd }) => {
             key={mouse.id} 
             /* 🔴 gamma (সবুজ ইঁদুর) হলে translate-x-3 দিয়ে ডানে সরানো হলো */
             className={`flex flex-col gap-2 items-center transform transition-transform ${
-              mouse.id === 'gamma' ? 'translate-x-1.7' : ''
+              mouse.id === 'gamma' ? 'translate-x-1.9' : ''
             }`}
           >
             {/* ছবির কন্টেইনার */}
