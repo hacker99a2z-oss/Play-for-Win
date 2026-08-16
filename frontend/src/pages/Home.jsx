@@ -334,70 +334,70 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         </div>
       )}
 
-      {/* ২. PLAYING STATE (100% Fixed Layout Solution) */}
+      {/* ২. PLAYING STATE (Absolute Matrix - Guaranteed Fix) */}
       {gameState === 'playing' && (
-        <div className="w-full max-w-sm mx-auto p-2 flex flex-col justify-center min-h-[500px]">
+        <div className="w-full max-w-sm mx-auto p-2 flex flex-col justify-center">
           {/* স্কোরবার */}
-          <div className="flex justify-between items-center bg-slate-900/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-700 mb-4 font-bold text-lg shadow-lg shrink-0">
+          <div className="flex justify-between items-center bg-slate-900/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-700 mb-4 font-bold text-lg shadow-lg">
             <span className="text-cyan-300 flex items-center gap-2">⏱️ {timeLeft}s</span>
             <span className="text-amber-400 flex items-center gap-2">🎯 {score}</span>
           </div>
 
-          {/* ফিক্সড গেম বোর্ড - লাফানো স্থায়ীভাবে বন্ধ */}
+          {/* ফিক্সড ১:১ স্কয়ার ব্যাকগ্রাউন্ড বোর্ড (সাইজ কখনো বদলাবে না) */}
           <div 
-            className="grid grid-cols-4 grid-rows-4 gap-2 p-4 rounded-3xl shadow-2xl relative touch-manipulation bg-green-700 border-4 border-lime-800 w-full aspect-square max-h-[400px]"
+            className="w-full aspect-square rounded-3xl shadow-2xl relative border-4 border-lime-800 bg-green-700 overflow-hidden"
             style={{ 
               backgroundImage: `url(${GAME_ASSETS.field})`,
               backgroundSize: '100% 100%',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'center'
+              backgroundRepeat: 'no-repeat'
             }}
           >
-            {holes.map((item, index) => (
-              <div
-                key={index}
-                onClick={() => item && handleHitItem(index)}
-                className="relative flex items-center justify-center cursor-pointer w-full h-full min-h-[70px] aspect-square"
-              >
-                {/* ক্যারেক্টার না থাকলেও কন্টেইনার যাতে ছোট না হয় তার জন্য ডামি অদৃশ্য স্থান */}
-                <div className={`flex items-center justify-center relative w-full h-full ${item ? 'animate-pop-up z-10' : 'opacity-0 invisible'}`}>
-                  {item?.type === 'mouse' && (
-                    <img
-                      src={GAME_ASSETS.mouse}
-                      alt="mouse"
-                      className="w-13 h-13 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
-                    />
-                  )}
-                  {item?.type === 'cat' && (
-                    <img
-                      src={GAME_ASSETS.cat}
-                      alt="cat"
-                      className="w-12 h-12 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
-                    />
-                  )}
-                  {item?.type === 'human' && (
-                    <img
-                      src={GAME_ASSETS.human}
-                      alt="human"
-                      className="w-12 h-12 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
-                    />
-                  )}
-                  {!item && (
-                    /* ডামি ক্যারেক্টার ঘর নির্দিষ্ট রাখার জন্য */
-                    <div className="w-12 h-12"></div>
-                  )}
+            {/* ১৬টি স্থির স্থান - Absolute Layout */}
+            <div className="absolute inset-0 grid grid-cols-4 grid-rows-4 gap-2 p-3">
+              {holes.map((item, index) => (
+                <div
+                  key={index}
+                  onClick={() => item && handleHitItem(index)}
+                  className="relative w-full h-full flex items-center justify-center cursor-pointer select-none"
+                >
+                  {/* ক্যারেক্টার থাকুক বা না থাকুক, এর জায়গা ১০০% ফিক্সড থাকবে */}
+                  {item && (
+                    <div className="z-10 animate-pop-up flex items-center justify-center w-full h-full">
+                      {item.type === 'mouse' && (
+                        <img
+                          src={GAME_ASSETS.mouse}
+                          alt="mouse"
+                          className="w-12 h-12 max-w-full max-h-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                        />
+                      )}
+                      {item.type === 'cat' && (
+                        <img
+                          src={GAME_ASSETS.cat}
+                          alt="cat"
+                          className="w-11 h-11 max-w-full max-h-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                        />
+                      )}
+                      {item.type === 'human' && (
+                        <img
+                          src={GAME_ASSETS.human}
+                          alt="human"
+                          className="w-11 h-11 max-w-full max-h-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                        />
+                      )}
 
-                  {/* হাতুড়ির হিট অ্যানিমেশন */}
-                  {hitIndex === index && (
-                    <img
-                      src={GAME_ASSETS.hammer}
-                      alt="hammer"
-                      className="absolute -top-3 -right-2 w-12 h-12 z-30 pointer-events-none transform -rotate-45 transition-all scale-110 drop-shadow-[0_6px_10px_rgba(0,0,0,0.9)]"
-                    />
+                      {/* হাতুড়ির হিট অ্যানিমেশন */}
+                      {hitIndex === index && (
+                        <img
+                          src={GAME_ASSETS.hammer}
+                          alt="hammer"
+                          className="absolute -top-2 -right-1 w-12 h-12 z-30 pointer-events-none transform -rotate-45 transition-all scale-110 drop-shadow-[0_6px_10px_rgba(0,0,0,0.9)]"
+                        />
+                      )}
+                    </div>
                   )}
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       )}
