@@ -374,7 +374,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                   alt="hole"
                   style={{ 
                     width: '180px', 
-                    height: '100px', 
+                    height: '130px', 
                     maxWidth: 'none', 
                     maxHeight: 'none', 
                     transform: 'scale(2.4)' 
