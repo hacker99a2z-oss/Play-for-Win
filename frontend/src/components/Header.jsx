@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function Header({ user }) {
   return (
-    <div className="flex items-center justify-between p-4 bg-gray-900 border-b border-gray-800 text-white">
+    <div className="flex items-center justify-between p-4 bg-black/40 backdrop-blur-md border-b border-white/10 text-white">
       {/* Telegram Profile Info */}
       <div className="flex items-center gap-3">
         <img
