@@ -98,7 +98,7 @@ const Fighting = ({ onPlayAd }) => {
             {/* 🔴 Boost Image Button - পূর্বের বাটনের মতো সমান Width ও Height বজায় রাখা হয়েছে */}
             <button
               onClick={() => handleBoostSingleMouse(mouse.id)}
-              className="w-[80%] active:scale-95 transition hover:brightness-110 mt-2 flex justify-center cursor-pointer"
+              className="w-[40%] active:scale-95 transition hover:brightness-110 mt-2 flex justify-center cursor-pointer"
             >
               <img 
                 src={adsBoostImg} 
