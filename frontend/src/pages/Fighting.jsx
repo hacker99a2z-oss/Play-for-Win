@@ -98,7 +98,7 @@ const Fighting = ({ onPlayAd }) => {
             {/* 🔴 ২. Boost Button-এ লেখার বদলে ADS-boost.png বসানো হয়েছে */}
             <button
               onClick={() => handleBoostSingleMouse(mouse.id)}
-              className="w-[98%] active:scale-95 transition hover:brightness-110 mt-1 cursor-pointer"
+              className="w-full transform scale-110 active:scale-105 transition hover:brightness-110 mt-2 cursor-pointer"
             >
               <img 
                 src={adsBoostImg} 
@@ -111,15 +111,15 @@ const Fighting = ({ onPlayAd }) => {
       </div>
 
       {/* 🔴 ৩. FIGHT! Button-এ লেখার বদলে FIGHT.png বসানো হয়েছে */}
-      <div className="w-full px-2 mt-4 mb-6 flex justify-center">
+      <div className="w-full px-2 mt-6 mb-6 flex justify-center">
         <button
           onClick={() => alert(`⚔️ Battle Started with Total Power: ${totalPower.toLocaleString()}`)}
-          className="w-full active:scale-95 transition hover:brightness-110 cursor-pointer"
+          className="w-full transform scale-110 active:scale-105 transition hover:brightness-110 cursor-pointer"
         >
           <img 
             src={fightBtnImg} 
             alt="Fight" 
-            className="w-full h-auto object-contain drop-shadow-2xl max-h-20"
+            className="w-full h-auto object-contain drop-shadow-2xl max-h-28 mx-auto"
           />
         </button>
       </div>
