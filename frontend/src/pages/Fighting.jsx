@@ -73,7 +73,7 @@ const Fighting = ({ onPlayAd }) => {
             className={`flex flex-col gap-2 items-center transform transition-transform ${mouse.cardPos || ''}`}
           >
             {/* ছবির কন্টেইনার */}
-            <div className="w-full relative inline-block transform scale-105 origin-center">
+            <div className="w-full relative inline-block transform scale-105 origin-center animate-float">
               <img 
                 src={mouse.img} 
                 alt="Mouse Card" 
