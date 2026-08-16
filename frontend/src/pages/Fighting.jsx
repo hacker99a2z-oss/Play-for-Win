@@ -98,12 +98,12 @@ const Fighting = ({ onPlayAd }) => {
             {/* 🔴 Boost Image Button - পূর্বের বাটনের মতো সমান Width ও Height বজায় রাখা হয়েছে */}
             <button
               onClick={() => handleBoostSingleMouse(mouse.id)}
-              className="w-[40%] active:scale-95 transition hover:brightness-110 mt-2 flex justify-center cursor-pointer"
+              className="w-full active:scale-95 transition hover:brightness-110 mt-2 flex justify-center cursor-pointer"
             >
               <img 
                 src={adsBoostImg} 
                 alt="Ads Boost" 
-                className="w-[40px] h-auto block object-contain drop-shadow-md"
+                className="w-full max-w-[120px] h-auto block object-contain drop-shadow-md"
               />
             </button>
           </div>
@@ -114,13 +114,13 @@ const Fighting = ({ onPlayAd }) => {
       <div className="w-full px-4 mt-12 mb-4 flex justify-center">
         <button
           onClick={() => alert(`⚔️ Battle Started with Total Power: ${totalPower.toLocaleString()}`)}
-          className="w-[50%] active:scale-95 transition hover:brightness-110 flex justify-center cursor-pointer"
+          className="w-full active:scale-95 transition hover:brightness-110 flex justify-center cursor-pointer"
         >
           <img 
             src={fightBtnImg} 
             alt="Fight" 
             /* scale-y-90 দিয়ে উচ্চতা কমানো হয়েছে এবং max-h-14 দিয়ে সাইজ ফিক্স করা হয়েছে */
-            className="w-[95%] max-h-18 h-auto block object-contain drop-shadow-2xl"
+            className="w-full max-w-[280px] h-auto block object-contain drop-shadow-2xl"
           />
         </button>
       </div>
