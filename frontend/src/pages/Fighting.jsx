@@ -95,15 +95,15 @@ const Fighting = ({ onPlayAd }) => {
               </div>
             </div>
 
-            {/* 🔴 ২. Boost Button-এ লেখার বদলে ADS-boost.png বসানো হয়েছে */}
+            {/* 🔴 Boost Image Button - পূর্বের বাটনের মতো সমান Width ও Height বজায় রাখা হয়েছে */}
             <button
               onClick={() => handleBoostSingleMouse(mouse.id)}
-              className="w-full transform scale-110 active:scale-105 transition hover:brightness-110 mt-2 cursor-pointer"
+              className="w-[95%] h-[38px] relative rounded-xl border border-white/40 shadow-md active:scale-95 transition overflow-hidden mt-1 cursor-pointer"
             >
               <img 
                 src={adsBoostImg} 
                 alt="Ads Boost" 
-                className="w-full h-auto object-contain drop-shadow-md"
+                className="absolute inset-0 w-full h-full object-cover"
               />
             </button>
           </div>
