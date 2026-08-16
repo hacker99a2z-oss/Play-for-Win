@@ -5,9 +5,30 @@ import mouseGamma from '../assets/mouse-gamma.png';
 
 const Fighting = ({ onPlayAd }) => {
   const [mice, setMice] = useState([
-    { id: 'alpha', power: 6250, color: '#38bdf8', img: mouseAlpha },
-    { id: 'beta', power: 5500, color: '#f59e0b', img: mouseBeta },
-    { id: 'gamma', power: 7000, color: '#34d399', img: mouseGamma },
+    { 
+      id: 'alpha', 
+      power: 6250, 
+      color: '#38bdf8', 
+      img: mouseAlpha,
+      // 🔵 Alpha (নীল) টেক্সটের পজিশন
+      textPos: { bottom: '4%', left: '52%' }
+    },
+    { 
+      id: 'beta', 
+      power: 5500, 
+      color: '#f59e0b', 
+      img: mouseBeta,
+      // 🟡 Beta (হলুদ) টেক্সটের পজিশন
+      textPos: { bottom: '4%', left: '52%' }
+    },
+    { 
+      id: 'gamma', 
+      power: 7000, 
+      color: '#34d399', 
+      img: mouseGamma,
+      // 🟢 Gamma (সবুজ) টেক্সটের পজিশন
+      textPos: { bottom: '4%', left: '52%' }
+    },
   ]);
 
   const totalPower = mice.reduce((acc, curr) => acc + curr.power, 0);
@@ -59,12 +80,12 @@ const Fighting = ({ onPlayAd }) => {
                 className="w-full h-auto block object-contain"
               />
               
-              {/* 🔴 পাওয়ারের সংখ্যা নিখুঁতভাবে বসানোর জন্য আপডেট পজিশনিং */}
+              {/* 🔴 ডায়নামিকভাবে আলাদা আলাদা টেক্সট পজিশনিং */}
               <div 
                 className="absolute font-black text-[10px] sm:text-xs tracking-wider whitespace-nowrap"
                 style={{
-                  bottom: '4%', // ↕️ উপরে-নিচে: % বাড়ালে উপরে উঠবে (যেমন: 10%), কমালে নিচে নামবে (যেমন: 5%)
-                  left: '52%',   // ↔️ ডানে-বামে: % বাড়ালে ডানে যাবে (যেমন: 65%), কমালে বামে যাবে (যেমন: 50%)
+                  bottom: mouse.textPos.bottom,
+                  left: mouse.textPos.left,
                   color: mouse.color,
                   textShadow: '0px 2px 4px rgba(0,0,0,0.95)'
                 }}
