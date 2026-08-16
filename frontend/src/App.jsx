@@ -6,6 +6,7 @@ import Fighting from './pages/Fighting';
 import Referral from './pages/Referral';
 import Contest from './pages/Contest';
 import Withdraw from './pages/Withdraw';
+import bgArena from './assets/fighting-bg.jpg';
 
 const BACKEND_URL = 'https://play-for-win.onrender.com';
 
@@ -121,12 +122,21 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans pb-24 select-none">
-      {/* হেডার */}
-      <Header user={user} />
+    /* 🔴 ২. এখানে bg-slate-950 বদলে ব্যাকগ্রাউন্ড ইমেজ ও প্রপার্টি যুক্ত করা হয়েছে */
+    <div 
+      className="min-h-screen bg-cover bg-center bg-no-repeat text-white font-sans pb-24 select-none relative overflow-x-hidden flex flex-col justify-between"
+      style={{ backgroundImage: `url(${bgArena})` }}
+    >
+      {/* 🔴 ৩. ব্যাকগ্রাউন্ড ওভারলে (টেক্সট স্পষ্ট করার জন্য হালকা ডার্ক টিন্ট) */}
+      <div className="absolute inset-0 bg-black/20 pointer-events-none z-0" />
+
+      {/* হেডার (z-10 দিয়ে ইমেজের ওপরে তুলে আনা হলো) */}
+      <div className="relative z-10">
+        <Header user={user} />
+      </div>
 
       {/* মেইন কন্টেন্ট এলাকা (Tabs) */}
-      <main className="max-w-md mx-auto px-2">
+      <main className="max-w-md mx-auto px-2 relative z-10 flex-1 flex flex-col justify-center w-full">
         {activeTab === 'home' && (
           <Home 
             user={user} 
@@ -135,7 +145,6 @@ export default function App() {
           />
         )}
 
-        {/* 👇 এই লাইনটি যুক্ত করুন */}
         {activeTab === 'fighting' && (
           <Fighting 
             user={user} 
@@ -149,7 +158,9 @@ export default function App() {
       </main>
 
       {/* নেভিগেশন বার */}
-      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      <div className="relative z-10">
+        <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      </div>
     </div>
   );
 }
