@@ -3,6 +3,7 @@ import React from 'react';
 export default function Navigation({ activeTab, setActiveTab }) {
   const tabs = [
     { id: 'home', label: 'Home', icon: '🏠' },
+    { id: 'fighting', label: 'Fighting', icon: '⚔️' },
     { id: 'referral', label: 'Referral', icon: '👥' },
     { id: 'contest', label: 'Contest', icon: '🏆' },
     { id: 'withdraw', label: 'Withdraw', icon: '💸' },
