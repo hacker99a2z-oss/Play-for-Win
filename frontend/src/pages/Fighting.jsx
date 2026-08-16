@@ -58,8 +58,8 @@ const Fighting = ({ onPlayAd }) => {
               <div 
                 className="absolute font-black text-[10px] sm:text-xs tracking-wider"
                 style={{
-                  bottom: '5%',
-                  left: '50%',
+                  bottom: '3%',
+                  left: '52%',
                   color: mouse.color,
                   textShadow: '0px 2px 4px rgba(0,0,0,0.95)'
                 }}
