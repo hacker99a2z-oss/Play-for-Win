@@ -113,7 +113,7 @@ const Fighting = ({ onPlayAd }) => {
       {/* 🔴 FIGHT! Image Button - উচ্চতা কমানো এবং নিচে নামানোর আপডেট কোড */}
       <div className="w-full px-4 mt-12 mb-4 flex justify-center">
         <button
-          onClick={() => alert(`⚔️ Battle Started with Total Power: ${totalPower.toLocaleString()}`)}
+          onClick={() => onNavigate && onNavigate('battle')}
           className="w-full active:scale-95 transition hover:brightness-110 flex justify-center cursor-pointer"
         >
           <img 
