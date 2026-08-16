@@ -120,7 +120,7 @@ const Fighting = ({ onPlayAd }) => {
             src={fightBtnImg} 
             alt="Fight" 
             /* scale-y-90 দিয়ে উচ্চতা কমানো হয়েছে এবং max-h-14 দিয়ে সাইজ ফিক্স করা হয়েছে */
-            className="w-[75%] max-h-14 transform scale-y-70 h-auto block object-contain drop-shadow-2xl"
+            className="w-[75%] max-h-14 transform scale-y-90 h-auto block object-contain drop-shadow-2xl"
           />
         </button>
       </div>
