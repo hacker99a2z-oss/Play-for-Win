@@ -372,7 +372,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                   <img
                     src={GAME_ASSETS.hole}
                     alt="hole"
-                    className="absolute w-12 h-12 object-contain opacity-90 pointer-events-none bottom-1"
+                    className="absolute w-36 h-36 object-contain opacity-90 pointer-events-none bottom-1"
                   />
                   {item && (
                     <div className="z-10 animate-pop-up flex items-center justify-center w-full h-full relative">
