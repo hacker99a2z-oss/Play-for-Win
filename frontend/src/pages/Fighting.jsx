@@ -7,7 +7,7 @@ const Fighting = ({ onPlayAd }) => {
   const [mice, setMice] = useState([
     { 
       id: 'alpha', 
-      power: 6250, 
+      power: 6250000, 
       color: '#38bdf8', 
       img: mouseAlpha,
       // 🔵 Alpha (নীল) টেক্সটের পজিশন
@@ -15,7 +15,7 @@ const Fighting = ({ onPlayAd }) => {
     },
     { 
       id: 'beta', 
-      power: 5500, 
+      power: 5500000, 
       color: '#f59e0b', 
       img: mouseBeta,
       // 🟡 Beta (হলুদ) টেক্সটের পজিশন
@@ -23,7 +23,7 @@ const Fighting = ({ onPlayAd }) => {
     },
     { 
       id: 'gamma', 
-      power: 7000, 
+      power: 7000000, 
       color: '#34d399', 
       img: mouseGamma,
       // 🟢 Gamma (সবুজ) টেক্সটের পজিশন
@@ -87,7 +87,7 @@ const Fighting = ({ onPlayAd }) => {
                   bottom: mouse.textPos.bottom,
                   left: mouse.textPos.left,
                   color: mouse.color,
-                  fontSize: '8px', // 🔴 এখানে সরাসরি ফন্ট সাইজ কমান (প্রয়োজনে 7px বা 6px দিন)
+                  fontSize: '9px', // 🔴 এখানে সরাসরি ফন্ট সাইজ কমান (প্রয়োজনে 7px বা 6px দিন)
                   textShadow: '0px 2px 4px rgba(0,0,0,0.95)'
                 }}
               >
