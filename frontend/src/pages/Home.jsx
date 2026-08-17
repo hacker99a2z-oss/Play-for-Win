@@ -64,30 +64,24 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     }
   }, [user]);
 
-  // ২. অবজেক্ট স্পনিং লজিক (ফিক্সড - কোনো আইটেম আটকে থাকবে না)
+  // ২. অবজেক্ট স্পনিং লজিক (timeLeft ডিপেন্ডেন্সি ছাড়াই চলবে, তাই আইটেম কখনো আটকাবে না)
   useEffect(() => {
     let spawnInterval;
 
     if (gameState === 'playing') {
       spawnInterval = setInterval(() => {
         setHoles((prevHoles) => {
-          // খালি গর্ত খুঁজে বের করা
           const emptyHoleIndexes = prevHoles
             .map((val, idx) => (val === null ? idx : null))
             .filter((val) => val !== null);
 
           if (emptyHoleIndexes.length === 0) return prevHoles;
 
-          // ১ থেকে ২ টি আইটেম ওঠা
-          const batchSize = Math.floor(Math.random() * 2) + 1; 
+          const batchSize = Math.floor(Math.random() * 2) + 1;
           const availableIndices = [...emptyHoleIndexes];
           const newHoles = [...prevHoles];
 
           let mouseSpawnedInThisBatch = false;
-
-          // ৩৫ সেকেন্ডে ১৪টি মাউস সুষমভাবে আসার লজিক
-          const elapsedTime = 35 - timeLeft;
-          const maxAllowedMiceAtThisTime = Math.min(14, Math.floor(elapsedTime / 2.3) + 1);
 
           for (let i = 0; i < batchSize; i++) {
             if (availableIndices.length === 0) break;
@@ -97,18 +91,17 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             const itemId = Date.now() + Math.random();
 
             let itemType = 'cat';
-            const canSpawnMouse = 
-              spawnedMiceCount.current < maxAllowedMiceAtThisTime && 
-              spawnedMiceCount.current < 14 && 
-              !mouseSpawnedInThisBatch;
+
+            // ১৪টি মাউস সুষমভাবে স্পন করার লজিক
+            const canSpawnMouse = spawnedMiceCount.current < 14 && !mouseSpawnedInThisBatch;
 
             if (canSpawnMouse) {
               const randVal = Math.random();
-              if (randVal < 0.65) {
+              if (randVal < 0.45) {
                 itemType = 'mouse';
                 spawnedMiceCount.current += 1;
                 mouseSpawnedInThisBatch = true;
-              } else if (randVal < 0.85) {
+              } else if (randVal < 0.75) {
                 itemType = 'cat';
               } else {
                 itemType = 'human';
@@ -117,11 +110,10 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
               itemType = Math.random() < 0.5 ? 'cat' : 'human';
             }
 
-            // নতুন আইটেম গর্তে বসানো
             newHoles[targetHoleIndex] = { id: itemId, type: itemType };
 
-            // ০.৮ সেকেন্ড পর আইটেম গায়েব হওয়ার ফিক্সড লজিক
-            const timeoutId = setTimeout(() => {
+            // ঠিক ৭০০ মিলি-সেকেন্ড (0.7s) পর আইটেমটি গর্তে নেমে যাবে
+            setTimeout(() => {
               setHoles((currHoles) => {
                 const updated = [...currHoles];
                 if (updated[targetHoleIndex] && updated[targetHoleIndex].id === itemId) {
@@ -129,23 +121,20 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                 }
                 return updated;
               });
-            }, 800);
-
-            activeTimeouts.current.push(timeoutId);
+            }, 700);
           }
 
           return newHoles;
         });
-      }, 1000); 
+      }, 1100);
+    } else {
+      setHoles(Array(16).fill(null));
     }
 
-    // ক্লিনআপ ফাংশন: রি-রেন্ডার হলে সব পুরোনো টাইমার ক্লিয়ার হয়ে যাবে
     return () => {
       clearInterval(spawnInterval);
-      activeTimeouts.current.forEach(clearTimeout);
-      activeTimeouts.current = [];
     };
-  }, [gameState, timeLeft]);
+  }, [gameState]); // <= এখানে শুধু gameState থাকবে, timeLeft উঠিয়ে দেওয়া হয়েছে
 
   // ৩. টাইমার লজিক
   useEffect(() => {
