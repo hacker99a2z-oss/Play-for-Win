@@ -400,7 +400,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                       <img
                         src={GAME_ASSETS.cat}
                         alt="cat"
-                        className="w-13 h-11 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                        className="w-15 h-13 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                       />
                     )}
                     {item.type === 'human' && (
