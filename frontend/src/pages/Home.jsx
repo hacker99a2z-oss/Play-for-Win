@@ -64,11 +64,14 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     }
   }, [user]);
 
-  // ২. অবজেক্ট স্পনিং লজিক (timeLeft ডিপেন্ডেন্সি ছাড়াই চলবে, তাই আইটেম কখনো আটকাবে না)
+  // ২. অবজেক্ট স্পনিং লজিক (মাউস আটকে থাকবে না + শেষ ১-২ সেকেন্ডে ১৪ নম্বর মাউস আসবে)
   useEffect(() => {
     let spawnInterval;
 
     if (gameState === 'playing') {
+      // গেম শুরু হওয়ার সময় রেকর্ড রাখা
+      const gameStartTime = Date.now();
+
       spawnInterval = setInterval(() => {
         setHoles((prevHoles) => {
           const emptyHoleIndexes = prevHoles
@@ -83,6 +86,12 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
           let mouseSpawnedInThisBatch = false;
 
+          // কত সেকেন্ড পার হয়েছে তা সরাসরি বর্তমান সময় থেকে বের করা (timeLeft ছাড়া)
+          const elapsedTime = (Date.now() - gameStartTime) / 1000; 
+
+          // প্রতি ২.৪ সেকেন্ডে সর্বোচ্চ ১টি মাউস আসার অনুমতি পাবে (৩৫ সেকেন্ডের গেম)
+          const maxAllowedMiceAtThisTime = Math.min(14, Math.floor(elapsedTime / 2.4) + 1);
+
           for (let i = 0; i < batchSize; i++) {
             if (availableIndices.length === 0) break;
 
@@ -92,16 +101,19 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
             let itemType = 'cat';
 
-            // ১৪টি মাউস সুষমভাবে স্পন করার লজিক
-            const canSpawnMouse = spawnedMiceCount.current < 14 && !mouseSpawnedInThisBatch;
+            // নির্দিষ্ট সময় পর পর ইঁদুর আসার শর্ত
+            const canSpawnMouse = 
+              spawnedMiceCount.current < maxAllowedMiceAtThisTime && 
+              spawnedMiceCount.current < 14 && 
+              !mouseSpawnedInThisBatch;
 
             if (canSpawnMouse) {
               const randVal = Math.random();
-              if (randVal < 0.45) {
+              if (randVal < 0.70) {
                 itemType = 'mouse';
                 spawnedMiceCount.current += 1;
                 mouseSpawnedInThisBatch = true;
-              } else if (randVal < 0.75) {
+              } else if (randVal < 0.88) {
                 itemType = 'cat';
               } else {
                 itemType = 'human';
@@ -112,7 +124,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
             newHoles[targetHoleIndex] = { id: itemId, type: itemType };
 
-            // ঠিক ৭০০ মিলি-সেকেন্ড (0.7s) পর আইটেমটি গর্তে নেমে যাবে
+            // ৭০০ms পর ক্যারেক্টার গর্তে নেমে যাবে
             setTimeout(() => {
               setHoles((currHoles) => {
                 const updated = [...currHoles];
@@ -126,7 +138,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
           return newHoles;
         });
-      }, 1100);
+      }, 1000);
     } else {
       setHoles(Array(16).fill(null));
     }
@@ -134,7 +146,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     return () => {
       clearInterval(spawnInterval);
     };
-  }, [gameState]); // <= এখানে শুধু gameState থাকবে, timeLeft উঠিয়ে দেওয়া হয়েছে
+  }, [gameState]);
 
   // ৩. টাইমার লজিক
   useEffect(() => {
@@ -391,7 +403,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                       <img
                         src={GAME_ASSETS.cat}
                         alt="cat"
-                        className="w-15 h-11 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
+                        className="w-16 h-13 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]"
                       />
                     )}
                     {item.type === 'human' && (
