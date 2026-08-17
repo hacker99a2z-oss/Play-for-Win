@@ -64,14 +64,13 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     }
   }, [user]);
 
-  // ২. অবজেক্ট স্পনিং লজিক (৩৫ সেকেন্ডে ব্যালেন্সড ও সুষমভাবে ১৪টি মাউস আসার জন্য)
+  // ২. অবজেক্ট স্পনিং লজিক (৩৫ সেকেন্ডের পুরো সময় জুড়ে ১৪টি ইঁদুর সমানভাবে ছড়িয়ে দেওয়ার জন্য)
   useEffect(() => {
     let spawnInterval;
 
     if (gameState === 'playing') {
       clickedItemsRef.current.clear();
-    
-      // ১ সেকেন্ড (1000ms) পর পর স্পন হবে
+
       spawnInterval = setInterval(() => {
         setHoles((prevHoles) => {
           const emptyHoleIndexes = prevHoles
@@ -80,12 +79,16 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
 
           if (emptyHoleIndexes.length === 0) return prevHoles;
 
-          // একসাথে ১ থেকে ৩টি পর্যন্ত অবজেক্ট উঠবে (বিড়াল, মানুষ, মাউস)
-          const batchSize = Math.floor(Math.random() * 3) + 1; 
+          const batchSize = Math.floor(Math.random() * 2) + 1; // ১ থেকে ২ টি আইটেম একসাথে
           const availableIndices = [...emptyHoleIndexes];
           const newHoles = [...prevHoles];
 
           let mouseSpawnedInThisBatch = false;
+
+          // টাইমারের ওপর ভিত্তি করে কত নম্বর মাউস পর্যন্ত আসার অনুমতি আছে
+          // ৩৫ সেকেন্ডের গেম: প্রতি ২.৪ সেকেন্ডে গড়ে ১টি করে মাউস এলাউ হবে
+          const elapsedTime = 35 - timeLeft; // কত সেকেন্ড পার হয়েছে
+          const maxAllowedMiceAtThisTime = Math.min(14, Math.floor(elapsedTime / 2.3) + 1);
 
           for (let i = 0; i < batchSize; i++) {
             if (availableIndices.length === 0) break;
@@ -95,25 +98,28 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
             const itemId = Date.now() + Math.random();
 
             let itemType = 'cat';
-            const canSpawnMouse = spawnedMiceCount.current < 14 && !mouseSpawnedInThisBatch;
+            
+            // মাউস তখনই স্পন করবে যদি নির্দিষ্ট সময়ের লিমিট এবং মোট ১৪ লিমিট না পেরোয়
+            const canSpawnMouse = 
+              spawnedMiceCount.current < maxAllowedMiceAtThisTime && 
+              spawnedMiceCount.current < 14 && 
+              !mouseSpawnedInThisBatch;
 
             if (canSpawnMouse) {
-              // মাউস স্পনের চান্স ৪০% রাখা হলো যেন মাউসগুলো পুরো ৩৫ সেকেন্ড ধরে ছড়িয়ে-ছিটিয়ে আসে
               const randVal = Math.random();
-              if (randVal < 0.40) {
+              if (randVal < 0.65) { // চান্স বাড়ানো হলো যেন সময় হলেই ইঁদুর চলে আসে
                 itemType = 'mouse';
                 spawnedMiceCount.current += 1;
-                mouseSpawnedInThisBatch = true; // একসাথে একাধিক ইঁদুর ওঠাকে ব্লক করবে
-              } else if (randVal < 0.70) {
+                mouseSpawnedInThisBatch = true;
+              } else if (randVal < 0.85) {
                 itemType = 'cat';
               } else {
                 itemType = 'human';
               }
             } else {
-              // ১৪টি মাউস উঠে গেলে কেবল বিড়াল ও মানুষ আসবে
               itemType = Math.random() < 0.5 ? 'cat' : 'human';
             }
- 
+
             newHoles[targetHoleIndex] = { id: itemId, type: itemType };
 
             const timeoutId = setTimeout(() => {
@@ -124,7 +130,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                 }
                 return updated;
               });
-            }, 800); // গর্তের ওপর অবজেক্টটি ০.৮ সেকেন্ড অবস্থান করবে
+            }, 800);
 
             activeTimeouts.current.push(timeoutId);
           }
@@ -143,7 +149,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       activeTimeouts.current.forEach(clearTimeout);
       activeTimeouts.current = [];
     };
-  }, [gameState]); // dependency array-তে timeLeft রাখার প্রয়োজন নেই
+  }, [gameState, timeLeft]); // <= এখানে dependency-তে timeLeft যুক্ত করা হয়েছে
 
   // ৩. টাইমার লজিক
   useEffect(() => {
