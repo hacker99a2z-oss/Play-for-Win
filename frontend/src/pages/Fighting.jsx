@@ -13,21 +13,21 @@ const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
       power: 0, 
       color: '#38bdf8', 
       img: mouseAlpha,
-      textPos: { bottom: '6.1%', left: '52%' }
+      textPos: { bottom: '6.2%', left: '53%' }
     },
     { 
       id: 'beta', 
       power: 0, 
       color: '#f59e0b', 
       img: mouseBeta,
-      textPos: { bottom: '6.5%', left: '52%' }
+      textPos: { bottom: '6.6%', left: '52%' }
     },
     { 
       id: 'gamma', 
       power: 0, 
       color: '#34d399', 
       img: mouseGamma,
-      textPos: { bottom: '7%', left: '46.6%' },
+      textPos: { bottom: '6.9%', left: '46.6%' },
       cardPos: 'translate-y-0.9 translate-x-1'
     },
   ]);
