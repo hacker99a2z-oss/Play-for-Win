@@ -129,16 +129,26 @@ export default function App() {
     );
   }
 
+  // ৩. battle ট্যাব হলে ফুল-স্ক্রিন গেম রেন্ডার হবে (হাইড হেডার, নেভিগেশন ও গ্লোবাল ব্যাকগ্রাউন্ড)
+  if (activeTab === 'battle') {
+    return (
+      <Battle 
+        user={user} 
+        mode={matchMode} 
+        refreshUserData={syncUserData} 
+        onNavigate={handleNavigate} 
+      />
+    );
+  }
+
   return (
-    /* 🔴 ২. এখানে bg-slate-950 বদলে ব্যাকগ্রাউন্ড ইমেজ ও প্রপার্টি যুক্ত করা হয়েছে */
     <div 
       className="min-h-screen bg-cover bg-center bg-no-repeat text-white font-sans pb-24 select-none relative overflow-x-hidden flex flex-col justify-between"
       style={{ backgroundImage: `url(${bgArena})` }}
     >
-      {/* 🔴 ৩. ব্যাকগ্রাউন্ড ওভারলে (টেক্সট স্পষ্ট করার জন্য হালকা ডার্ক টিন্ট) */}
       <div className="absolute inset-0 bg-black/20 pointer-events-none z-0" />
 
-      {/* হেডার (z-10 দিয়ে ইমেজের ওপরে তুলে আনা হলো) */}
+      {/* হেডার */}
       <div className="relative z-10">
         <Header user={user} />
       </div>
@@ -162,15 +172,6 @@ export default function App() {
           />
         )}
 
-        {/* 🔴 Battle পেজের কন্ডিশন না থাকলে এটি যুক্ত করে নিন */}
-        {activeTab === 'battle' && (
-          <Battle 
-            user={user} 
-            mode={matchMode}
-            refreshUserData={syncUserData} 
-            onNavigate={handleNavigate}
-          />
-        )}
         {activeTab === 'referral' && <Referral user={user} refreshUser={syncUserData} />}
         {activeTab === 'contest' && <Contest user={user} />}
         {activeTab === 'withdraw' && <Withdraw user={user} />}
@@ -182,4 +183,3 @@ export default function App() {
       </div>
     </div>
   );
-}
