@@ -152,7 +152,10 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
         </button>
 
         {/* ডানদিকের বোর্ডে শুধুমাত্র Hits সংখ্যা দেখাবে */}
-        <div className="text-center pr-2 pt-1">
+        <div
+          className="absolute z-20 pointer-events-none"
+          style={{ top: '25px', right: '30px' }}
+        >
           <p className="text-xl font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             {hits}
           </p>
@@ -182,7 +185,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
       {/* বাম পাশের পাথরের বাক্সে সংকেত/কাউন্ট */}
       <div
         className="absolute z-20 pointer-events-none"
-        style={{ bottom: '70px', left: '45px' }}
+        style={{ bottom: '67px', left: '45px' }}
       >
         <div className="relative flex items-center justify-center">
           <span className="bg-black/80 border border-amber-500/60 text-amber-400 font-black text-xs px-2.5 py-0.5 rounded-full shadow-lg">
