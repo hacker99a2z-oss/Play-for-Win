@@ -7,8 +7,12 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
   const [stonesLeft, setStonesLeft] = useState(30);
   const [hits, setHits] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  // ১টি মাত্র ইঁদুর যা ব্রিজের ওপর ডানে-বামে মুভ করবে (y: 28% ব্রিজের সমান্তরালে)
+  // ১. সময় গণনার জন্য টাইম ট্র্যাক
+  const startTimeRef = useRef(Date.now());
+
+  // ১টি মাত্র ইঁদুর যা ব্রিজের ওপর ডানে-বামে মুভ করবে
   const [mouse, setMouse] = useState({
     x: 50,
     y: 28,
@@ -24,7 +28,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
 
   const arenaRef = useRef(null);
 
-  // ইঁদুরের এক লাইনে ডানে-বামে মুভ করার লজিক
+  // ইঁদুরের ডানে-বামে মুভ করার লজিক
   useEffect(() => {
     if (gameOver) return;
     const interval = setInterval(() => {
@@ -46,6 +50,39 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
 
     return () => clearInterval(interval);
   }, [gameOver]);
+
+  // ২. গেম ওভার হলে ব্যাকএন্ডে ডেটা সাবমিট করার এফেক্ট
+  useEffect(() => {
+    if (gameOver) {
+      const timeTaken = (Date.now() - startTimeRef.current) / 1000; // সেকেন্ডে সময় বের করা
+      submitMatchResult(hits, timeTaken);
+    }
+  }, [gameOver]);
+
+  const submitMatchResult = async (finalHits, timeTaken) => {
+    setSubmitting(true);
+    try {
+      const res = await fetch('https://play-for-win.onrender.com/api/match/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramId: user?.telegramId,
+          mode: mode,
+          hits: finalHits,
+          timeTaken: timeTaken
+        })
+      });
+
+      const data = await res.json();
+      if (data.success && refreshUserData) {
+        refreshUserData(); // ইউজারের ব্যালেন্স বা প্রোফাইল আপডেট
+      }
+    } catch (err) {
+      console.error("Match submit failed:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // ড্র্যাগ হ্যান্ডলার
   const handleTouchStart = (e) => {
@@ -91,7 +128,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
   // পাথর ছোঁড়া এবং হিট চেক
   const throwStone = () => {
     setIsThrown(true);
-    const targetY = 28; // ইঁদুরের লাইনে (y: 28%) পাথর পৌঁছাবে
+    const targetY = 28;
     const targetX = stonePos.x;
 
     setStonePos({ x: targetX, y: targetY });
@@ -142,7 +179,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
           : {}
       }
     >
-      {/* টপ বার (Exit এবং শুধু Hits কাউন্ট) */}
+      {/* টপ বার (Exit এবং Hits কাউন্ট) */}
       <div className="flex justify-between items-start p-4 z-20">
         <button
           onClick={() => onNavigate && onNavigate('fighting')}
@@ -151,7 +188,6 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
           Exit
         </button>
 
-        {/* ডানদিকের বোর্ডে শুধুমাত্র Hits সংখ্যা দেখাবে */}
         <div
           className="absolute z-20 pointer-events-none"
           style={{ top: '39px', right: '54px' }}
@@ -162,7 +198,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
         </div>
       </div>
 
-      {/* ১টি মাত্র ইঁদুর যা ব্রিজের ওপর দিয়ে চলাফেরা করবে */}
+      {/* ১টি ইঁদুর */}
       <div className="absolute inset-0 pointer-events-none z-10">
         <div
           className="absolute transition-all duration-75 ease-linear"
@@ -182,7 +218,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
         </div>
       </div>
 
-      {/* বাম পাশের পাথরের বাক্সে সংকেত/কাউন্ট */}
+      {/* বাম পাশের পাথরের কাউন্ট */}
       <div
         className="absolute z-20 pointer-events-none"
         style={{ bottom: '67px', left: '45px' }}
@@ -194,7 +230,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
         </div>
       </div>
 
-      {/* ছোড়ার জন্য মেইন পাথর */}
+      {/* মেইন পাথর */}
       {!gameOver && stonesLeft > 0 && (
         <div
           onMouseDown={handleTouchStart}
@@ -227,12 +263,16 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
             <p className="text-sm text-slate-300">
               Total Hits: <span className="text-emerald-400 font-bold">{hits}</span>
             </p>
-            <button
-              onClick={() => onNavigate && onNavigate('fighting')}
-              className="w-full bg-amber-500 font-bold py-2 rounded-xl text-black active:scale-95 transition"
-            >
-              Back to Arena
-            </button>
+            {submitting ? (
+              <p className="text-xs text-amber-400 animate-pulse">Saving Score...</p>
+            ) : (
+              <button
+                onClick={() => onNavigate && onNavigate('fighting')}
+                className="w-full bg-amber-500 font-bold py-2 rounded-xl text-black active:scale-95 transition"
+              >
+                Back to Arena
+              </button>
+            )}
           </div>
         </div>
       )}
