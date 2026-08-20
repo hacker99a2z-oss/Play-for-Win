@@ -57,29 +57,36 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
         <img src={fightBtnImg} alt="Fight" className="w-full max-w-[280px] object-contain drop-shadow-2xl" />
       </button>
 
-      {/* Mode Selection Modal */}
+      {/* Mode Selection Modal (UPDATE HERE) */}
       {showModeModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-amber-500/30 p-6 rounded-2xl w-full max-w-xs text-center space-y-4">
-            <h3 className="text-lg font-bold text-amber-400">Select Arena Mode</h3>
-            <p className="text-xs text-slate-300">Entry Fee: 🪙 250 Coins</p>
-            <div className="flex gap-3">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border-2 border-amber-500/80 p-6 rounded-2xl w-full max-w-xs text-center space-y-4 shadow-2xl">
+            <h3 className="text-xl font-bold text-amber-400 drop-shadow">Select Arena Mode</h3>
+            <p className="text-xs font-semibold text-slate-200">Entry Fee: 🪙 250 Coins</p>
+            
+            <div className="flex gap-3 pt-2">
               <button 
                 disabled={loading}
                 onClick={() => handleStartGame(2)} 
-                className="flex-1 bg-amber-500 font-bold py-2 rounded-xl text-black active:scale-95 disabled:opacity-50"
+                className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 font-bold py-2.5 rounded-xl text-black shadow-lg active:scale-95 transition disabled:opacity-50"
               >
                 2 Players
               </button>
               <button 
                 disabled={loading}
                 onClick={() => handleStartGame(4)} 
-                className="flex-1 bg-amber-500 font-bold py-2 rounded-xl text-black active:scale-95 disabled:opacity-50"
+                className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 font-bold py-2.5 rounded-xl text-black shadow-lg active:scale-95 transition disabled:opacity-50"
               >
                 4 Players
               </button>
             </div>
-            <button onClick={() => setShowModeModal(false)} className="text-xs text-slate-400 underline mt-2">Cancel</button>
+
+            <button 
+              onClick={() => setShowModeModal(false)} 
+              className="text-xs text-slate-400 hover:text-slate-200 underline pt-2 inline-block cursor-pointer"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
