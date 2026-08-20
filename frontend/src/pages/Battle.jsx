@@ -154,7 +154,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
         {/* ডানদিকের বোর্ডে শুধুমাত্র Hits সংখ্যা দেখাবে */}
         <div
           className="absolute z-20 pointer-events-none"
-          style={{ top: '48px', right: '50px' }}
+          style={{ top: '38px', right: '52px' }}
         >
           <p className="text-xl font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             {hits}
