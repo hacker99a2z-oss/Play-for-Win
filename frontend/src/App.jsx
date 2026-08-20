@@ -129,7 +129,7 @@ export default function App() {
     );
   }
 
-  // ৩. battle ট্যাব হলে ফুল-স্ক্রিন গেম রেন্ডার হবে (হাইড হেডার, নেভিগেশন ও গ্লোবাল ব্যাকগ্রাউন্ড)
+  // 🔴 Battle ট্যাব হলে সম্পূর্ণ ফুল-স্ক্রিন গেম রেন্ডার করবে
   if (activeTab === 'battle') {
     return (
       <Battle 
@@ -141,6 +141,7 @@ export default function App() {
     );
   }
 
+  // মেইন অ্যাপ লেআউট (অন্যান্য ট্যাবের জন্য)
   return (
     <div 
       className="min-h-screen bg-cover bg-center bg-no-repeat text-white font-sans pb-24 select-none relative overflow-x-hidden flex flex-col justify-between"
@@ -153,7 +154,7 @@ export default function App() {
         <Header user={user} />
       </div>
 
-      {/* মেইন কন্টেন্ট এলাকা (Tabs) */}
+      {/* মেইন কন্টেন্ট এলাকা */}
       <main className="max-w-md mx-auto px-2 relative z-10 flex-1 flex flex-col justify-center w-full">
         {activeTab === 'home' && (
           <Home 
@@ -183,3 +184,4 @@ export default function App() {
       </div>
     </div>
   );
+}
