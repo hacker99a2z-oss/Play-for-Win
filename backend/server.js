@@ -27,6 +27,7 @@ const matchSchema = new mongoose.Schema({
     telegramId: String,
     firstName: String,
     hits: { type: Number, default: 0 },
+    timeTaken: { type: Number, default: 0 },
     finishedAt: Date,
     prizeUSD: { type: Number, default: 0 }
   }],
@@ -102,6 +103,26 @@ const getClientIpAndCountry = async (req, frontendIp) => {
   return { clientIp, countryName: 'Unknown', isVpnOrProxy: false };
 };
 
+// ১.১ ডেডিকেটেড কয়েন কাটার API (Fighting.jsx এর জন্য)
+app.post('/api/user/deduct-coins', async (req, res) => {
+  try {
+    const { telegramId, amount } = req.body;
+    const user = await User.findOne({ telegramId });
+
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if ((user.mainCoins || 0) < amount) {
+      return res.status(400).json({ success: false, message: 'Insufficient coins' });
+    }
+
+    user.mainCoins -= amount;
+    await user.save();
+
+    res.json({ success: true, remainingCoins: user.mainCoins });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+});
+
 // ১. POST /api/match/join - ২৫০ কয়েন কেটে ম্যাচ জয়েন করা
 app.post('/api/match/join', async (req, res) => {
   try {
@@ -159,6 +180,7 @@ app.post('/api/match/submit-score', async (req, res) => {
     const playerIndex = match.players.findIndex(p => p.telegramId === telegramId);
     if (playerIndex !== -1) {
       match.players[playerIndex].hits = hits;
+      match.players[playerIndex].timeTaken = timeTaken || 0;
       match.players[playerIndex].finishedAt = new Date();
     } else {
       return res.status(400).json({ error: 'Player not in this match' });
@@ -174,7 +196,7 @@ app.post('/api/match/submit-score', async (req, res) => {
       // স্কোর এবং টাইম দিয়ে সর্টিং (Hits বেশি এবং সময় কম হলে ১ নম্বর)
       match.players.sort((a, b) => {
         if (b.hits !== a.hits) return b.hits - a.hits;
-        return new Date(a.finishedAt) - new Date(b.finishedAt);
+        return (a.timeTaken || 0) - (b.timeTaken || 0);
       });
 
       // প্রাইজ বিতরণ
