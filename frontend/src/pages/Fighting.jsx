@@ -57,25 +57,50 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
         <img src={fightBtnImg} alt="Fight" className="w-full max-w-[280px] object-contain drop-shadow-2xl" />
       </button>
 
-      {/* Mode Selection Modal (UPDATE HERE) */}
+      {/* Mode Selection Modal */}
       {showModeModal && (
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border-2 border-amber-500/80 p-6 rounded-2xl w-full max-w-xs text-center space-y-4 shadow-2xl">
-            <h3 className="text-xl font-bold text-amber-400 drop-shadow">Select Arena Mode</h3>
-            <p className="text-xs font-semibold text-slate-200">Entry Fee: 🪙 250 Coins</p>
+        <div 
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(6px)' }} 
+          className="fixed inset-0 flex items-center justify-center z-50 p-4"
+        >
+          <div 
+            style={{ 
+              backgroundColor: '#0f172a', 
+              border: '2px solid #f59e0b', 
+              borderRadius: '16px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.7)' 
+            }} 
+            className="p-6 w-full max-w-xs text-center space-y-4"
+          >
+            <h3 style={{ color: '#fbbf24' }} className="text-xl font-bold">Select Arena Mode</h3>
+            <p style={{ color: '#f1f5f9' }} className="text-xs font-semibold">Entry Fee: 🪙 250 Coins</p>
             
             <div className="flex gap-3 pt-2">
               <button 
                 disabled={loading}
                 onClick={() => handleStartGame(2)} 
-                className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 font-bold py-2.5 rounded-xl text-black shadow-lg active:scale-95 transition disabled:opacity-50"
+                style={{ 
+                  backgroundColor: '#f59e0b', 
+                  color: '#000000', 
+                  borderRadius: '12px',
+                  fontWeight: 'bold',
+                  padding: '10px 0'
+                }}
+                className="flex-1 active:scale-95 transition disabled:opacity-50 cursor-pointer"
               >
                 2 Players
               </button>
               <button 
                 disabled={loading}
                 onClick={() => handleStartGame(4)} 
-                className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 font-bold py-2.5 rounded-xl text-black shadow-lg active:scale-95 transition disabled:opacity-50"
+                style={{ 
+                  backgroundColor: '#f59e0b', 
+                  color: '#000000', 
+                  borderRadius: '12px',
+                  fontWeight: 'bold',
+                  padding: '10px 0'
+                }}
+                className="flex-1 active:scale-95 transition disabled:opacity-50 cursor-pointer"
               >
                 4 Players
               </button>
@@ -83,7 +108,8 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
 
             <button 
               onClick={() => setShowModeModal(false)} 
-              className="text-xs text-slate-400 hover:text-slate-200 underline pt-2 inline-block cursor-pointer"
+              style={{ color: '#94a3b8' }}
+              className="text-xs underline pt-2 inline-block cursor-pointer"
             >
               Cancel
             </button>
