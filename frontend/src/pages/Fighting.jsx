@@ -5,6 +5,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
   const [history, setHistory] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [showModeModal, setShowModeModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user?.telegramId) {
@@ -15,18 +16,40 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
     }
   }, [user]);
 
-  const handleStartGame = (mode) => {
+  const handleStartGame = async (mode) => {
     if ((user?.mainCoins || 0) < 250) {
       alert("⚠️ Insufficient coins! 250 Coins required.");
       return;
     }
-    setShowModeModal(false);
-    onNavigate('battle', { mode });
+
+    setLoading(true);
+    try {
+      // ব্যাকএন্ডে ২৫০ কয়েন কাটার API কল
+      const res = await fetch(`https://play-for-win.onrender.com/api/user/deduct-coins`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegramId: user.telegramId, amount: 250 })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        if (refreshUserData) refreshUserData(); // ফ্রন্টএন্ড ব্যালেন্স রিফ্রেশ
+        setShowModeModal(false);
+        onNavigate('battle', { mode });
+      } else {
+        alert(data.message || "Failed to enter match");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="w-full flex flex-col gap-4 py-4 text-white">
-      {/* Fight Modal / Options */}
+      {/* Fight Button */}
       <button 
         onClick={() => setShowModeModal(true)}
         className="w-full active:scale-95 transition hover:brightness-110 flex justify-center cursor-pointer"
@@ -41,8 +64,20 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
             <h3 className="text-lg font-bold text-amber-400">Select Arena Mode</h3>
             <p className="text-xs text-slate-300">Entry Fee: 🪙 250 Coins</p>
             <div className="flex gap-3">
-              <button onClick={() => handleStartGame(2)} className="flex-1 bg-amber-500 font-bold py-2 rounded-xl text-black">2 Players</button>
-              <button onClick={() => handleStartGame(4)} className="flex-1 bg-amber-500 font-bold py-2 rounded-xl text-black">4 Players</button>
+              <button 
+                disabled={loading}
+                onClick={() => handleStartGame(2)} 
+                className="flex-1 bg-amber-500 font-bold py-2 rounded-xl text-black active:scale-95 disabled:opacity-50"
+              >
+                2 Players
+              </button>
+              <button 
+                disabled={loading}
+                onClick={() => handleStartGame(4)} 
+                className="flex-1 bg-amber-500 font-bold py-2 rounded-xl text-black active:scale-95 disabled:opacity-50"
+              >
+                4 Players
+              </button>
             </div>
             <button onClick={() => setShowModeModal(false)} className="text-xs text-slate-400 underline mt-2">Cancel</button>
           </div>
@@ -53,35 +88,44 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
       <div className="bg-slate-900/90 border border-slate-700/50 rounded-2xl p-4">
         <h3 className="text-sm font-bold text-amber-400 mb-3 uppercase tracking-wider">Recent 5 Matches</h3>
         <div className="space-y-2">
-          {history.map((match, idx) => (
-            <div 
-              key={idx} 
-              onClick={() => setSelectedMatch(match)}
-              className="bg-slate-800/60 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:bg-slate-800 border border-white/5"
-            >
-              <div>
-                <span className="text-xs font-bold text-slate-300">{match.mode} Players Match</span>
-                <p className="text-[10px] text-slate-400">{new Date(match.createdAt).toLocaleTimeString()}</p>
+          {history.length === 0 ? (
+            <p className="text-xs text-slate-500 text-center py-2">No match history found</p>
+          ) : (
+            history.map((match, idx) => (
+              <div 
+                key={idx} 
+                onClick={() => setSelectedMatch(match)}
+                className="bg-slate-800/60 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:bg-slate-800 border border-white/5"
+              >
+                <div>
+                  <span className="text-xs font-bold text-slate-300">{match.mode} Players Match</span>
+                  <p className="text-[10px] text-slate-400">{new Date(match.createdAt).toLocaleTimeString()}</p>
+                </div>
+                <span className={`text-xs px-2.5 py-1 rounded-md font-bold uppercase ${match.status === 'pending' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                  {match.status}
+                </span>
               </div>
-              <span className={`text-xs px-2.5 py-1 rounded-md font-bold uppercase ${match.status === 'pending' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
-                {match.status}
-              </span>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
-      {/* Match Details Modal (Shows on Pending/Completed Click) */}
+      {/* Match Details Modal */}
       {selectedMatch && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-700 p-5 rounded-2xl w-full max-w-sm space-y-3">
             <h4 className="text-sm font-bold text-amber-400">Match Details ({selectedMatch.status})</h4>
             <div className="space-y-2">
-              {selectedMatch.players.map((p, i) => (
-                <div key={i} className="flex justify-between items-center text-xs bg-slate-800 p-2 rounded-lg">
-                  <span className="text-slate-200">{i + 1}. {p.firstName}</span>
-                  <span className="text-amber-400 font-bold">{p.hits} Target Hits</span>
-                  <span className="text-emerald-400 font-bold">+${p.prizeUSD || 0}</span>
+              {selectedMatch.players?.map((p, i) => (
+                <div key={i} className="flex justify-between items-center text-xs bg-slate-800 p-2.5 rounded-lg border border-white/5">
+                  <div>
+                    <p className="text-slate-200 font-bold">{i + 1}. {p.firstName || 'Player'}</p>
+                    <p className="text-[10px] text-slate-400">{p.timeTaken ? `${p.timeTaken.toFixed(1)}s` : 'N/A'}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-amber-400 font-bold">{p.hits || 0} Hits</p>
+                    <p className="text-emerald-400 font-bold">+${p.prizeUSD || 0}</p>
+                  </div>
                 </div>
               ))}
             </div>
