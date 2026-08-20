@@ -8,48 +8,46 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
   const [hits, setHits] = useState(0);
   const [gameOver, setGameOver] = useState(false);
 
-  // ইঁদুরের পজিশন ও ডিরেকশন (বাম-ডান মুভমেন্ট)
-  const [mice, setMice] = useState([
-    { id: 1, x: 10, y: 20, speed: 0.8, direction: 1 },
-    { id: 2, x: 50, y: 32, speed: 1.2, direction: -1 },
-    { id: 3, x: 80, y: 45, speed: 1.0, direction: 1 },
-  ]);
+  // ১টি মাত্র ইঁদুর যা ব্রিজের ওপর ডানে-বামে মুভ করবে (y: 28% ব্রিজের সমান্তরালে)
+  const [mouse, setMouse] = useState({
+    x: 50,
+    y: 28,
+    speed: 1.2,
+    direction: 1
+  });
 
   // পাথর নিক্ষেপের স্টেট
-  const [stonePos, setStonePos] = useState({ x: 50, y: 85 }); // পির্সেন্টেজ অনুযায়ী পজিশন
+  const [stonePos, setStonePos] = useState({ x: 50, y: 82 });
   const [isDragging, setIsDragging] = useState(false);
   const [isThrown, setIsThrown] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   const arenaRef = useRef(null);
 
-  // ১. ইঁদুর বামে ও ডানে মুভ করার লজিক
+  // ইঁদুরের এক লাইনে ডানে-বামে মুভ করার লজিক
   useEffect(() => {
     if (gameOver) return;
     const interval = setInterval(() => {
-      setMice((prevMice) =>
-        prevMice.map((mouse) => {
-          let newX = mouse.x + mouse.speed * mouse.direction;
-          let newDir = mouse.direction;
+      setMouse((prev) => {
+        let newX = prev.x + prev.speed * prev.direction;
+        let newDir = prev.direction;
 
-          // স্ক্রিনের কিনারে গেলে ডিরেকশন রিভার্স করবে
-          if (newX >= 88) {
-            newX = 88;
-            newDir = -1;
-          } else if (newX <= 5) {
-            newX = 5;
-            newDir = 1;
-          }
+        if (newX >= 80) {
+          newX = 80;
+          newDir = -1;
+        } else if (newX <= 20) {
+          newX = 20;
+          newDir = 1;
+        }
 
-          return { ...mouse, x: newX, direction: newDir };
-        })
-      );
+        return { ...prev, x: newX, direction: newDir };
+      });
     }, 30);
 
     return () => clearInterval(interval);
   }, [gameOver]);
 
-  // ২. ড্র্যাগ ও থ্রো (Touch & Mouse Handlers)
+  // ড্র্যাগ হ্যান্ডলার
   const handleTouchStart = (e) => {
     if (isThrown || stonesLeft <= 0 || gameOver) return;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -69,10 +67,9 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
       const xPercent = ((clientX - rect.left) / rect.width) * 100;
       const yPercent = ((clientY - rect.top) / rect.height) * 100;
 
-      // নির্দিষ্ট সীমার মধ্যে পাথর ড্র্যাগ করা যাবে
       setStonePos({
-        x: Math.max(10, Math.min(90, xPercent)),
-        y: Math.max(65, Math.min(90, yPercent))
+        x: Math.max(15, Math.min(85, xPercent)),
+        y: Math.max(60, Math.min(88, yPercent))
       });
     }
   };
@@ -84,67 +81,46 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
     const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
     const diffY = dragStart.y - clientY;
 
-    // যদি উপরের দিকে অন্তত ৩০ পিক্সেল সোয়াইপ করা হয় তবে পাথর ছোঁড়া হবে
     if (diffY > 30) {
       throwStone();
     } else {
-      // সোয়াইপ না হলে পাথর আবার আগের পজিশনে ফিরে আসবে
-      setStonePos({ x: 50, y: 85 });
+      setStonePos({ x: 50, y: 82 });
     }
   };
 
-  // ৩. পাথর ছোঁড়া এবং হিট চেক করার লজিক
+  // পাথর ছোঁড়া এবং হিট চেক
   const throwStone = () => {
     setIsThrown(true);
-
-    // পাথরের টার্গেট পয়েন্ট (যেদিকে মুখ করে ড্র্যাগ করা হয়েছিল)
-    const targetY = 15; // স্ক্রিনের একদম উপরের দিকে উড়ে যাবে
+    const targetY = 28; // ইঁদুরের লাইনে (y: 28%) পাথর পৌঁছাবে
     const targetX = stonePos.x;
 
     setStonePos({ x: targetX, y: targetY });
 
-    // পাথরটি ইঁদুরের লেভেলে পৌঁছালে হিট চেক করা হবে
     setTimeout(() => {
       checkHit(targetX);
     }, 250);
 
-    // পাথর ছোঁড়ার পর রিসেট করা
     setTimeout(() => {
       setStonesLeft((prev) => {
         const remaining = prev - 1;
-        if (remaining <= 0) {
-          setGameOver(true);
-        }
+        if (remaining <= 0) setGameOver(true);
         return remaining;
       });
 
-      // পাথরকে আবার শুরুতে ফেরত নিয়ে আসা
-      setStonePos({ x: 50, y: 85 });
+      setStonePos({ x: 50, y: 82 });
       setIsThrown(false);
     }, 450);
   };
 
-  // ৪. হিট বা কলিশন চেক লজিক
   const checkHit = (thrownX) => {
-    let hitDetected = false;
-
-    setMice((prevMice) =>
-      prevMice.map((m) => {
-        // পাথর এবং ইঁদুরের X-Axis এর পার্থক্য কম হলে হিট গণ্য হবে
-        const distance = Math.abs(m.x - thrownX);
-        if (!hitDetected && distance < 12) {
-          hitDetected = true;
-          setHits((h) => h + 1);
-
-          // হিট হওয়া ইঁদুরকে অন্য প্রান্তে রিসেট করা
-          return {
-            ...m,
-            x: m.direction === 1 ? 5 : 88
-          };
-        }
-        return m;
-      })
-    );
+    const distance = Math.abs(mouse.x - thrownX);
+    if (distance < 12) {
+      setHits((h) => h + 1);
+      setMouse((prev) => ({
+        ...prev,
+        x: prev.direction === 1 ? 20 : 80
+      }));
+    }
   };
 
   return (
@@ -166,44 +142,53 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
           : {}
       }
     >
-      {/* টপ বার (স্কোর ও এক্সিট) */}
-      <div className="flex justify-between items-center p-4 bg-black/40 backdrop-blur-md z-20">
+      {/* টপ বার (Exit এবং শুধু Hits কাউন্ট) */}
+      <div className="flex justify-between items-start p-4 z-20">
         <button
           onClick={() => onNavigate && onNavigate('fighting')}
           className="bg-red-600/80 text-white px-3 py-1 rounded-lg text-xs font-bold active:scale-95 transition cursor-pointer"
         >
           Exit
         </button>
-        <div className="text-right">
-          <p className="text-xs text-amber-400 font-bold">Mode: {mode}P</p>
-          <p className="text-sm font-black text-emerald-400">Hits: {hits}</p>
+
+        {/* ডানদিকের বোর্ডে শুধুমাত্র Hits সংখ্যা দেখাবে */}
+        <div className="text-center pr-2 pt-1">
+          <p className="text-xl font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            {hits}
+          </p>
         </div>
       </div>
 
-      {/* গেম প্লে এরিয়া (ইঁদুরসমূহ) */}
-      <div className="relative w-full h-80 my-auto pointer-events-none">
-        {mice.map((m) => (
-          <div
-            key={m.id}
-            className="absolute transition-all duration-75 ease-linear"
-            style={{
-              left: `${m.x}%`,
-              top: `${m.y}%`,
-              transform: `translate(-50%, -50%) scaleX(${m.direction === 1 ? -1 : 1})`
-            }}
-          >
-            {mouseImg ? (
-              <img src={mouseImg} alt="Mouse" className="w-16 h-16 object-contain" />
-            ) : (
-              <div className="w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center font-bold text-xs">
-                MICE
-              </div>
-            )}
-          </div>
-        ))}
+      {/* ১টি মাত্র ইঁদুর যা ব্রিজের ওপর দিয়ে চলাফেরা করবে */}
+      <div className="absolute inset-0 pointer-events-none z-10">
+        <div
+          className="absolute transition-all duration-75 ease-linear"
+          style={{
+            left: `${mouse.x}%`,
+            top: `${mouse.y}%`,
+            transform: `translate(-50%, -50%) scaleX(${mouse.direction === 1 ? -1 : 1})`
+          }}
+        >
+          {mouseImg ? (
+            <img src={mouseImg} alt="Mouse" className="w-16 h-20 object-contain drop-shadow-md" />
+          ) : (
+            <div className="w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center font-bold text-xs">
+              MOUSE
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* পাথর (যা আঙুল দিয়ে টেনে ছোড়া যাবে) */}
+      {/* বাম পাশের পাথরের বাক্সে সংকেত/কাউন্ট */}
+      <div className="absolute bottom-16 left-6 z-20 pointer-events-none">
+        <div className="relative flex items-center justify-center">
+          <span className="bg-black/80 border border-amber-500/60 text-amber-400 font-black text-xs px-2.5 py-0.5 rounded-full shadow-lg">
+            {stonesLeft}
+          </span>
+        </div>
+      </div>
+
+      {/* ছোড়ার জন্য মেইন পাথর */}
       {!gameOver && stonesLeft > 0 && (
         <div
           onMouseDown={handleTouchStart}
@@ -214,29 +199,19 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
           style={{
             left: `${stonePos.x}%`,
             top: `${stonePos.y}%`,
-            transform: `translate(-50%, -50%) scale(${isThrown ? 0.4 : 1.1})`,
+            transform: `translate(-50%, -50%) scale(${isThrown ? 0.35 : 1.1})`,
             opacity: isThrown ? 0.7 : 1
           }}
         >
           {stoneImg ? (
-            <img src={stoneImg} alt="Stone" className="w-14 h-14 object-contain drop-shadow-lg" />
+            <img src={stoneImg} alt="Stone" className="w-16 h-16 object-contain drop-shadow-2xl" />
           ) : (
-            <div className="w-10 h-10 bg-gray-500 rounded-full border-2 border-gray-300 shadow-xl flex items-center justify-center font-bold text-[10px]">
+            <div className="w-12 h-12 bg-gray-400 rounded-full border-2 border-gray-200 shadow-xl flex items-center justify-center font-bold text-[10px]">
               STONE
             </div>
           )}
         </div>
       )}
-
-      {/* বটম বার (অবশিষ্ট পাথর) */}
-      <div className="p-4 bg-black/40 backdrop-blur-md text-center z-20 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          {stoneImg && <img src={stoneImg} alt="Stone" className="w-6 h-6 object-contain" />}
-          <span className="text-sm font-bold text-slate-200">
-            Stones Left: {stonesLeft}
-          </span>
-        </div>
-      </div>
 
       {/* গেম ওভার পপআপ */}
       {gameOver && (
