@@ -18,6 +18,23 @@ app.get('/', (req, res) => {
   res.status(200).send('Server is alive!');
 });
 
+// ============ MATCH SCHEMA ============
+const matchSchema = new mongoose.Schema({
+  mode: { type: Number, enum: [2, 4], required: true },
+  entryFeeCoins: { type: Number, default: 250 },
+  status: { type: String, enum: ['pending', 'completed'], default: 'pending' },
+  players: [{
+    telegramId: String,
+    firstName: String,
+    hits: { type: Number, default: 0 },
+    finishedAt: Date,
+    prizeUSD: { type: Number, default: 0 }
+  }],
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Match = mongoose.models.Match || mongoose.model('Match', matchSchema);
+
 // ============ TELEGRAM BOT SETUP ============
 const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE';
 const WEB_APP_URL = process.env.WEB_APP_URL || 'https://your-vercel-app.vercel.app';
