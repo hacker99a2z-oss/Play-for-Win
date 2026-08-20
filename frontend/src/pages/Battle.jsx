@@ -17,7 +17,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
   });
 
   // পাথর নিক্ষেপের স্টেট
-  const [stonePos, setStonePos] = useState({ x: 51, y: 86 });
+  const [stonePos, setStonePos] = useState({ x: 50.5, y: 86.5 });
   const [isDragging, setIsDragging] = useState(false);
   const [isThrown, setIsThrown] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -84,7 +84,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
     if (diffY > 30) {
       throwStone();
     } else {
-      setStonePos({ x: 51, y: 86 });
+      setStonePos({ x: 50.5, y: 86.5 });
     }
   };
 
@@ -107,7 +107,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
         return remaining;
       });
 
-      setStonePos({ x: 51, y: 86 });
+      setStonePos({ x: 50.5, y: 86.5 });
       setIsThrown(false);
     }, 450);
   };
