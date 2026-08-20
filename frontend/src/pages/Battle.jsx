@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import mouseImg from '../assets/mouse-alpha.png'; // আপনার ইঁদুরের পিকচার পাথ
-import stoneImg from '../assets/stone.png'; // পাথরের পিকচার পাথ (assets এ যুক্ত করবেন)
+import stoneImg from '../assets/stone.png';// পাথরের পিকচার পাথ (assets এ যুক্ত করবেন)
+import bgImg from '../assets/battle.jpeg'; // অথবা '../assets/fighting-bg.jpg'
 
 const Battle = ({ user, refreshUserData }) => {
   const [stonesLeft, setStonesLeft] = useState(30);
