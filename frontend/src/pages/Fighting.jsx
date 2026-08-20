@@ -1,196 +1,96 @@
 import React, { useState, useEffect } from 'react';
-import mouseAlpha from '../assets/mouse-alpha.png';
-import mouseBeta from '../assets/mouse-beta.png';
-import mouseGamma from '../assets/mouse-gamma.png';
-import adsBoostImg from '../assets/ADS-boost.png';
 import fightBtnImg from '../assets/FIGHT.png';
 
-const Fighting = ({ user, onPlayAd, refreshUserData, onNavigate }) => {
-  // 🟢 ডেমো পাওয়ার সরিয়ে পাওয়ার প্রাথমিক মান 0 করে দেওয়া হয়েছে
-  const [mice, setMice] = useState([
-    { 
-      id: 'alpha', 
-      power: 0, 
-      color: '#38bdf8', 
-      img: mouseAlpha,
-      textPos: { bottom: '6.15%', left: '53%' }
-    },
-    { 
-      id: 'beta', 
-      power: 0, 
-      color: '#f59e0b', 
-      img: mouseBeta,
-      textPos: { bottom: '6.55%', left: '52%' }
-    },
-    { 
-      id: 'gamma', 
-      power: 0, 
-      color: '#34d399', 
-      img: mouseGamma,
-      textPos: { bottom: '6.95%', left: '46.6%' },
-      cardPos: 'translate-y-0.9 translate-x-1'
-    },
-  ]);
-
-  const [cooldown, setCooldown] = useState(0);
-  const [isCooldownActive, setIsCooldownActive] = useState(false);
-  const [loadingMouseId, setLoadingMouseId] = useState(null);
-
-  // ১. কুলডাউন চেক ও টাইমার
-  useEffect(() => {
-    const savedCooldownTarget = localStorage.getItem('boostCooldownTarget');
-    if (savedCooldownTarget) {
-      const remaining = Math.ceil((parseInt(savedCooldownTarget, 10) - Date.now()) / 1000);
-      if (remaining > 0) {
-        setCooldown(remaining);
-        setIsCooldownActive(true);
-      } else {
-        localStorage.removeItem('boostCooldownTarget');
-      }
-    }
-  }, []);
+const Fighting = ({ user, refreshUserData, onNavigate }) => {
+  const [history, setHistory] = useState([]);
+  const [selectedMatch, setSelectedMatch] = useState(null);
+  const [showModeModal, setShowModeModal] = useState(false);
 
   useEffect(() => {
-    let timer;
-    if (isCooldownActive && cooldown > 0) {
-      timer = setInterval(() => {
-        setCooldown((prev) => prev - 1);
-      }, 1000);
-    } else if (cooldown === 0 && isCooldownActive) {
-      setIsCooldownActive(false);
-      localStorage.removeItem('boostCooldownTarget');
+    if (user?.telegramId) {
+      fetch(`https://play-for-win.onrender.com/api/match/history/${user.telegramId}`)
+        .then(res => res.json())
+        .then(data => setHistory(data.slice(0, 5)))
+        .catch(err => console.error(err));
     }
-    return () => clearInterval(timer);
-  }, [isCooldownActive, cooldown]);
+  }, [user]);
 
-  const totalPower = mice.reduce((acc, curr) => acc + curr.power, 0);
-
-  // ২. Adsgram অ্যাড ভ্যালিডেশন এবং ১০০ পাওয়ার বৃদ্ধি
-  const handleBoostSingleMouse = async (mouseId) => {
-    if (isCooldownActive || loadingMouseId) return;
-
-    setLoadingMouseId(mouseId);
-
-    try {
-      let isWatched = false;
-      if (onPlayAd) {
-        isWatched = await onPlayAd();
-      }
-
-      // অ্যাড সফলভাবে দেখা শেষ হলে ১০০ পাওয়ার যুক্ত হবে
-      if (isWatched) {
-        setMice((prev) =>
-          prev.map((m) => (m.id === mouseId ? { ...m, power: m.power + 100 } : m))
-        );
-
-        // ৬০ সেকেন্ডের কুলডাউন চালু হবে
-        const cooldownTarget = Date.now() + 60 * 1000;
-        localStorage.setItem('boostCooldownTarget', cooldownTarget.toString());
-        setCooldown(60);
-        setIsCooldownActive(true);
-      }
-    } catch (error) {
-      console.error("Boost Ad Error:", error);
-    } finally {
-      setLoadingMouseId(null);
+  const handleStartGame = (mode) => {
+    if ((user?.mainCoins || 0) < 250) {
+      alert("⚠️ Insufficient coins! 250 Coins required.");
+      return;
     }
+    setShowModeModal(false);
+    onNavigate('battle', { mode });
   };
 
   return (
-    <div className="w-full flex flex-col justify-between py-2 pb-10 select-none">
-      {/* ১. TOTAL POWER Header */}
-      <div className="bg-black/60 backdrop-blur-md rounded-xl p-2.5 border border-white/20 flex justify-between items-center shadow-lg mb-4">
-        <div className="flex items-center gap-1.5">
-          <span className="text-yellow-400 text-lg">⚡</span>
-          <span className="text-[10px] font-bold uppercase tracking-wide text-slate-200">TOTAL POWER:</span>
-          <span className="text-yellow-400 font-extrabold text-sm">{totalPower.toLocaleString()}</span>
-        </div>
-        <span className="border border-white/40 rounded-lg px-2.5 py-1 text-[9px] font-black uppercase bg-black/40 text-white">
-          ARENA
-        </span>
-      </div>
+    <div className="w-full flex flex-col gap-4 py-4 text-white">
+      {/* Fight Modal / Options */}
+      <button 
+        onClick={() => setShowModeModal(true)}
+        className="w-full active:scale-95 transition hover:brightness-110 flex justify-center cursor-pointer"
+      >
+        <img src={fightBtnImg} alt="Fight" className="w-full max-w-[280px] object-contain drop-shadow-2xl" />
+      </button>
 
-      {/* ২. মাউস কার্ডস ও পাওয়ার প্রদর্শনী */}
-      <div className="grid grid-cols-3 gap-1 px-0 my-auto py-2">
-        {mice.map((mouse) => (
-          <div 
-            key={mouse.id}
-            className={`flex flex-col gap-2 items-center transform transition-transform ${mouse.cardPos || ''}`}
-          >
-            {/* ছবির কন্টেইনার */}
-            <div className="w-full relative inline-block transform scale-105 origin-center animate-float">
-              <img 
-                src={mouse.img} 
-                alt="Mouse Card" 
-                className="w-full h-auto block object-contain"
-              />
-              
-              {/* পাওয়ার টেক্সট */}
-              <div 
-                className="absolute font-black tracking-wider whitespace-nowrap"
-                style={{
-                  bottom: mouse.textPos.bottom,
-                  left: mouse.textPos.left,
-                  color: mouse.color,
-                  fontSize: '9px',
-                  textShadow: '0px 2px 4px rgba(0,0,0,0.95)'
-                }}
-              >
-                {mouse.power.toLocaleString()}
-              </div>
+      {/* Mode Selection Modal */}
+      {showModeModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-amber-500/30 p-6 rounded-2xl w-full max-w-xs text-center space-y-4">
+            <h3 className="text-lg font-bold text-amber-400">Select Arena Mode</h3>
+            <p className="text-xs text-slate-300">Entry Fee: 🪙 250 Coins</p>
+            <div className="flex gap-3">
+              <button onClick={() => handleStartGame(2)} className="flex-1 bg-amber-500 font-bold py-2 rounded-xl text-black">2 Players</button>
+              <button onClick={() => handleStartGame(4)} className="flex-1 bg-amber-500 font-bold py-2 rounded-xl text-black">4 Players</button>
             </div>
-
-            {/* Boost Button (Adsgram) */}
-            <button
-              onClick={() => handleBoostSingleMouse(mouse.id)}
-              disabled={isCooldownActive || loadingMouseId !== null}
-              className={`w-full max-w-[120px] mt-2 flex justify-center items-center cursor-pointer transition rounded-xl ${
-                isCooldownActive || loadingMouseId !== null
-                  ? 'opacity-60 cursor-not-allowed'
-                  : 'active:scale-95 hover:brightness-110'
-              }`}
-            >
-              {loadingMouseId === mouse.id ? (
-                <div className="bg-black/80 text-yellow-400 text-[10px] font-bold py-2 px-3 rounded-xl border border-yellow-500/30 flex items-center gap-1">
-                  <div className="w-3 h-3 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Loading...</span>
-                </div>
-              ) : isCooldownActive ? (
-                <div className="bg-black/80 text-gray-300 text-[10px] font-bold py-1.5 px-2 rounded-xl border border-white/20 w-full text-center">
-                  ⏳ {cooldown}s
-                </div>
-              ) : (
-                <img 
-                  src={adsBoostImg} 
-                  alt="Ads Boost" 
-                  className="w-full h-auto block object-contain drop-shadow-md"
-                />
-              )}
-            </button>
+            <button onClick={() => setShowModeModal(false)} className="text-xs text-slate-400 underline mt-2">Cancel</button>
           </div>
-        ))}
+        </div>
+      )}
+
+      {/* Last 5 Matches History */}
+      <div className="bg-slate-900/90 border border-slate-700/50 rounded-2xl p-4">
+        <h3 className="text-sm font-bold text-amber-400 mb-3 uppercase tracking-wider">Recent 5 Matches</h3>
+        <div className="space-y-2">
+          {history.map((match, idx) => (
+            <div 
+              key={idx} 
+              onClick={() => setSelectedMatch(match)}
+              className="bg-slate-800/60 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:bg-slate-800 border border-white/5"
+            >
+              <div>
+                <span className="text-xs font-bold text-slate-300">{match.mode} Players Match</span>
+                <p className="text-[10px] text-slate-400">{new Date(match.createdAt).toLocaleTimeString()}</p>
+              </div>
+              <span className={`text-xs px-2.5 py-1 rounded-md font-bold uppercase ${match.status === 'pending' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                {match.status}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* ৩. FIGHT Button */}
-      <div className="w-full px-4 mt-12 mb-4 flex justify-center">
-        <button
-          onClick={() => {
-            if (onNavigate) {
-              onNavigate('battle');
-            }
-          }}
-          className="w-full active:scale-95 transition hover:brightness-110 flex justify-center cursor-pointer"
-        >
-          <img 
-            src={fightBtnImg} 
-            alt="Fight" 
-            className="w-full max-w-[280px] h-auto block object-contain drop-shadow-2xl"
-          />
-        </button>
-      </div>
+      {/* Match Details Modal (Shows on Pending/Completed Click) */}
+      {selectedMatch && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 p-5 rounded-2xl w-full max-w-sm space-y-3">
+            <h4 className="text-sm font-bold text-amber-400">Match Details ({selectedMatch.status})</h4>
+            <div className="space-y-2">
+              {selectedMatch.players.map((p, i) => (
+                <div key={i} className="flex justify-between items-center text-xs bg-slate-800 p-2 rounded-lg">
+                  <span className="text-slate-200">{i + 1}. {p.firstName}</span>
+                  <span className="text-amber-400 font-bold">{p.hits} Target Hits</span>
+                  <span className="text-emerald-400 font-bold">+${p.prizeUSD || 0}</span>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setSelectedMatch(null)} className="w-full bg-slate-800 text-slate-300 py-2 rounded-xl text-xs font-bold">Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Fighting;
-
