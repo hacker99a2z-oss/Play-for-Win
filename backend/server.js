@@ -85,6 +85,126 @@ const getClientIpAndCountry = async (req, frontendIp) => {
   return { clientIp, countryName: 'Unknown', isVpnOrProxy: false };
 };
 
+// ১. POST /api/match/join - ২৫০ কয়েন কেটে ম্যাচ জয়েন করা
+app.post('/api/match/join', async (req, res) => {
+  try {
+    const { telegramId, firstName, mode } = req.body;
+
+    if (!telegramId || !mode) {
+      return res.status(400).json({ error: 'telegramId and mode are required' });
+    }
+
+    const user = await User.findOne({ telegramId });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    // ২৫০ কয়েন ব্যালেন্স চেক (mainCoins)
+    if ((user.mainCoins || 0) < 250) {
+      return res.status(400).json({ error: 'Insufficient mainCoins balance' });
+    }
+
+    // কয়েন কেটে নেওয়া
+    user.mainCoins -= 250;
+    await user.save();
+
+    // পেন্ডিং ম্যাচ খোঁজা (যাতে খালি জায়গায় জয়েন করা যায়)
+    let match = await Match.findOne({
+      mode: Number(mode),
+      status: 'pending',
+      'players.telegramId': { $ne: telegramId }
+    });
+
+    if (match) {
+      match.players.push({ telegramId, firstName });
+      await match.save();
+    } else {
+      match = new Match({
+        mode: Number(mode),
+        players: [{ telegramId, firstName }]
+      });
+      await match.save();
+    }
+
+    res.json({ success: true, matchId: match._id, remainingCoins: user.mainCoins });
+  } catch (err) {
+    console.error('Match Join Error:', err);
+    res.status(500).json({ error: 'Server error joining match' });
+  }
+});
+
+// ২. POST /api/match/submit-score - স্কোর ও টাইম সেভ করে বিজয়ী নির্ধারণ
+app.post('/api/match/submit-score', async (req, res) => {
+  try {
+    const { matchId, telegramId, hits } = req.body;
+
+    const match = await Match.findById(matchId);
+    if (!match) return res.status(404).json({ error: 'Match not found' });
+
+    const playerIndex = match.players.findIndex(p => p.telegramId === telegramId);
+    if (playerIndex !== -1) {
+      match.players[playerIndex].hits = hits;
+      match.players[playerIndex].finishedAt = new Date();
+    } else {
+      return res.status(400).json({ error: 'Player not in this match' });
+    }
+
+    // সবাই সাবমিট করেছে কি না চেক
+    const allFinished = match.players.length === match.mode && 
+                        match.players.every(p => p.finishedAt);
+
+    if (allFinished) {
+      match.status = 'completed';
+
+      // স্কোর এবং টাইম দিয়ে সর্টিং (Hits বেশি এবং সময় কম হলে ১ নম্বর)
+      match.players.sort((a, b) => {
+        if (b.hits !== a.hits) return b.hits - a.hits;
+        return new Date(a.finishedAt) - new Date(b.finishedAt);
+      });
+
+      // প্রাইজ বিতরণ
+      if (match.mode === 2) {
+        match.players[0].prizeUSD = 0.10;
+        match.players[1].prizeUSD = 0.00;
+      } else if (match.mode === 4) {
+        if (match.players[0]) match.players[0].prizeUSD = 0.10;
+        if (match.players[1]) match.players[1].prizeUSD = 0.07;
+        if (match.players[2]) match.players[2].prizeUSD = 0.03;
+        if (match.players[3]) match.players[3].prizeUSD = 0.00;
+      }
+
+      // ডলার ব্যালেন্সে জমা করা (bonusBalanceUSD)
+      for (const p of match.players) {
+        if (p.prizeUSD > 0) {
+          await User.findOneAndUpdate(
+            { telegramId: p.telegramId },
+            { $inc: { bonusBalanceUSD: p.prizeUSD } }
+          );
+        }
+      }
+    }
+
+    await match.save();
+    res.json({ success: true, match });
+  } catch (err) {
+    console.error('Submit Score Error:', err);
+    res.status(500).json({ error: 'Server error submitting score' });
+  }
+});
+
+// ৩. GET /api/match/history/:telegramId - লাস্ট ৫টি ম্যাচের হিস্ট্রি
+app.get('/api/match/history/:telegramId', async (req, res) => {
+  try {
+    const { telegramId } = req.params;
+    const history = await Match.find({ 'players.telegramId': telegramId })
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    res.json(history);
+  } catch (err) {
+    console.error('Match History Error:', err);
+    res.status(500).json({ error: 'Server error fetching history' });
+  }
+});
+
 // ==================== API ENDPOINTS FOR FRONTEND ====================
 
 app.post('/api/save-user-location', async (req, res) => {
