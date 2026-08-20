@@ -13,8 +13,15 @@ const BACKEND_URL = 'https://play-for-win.onrender.com';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
+  const [matchMode, setMatchMode] = useState(2);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const handleNavigate = (tab, params = {}) => {
+    if (params.mode) {
+      setMatchMode(params.mode);
+    }
+    setActiveTab(tab);
+  };
 
   // ১. টেলিগ্রাম ইউজারের তথ্য ব্যাকএন্ডের সাথে Sync করা
   const syncUserData = useCallback(() => {
@@ -151,7 +158,7 @@ export default function App() {
             user={user} 
             onPlayAd={handlePlayAd} 
             refreshUserData={syncUserData} 
-            onNavigate={setActiveTab}
+            onNavigate={handleNavigate}
           />
         )}
 
@@ -159,7 +166,9 @@ export default function App() {
         {activeTab === 'battle' && (
           <Battle 
             user={user} 
+            mode={matchMode}
             refreshUserData={syncUserData} 
+            onNavigate={handleNavigate}
           />
         )}
         {activeTab === 'referral' && <Referral user={user} refreshUser={syncUserData} />}
