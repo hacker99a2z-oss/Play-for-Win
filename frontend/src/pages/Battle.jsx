@@ -12,12 +12,12 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
   const [mouse, setMouse] = useState({
     x: 50,
     y: 28,
-    speed: 1.2,
+    speed: 1.6,
     direction: 1
   });
 
   // পাথর নিক্ষেপের স্টেট
-  const [stonePos, setStonePos] = useState({ x: 50, y: 82 });
+  const [stonePos, setStonePos] = useState({ x: 50, y: 90 });
   const [isDragging, setIsDragging] = useState(false);
   const [isThrown, setIsThrown] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -32,11 +32,11 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
         let newX = prev.x + prev.speed * prev.direction;
         let newDir = prev.direction;
 
-        if (newX >= 80) {
-          newX = 80;
+        if (newX >= 90) {
+          newX = 90;
           newDir = -1;
-        } else if (newX <= 20) {
-          newX = 20;
+        } else if (newX <= 10) {
+          newX = 10;
           newDir = 1;
         }
 
@@ -107,7 +107,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
         return remaining;
       });
 
-      setStonePos({ x: 50, y: 82 });
+      setStonePos({ x: 50, y: 90 });
       setIsThrown(false);
     }, 450);
   };
