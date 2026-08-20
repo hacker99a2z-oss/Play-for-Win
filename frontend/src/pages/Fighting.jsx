@@ -117,24 +117,50 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
         </div>
       )}
 
-      {/* Last 5 Matches History */}
-      <div className="bg-slate-900/90 border border-slate-700/50 rounded-2xl p-4">
-        <h3 className="text-sm font-bold text-amber-400 mb-3 uppercase tracking-wider">Recent 5 Matches</h3>
+      {/* Last 5 Matches History (Solid Dark Background Fix) */}
+      <div 
+        style={{ 
+          backgroundColor: '#0f172a', 
+          border: '2px solid #334155', 
+          borderRadius: '16px',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+        }} 
+        className="p-4 w-full"
+      >
+        <h3 style={{ color: '#fbbf24' }} className="text-sm font-bold mb-3 uppercase tracking-wider">
+          Recent 5 Matches
+        </h3>
+
         <div className="space-y-2">
           {history.length === 0 ? (
-            <p className="text-xs text-slate-500 text-center py-2">No match history found</p>
+            <p style={{ color: '#94a3b8' }} className="text-xs text-center py-2 font-medium">
+              No match history found
+            </p>
           ) : (
             history.map((match, idx) => (
               <div 
                 key={idx} 
                 onClick={() => setSelectedMatch(match)}
-                className="bg-slate-800/60 p-3 rounded-xl flex justify-between items-center cursor-pointer hover:bg-slate-800 border border-white/5"
+                style={{ 
+                  backgroundColor: '#1e293b', 
+                  border: '1px solid #475569' 
+                }}
+                className="p-3 rounded-xl flex justify-between items-center cursor-pointer hover:brightness-125 transition"
               >
                 <div>
-                  <span className="text-xs font-bold text-slate-300">{match.mode} Players Match</span>
-                  <p className="text-[10px] text-slate-400">{new Date(match.createdAt).toLocaleTimeString()}</p>
+                  <span style={{ color: '#cbd5e1' }} className="text-xs font-bold">
+                    {match.mode} Players Match
+                  </span>
+                  <p style={{ color: '#64748b' }} className="text-[10px]">
+                    {new Date(match.createdAt).toLocaleTimeString()}
+                  </p>
                 </div>
-                <span className={`text-xs px-2.5 py-1 rounded-md font-bold uppercase ${match.status === 'pending' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+
+                <span className={`text-xs px-2.5 py-1 rounded-md font-bold uppercase ${
+                  match.status === 'pending' 
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
+                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                }`}>
                   {match.status}
                 </span>
               </div>
