@@ -54,7 +54,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
   // ২. গেম ওভার হলে ব্যাকএন্ডে ডেটা সাবমিট করার এফেক্ট
   useEffect(() => {
     if (gameOver) {
-      const timeTaken = (Date.now() - startTimeRef.current) / 1000; // সেকেন্ডে সময় বের করা
+      const timeTaken = (Date.now() - startTimeRef.current) / 1000;
       submitMatchResult(hits, timeTaken);
     }
   }, [gameOver]);
@@ -75,7 +75,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
 
       const data = await res.json();
       if (data.success && refreshUserData) {
-        refreshUserData(); // ইউজারের ব্যালেন্স বা প্রোফাইল আপডেট
+        refreshUserData();
       }
     } catch (err) {
       console.error("Match submit failed:", err);
@@ -179,25 +179,27 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
           : {}
       }
     >
-      {/* ১. টপ বার (Exit এবং Hits কাউন্ট) - রেসপন্সিভ পার্সেন্টেজ পজিশনিং */}
-      <div className="absolute top-4 left-4 right-4 z-20 flex justify-between items-center">
+      {/* ১. টপ বার (Exit বাটন) */}
+      <div className="absolute top-4 left-4 z-20">
         <button
           onClick={() => onNavigate && onNavigate('fighting')}
           className="bg-red-600/90 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold active:scale-95 transition cursor-pointer shadow-lg border border-red-500/30"
         >
           Exit
         </button>
-
-        {/* Hits Display (পিসি ও মোবাইল উভয় ডিভাইসেই ফিক্সড থাকবে) */}
-        <div className="bg-black/60 border border-amber-500/40 px-3 py-1 rounded-xl flex items-center gap-1.5 backdrop-blur-sm shadow-md">
-          <span className="text-xs font-bold text-amber-400">HITS:</span>
-          <span className="text-lg font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-            {hits}
-          </span>
-        </div>
       </div>
 
-      {/* ২. ১টি ইঁদুর */}
+      {/* ২. HITS এর নম্বর (উপরের ডানপাশের বোর্ডের ভেতর পজিশন করতে top ও right এর % বদলাবেন) */}
+      <div
+        className="absolute z-20 pointer-events-none"
+        style={{ top: '4.8%', right: '6.5%' }}
+      >
+        <span className="text-xl font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+          {hits}
+        </span>
+      </div>
+
+      {/* ৩. ১টি ইঁদুর */}
       <div className="absolute inset-0 pointer-events-none z-10">
         <div
           className="absolute transition-all duration-75 ease-linear"
@@ -217,20 +219,17 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
         </div>
       </div>
 
-      {/* ৩. বাম পাশের পাথরের কাউন্ট (পার্সেন্টেজ দিয়ে পজিশনিং করা হয়েছে) */}
+      {/* ৪. STONES এর নম্বর (নিচের বামপাশের ট্রলি বক্সের ভেতর পজিশন করতে bottom ও left এর % বদলাবেন) */}
       <div
         className="absolute z-20 pointer-events-none"
-        style={{ bottom: '8%', left: '8%' }}
+        style={{ bottom: '9.2%', left: '16.5%' }}
       >
-        <div className="relative flex items-center justify-center bg-black/80 border border-amber-500/60 px-3 py-1 rounded-full shadow-lg">
-          <span className="text-[10px] text-slate-300 font-bold mr-1">STONES:</span>
-          <span className="text-amber-400 font-black text-sm">
-            {stonesLeft}
-          </span>
-        </div>
+        <span className="text-base font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+          {stonesLeft}
+        </span>
       </div>
 
-      {/* ৪. মেইন পাথর */}
+      {/* ৫. মেইন পাথর */}
       {!gameOver && stonesLeft > 0 && (
         <div
           onMouseDown={handleTouchStart}
@@ -255,10 +254,10 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
         </div>
       )}
 
-      {/* ৫. গেম ওভার পপআপ */}
+      {/* ৬. গেম ওভার পপআপ */}
       {gameOver && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div 
+          <div
             style={{ backgroundColor: '#0f172a', border: '2px solid #334155' }}
             className="p-6 rounded-2xl w-full max-w-xs text-center space-y-4 shadow-2xl"
           >
