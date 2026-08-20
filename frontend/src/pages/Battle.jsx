@@ -180,7 +180,10 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
       </div>
 
       {/* বাম পাশের পাথরের বাক্সে সংকেত/কাউন্ট */}
-      <div className="absolute bottom-17 left-12 z-20 pointer-events-none">
+      <div
+        className="absolute z-20 pointer-events-none"
+        style={{ bottom: '70px', left: '45px' }}
+      >
         <div className="relative flex items-center justify-center">
           <span className="bg-black/80 border border-amber-500/60 text-amber-400 font-black text-xs px-2.5 py-0.5 rounded-full shadow-lg">
             {stonesLeft}
