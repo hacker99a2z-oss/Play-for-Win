@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import mouseImg from '../assets/mouserun.png';
 import stoneImg from '../assets/stone.png';
 import bgImg from '../assets/battle.jpeg';
