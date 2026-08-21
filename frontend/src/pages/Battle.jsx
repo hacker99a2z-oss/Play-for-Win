@@ -155,25 +155,29 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
   };
 
   return (
-    // মেইন ব্যাকগ্রাউন্ড কন্টেইনার (পিসি ও মোবাইলে সেন্টারে থাকবে)
-    <div className="w-full h-screen bg-slate-950 flex items-center justify-center overflow-hidden">
-      {/* গেম এরিয়া: aspect-[9/16] দিয়ে ব্যাকগ্রাউন্ড ও এলিমেন্ট ফিক্সড রাখা হয়েছে */}
+    <div className="w-screen h-screen bg-black flex items-center justify-center overflow-hidden">
+      {/* গেম কন্টেইনার: ৩৬০x৬৪০ পিক্সেলের ফিক্সড ফ্রেমে লক করা হয়েছে */}
       <div
         ref={arenaRef}
         onMouseMove={handleTouchMove}
         onMouseUp={handleTouchEnd}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="relative w-full h-full max-h-screen aspect-[9/16] bg-slate-900 text-white overflow-hidden select-none touch-none shadow-2xl"
+        className="relative overflow-hidden select-none touch-none shadow-2xl shrink-0"
         style={{
+          width: '360px',
+          height: '640px',
+          // স্ক্রিন ছোট বা বড় হলে পুরো গেম অটো স্কেল হবে, কিন্তু পজিশন নড়বে না
+          transform: `scale(${Math.min(window.innerWidth / 360, window.innerHeight / 640)})`,
+          transformOrigin: 'center center',
           backgroundImage: `url(${bgImg})`,
           backgroundSize: '100% 100%',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
         }}
       >
-        {/* Exit Button */}
-        <div className="absolute top-[3%] left-[4%] z-20">
+        {/* ১. Exit Button */}
+        <div className="absolute top-[16px] left-[16px] z-20">
           <button
             onClick={() => onNavigate && onNavigate('fighting')}
             className="bg-red-600/90 text-white px-3 py-1 rounded-xl text-xs font-bold active:scale-95 transition cursor-pointer shadow-lg border border-red-500/30"
@@ -182,17 +186,17 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           </button>
         </div>
 
-        {/* HITS Score (ডানপাশের বোর্ডের ভেতর ফিক্সড) */}
+        {/* ২. TARGETS HIT (0) - ফিক্সড পিক্সেল পজিশন */}
         <div
-          className="absolute z-20 pointer-events-none flex items-center justify-center w-[18%]"
-          style={{ top: '6.5%', right: '13%' }}
+          className="absolute z-20 pointer-events-none flex items-center justify-center"
+          style={{ top: '101px', right: '47px', width: '40px', height: '24px' }}
         >
-          <span className="text-lg sm:text-2xl font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+          <span className="text-lg font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
             {hits}
           </span>
         </div>
 
-        {/* Mouse */}
+        {/* ৩. Mouse (ইঁদুর) */}
         <div className="absolute inset-0 pointer-events-none z-10">
           <div
             className="absolute transition-all duration-75 ease-linear"
@@ -203,7 +207,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
             }}
           >
             {mouseImg ? (
-              <img src={mouseImg} alt="Mouse" className="w-14 h-16 sm:w-16 sm:h-20 object-contain drop-shadow-md" />
+              <img src={mouseImg} alt="Mouse" className="w-14 h-16 object-contain drop-shadow-md" />
             ) : (
               <div className="w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center font-bold text-xs">
                 MOUSE
@@ -212,17 +216,17 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           </div>
         </div>
 
-        {/* STONES Count (বামপাশের ঝুড়ির ভেতর ফিক্সড) */}
+        {/* ৪. STONES (30) - ফিক্সড পিক্সেল পজিশন */}
         <div
-          className="absolute z-20 pointer-events-none flex items-center justify-center w-[15%]"
-          style={{ bottom: '11.2%', left: '15%' }}
+          className="absolute z-20 pointer-events-none flex items-center justify-center"
+          style={{ bottom: '75px', left: '55px', width: '40px', height: '24px' }}
         >
-          <span className="text-sm sm:text-base font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+          <span className="text-sm font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
             {stonesLeft}
           </span>
         </div>
 
-        {/* Slingshot Stone */}
+        {/* ৫. Slingshot Stone */}
         {!gameOver && stonesLeft > 0 && (
           <div
             onMouseDown={handleTouchStart}
@@ -238,7 +242,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
             }}
           >
             {stoneImg ? (
-              <img src={stoneImg} alt="Stone" className="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow-2xl" />
+              <img src={stoneImg} alt="Stone" className="w-14 h-14 object-contain drop-shadow-2xl" />
             ) : (
               <div className="w-12 h-12 bg-gray-400 rounded-full border-2 border-gray-200 shadow-xl flex items-center justify-center font-bold text-[10px]">
                 STONE
@@ -247,7 +251,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           </div>
         )}
 
-        {/* Game Over Modal */}
+        {/* ৬. Game Over Modal */}
         {gameOver && (
           <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div
