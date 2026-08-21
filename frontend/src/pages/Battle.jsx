@@ -170,21 +170,24 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     }, 400);
   };
 
-  const checkHit = (thrownX) => {
-    // এখানে thrownX কে পার্সেন্ট থেকে পিক্সেলে কনভার্ট করে দূরত্ব মাপা হবে
-    const mousePixelX = (mouse.x / 360) * 100; // তুলনার জন্য পার্সেন্টে রূপান্তর
-    const distance = Math.abs(mousePixelX - thrownX);
+  const checkHit = (thrownPercentX) => {
+    // thrownPercentX হলো পার্সেন্টেজ (যেমন 50%)， এটিকে ৩৬০ পিক্সেলের মাপে রূপান্তর করা হলো
+    const thrownPixelX = (thrownPercentX / 100) * 360;
 
-    if (distance < 12) {
+    // এখন mouse.x এবং thrownPixelX দুটিই পিক্সেলে রয়েছে, তাই সঠিক দূরত্ব মাপা যাবে
+    const distance = Math.abs(mouse.x - thrownPixelX);
+
+    // দূরত্ব ৩০ পিক্সেলের কম হলে নিখুঁতভাবে হিট কাউন্ট হবে
+    if (distance < 30) {
       setHits((h) => h + 1);
       
       setMouse((prev) => ({ ...prev, isFalling: true }));
 
       setTimeout(() => {
         setMouse({
-          x: Math.random() > 0.5 ? 0 : 360, // পিক্সেলের কোণা থেকে শুরু হবে
+          x: Math.random() > 0.5 ? -40 : 400,
           y: 28,
-          speed: 4 + Math.random() * 2,
+          speed: 3.5 + Math.random() * 1.5,
           direction: Math.random() > 0.5 ? 1 : -1,
           isFalling: false
         });
@@ -234,12 +237,12 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           </span>
         </div>
 
-        {/* ৩. Mouse */}
+        {/* ৩. Mouse (অ্যানিমেশন স্মুথ করার জন্য transition তুলে দেওয়া হলো) */}
         <div className="absolute inset-0 pointer-events-none z-10">
           <div
-            className="absolute transition-all duration-300 ease-in-out"
+            className="absolute"
             style={{
-              left: `${mouse.x}px`, // এখানে % এর বদলে px করে দেওয়া হলো!
+              left: `${mouse.x}px`,
               top: mouse.isFalling ? `${mouse.y + 25}%` : `${mouse.y}%`,
               opacity: mouse.isFalling ? 0 : 1,
               transform: `translate(-50%, -50%) scaleX(${mouse.direction === 1 ? -1 : 1}) ${mouse.isFalling ? 'rotate(60deg)' : ''}`
