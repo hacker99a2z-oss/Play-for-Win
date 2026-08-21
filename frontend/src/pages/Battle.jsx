@@ -254,10 +254,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         {/* ৬. Game Over Modal */}
         {gameOver && (
           <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div
-              style={{ backgroundColor: '#0f172a', border: '2px solid #334155' }}
-              className="p-6 rounded-2xl w-full max-w-xs text-center space-y-4 shadow-2xl"
-            >
+            <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl w-full max-w-xs text-center space-y-4 shadow-2xl">
               <h3 className="text-xl font-bold text-amber-400">Game Over!</h3>
               <p className="text-sm text-slate-300">
                 Total Hits: <span className="text-emerald-400 font-bold">{hits}</span>
@@ -267,7 +264,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
               ) : (
                 <button
                   onClick={() => onNavigate && onNavigate('fighting')}
-                  className="w-full bg-amber-500 hover:bg-amber-400 font-bold py-2.5 rounded-xl text-black active:scale-95 transition cursor-pointer"
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2.5 rounded-xl text-white shadow-lg active:scale-95 transition cursor-pointer border border-emerald-400/30"
                 >
                   Back to Arena
                 </button>
