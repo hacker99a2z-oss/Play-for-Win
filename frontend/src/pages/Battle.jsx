@@ -30,7 +30,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
   const arenaRef = useRef(null);
 
-// ইঁদুরের চলাচলের লজিক (স্ক্রিনের বাইরে যাওয়ার জন্য মান বাড়িয়ে দেওয়া হলো)
+  // ইঁদুরের চলাচলের লজিক
   useEffect(() => {
     if (gameOver) return;
     const interval = setInterval(() => {
@@ -40,23 +40,17 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         let newX = prev.x + prev.speed * prev.direction;
         let newDir = prev.direction;
 
-        // ডান দিকে স্ক্রিন (৩৬০) পার হয়ে ৪২০ পিক্সেল পর্যন্ত বাইরে গিয়ে ফিরবে
         if (newX >= 420) {
           newX = 420;
-          newDir = -1; 
-        } 
-        // বাম দিকে শূন্য পার হয়ে -৬০ পিক্সেল পর্যন্ত বাইরে গিয়ে ফিরবে
-        else if (newX <= -60) {
+          newDir = -1;
+        } else if (newX <= -60) {
           newX = -60;
-          newDir = 1;  
+          newDir = 1;
         }
 
         return { ...prev, x: newX, direction: newDir };
       });
     }, 30);
-
-    return () => clearInterval(interval);
-  }, [gameOver]);
 
     return () => clearInterval(interval);
   }, [gameOver]);
