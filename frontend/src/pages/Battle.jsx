@@ -38,11 +38,11 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         let newX = prev.x + prev.speed * prev.direction;
         let newDir = prev.direction;
 
-        if (newX >= 88) {
-          newX = 88;
+        if (newX >= 95) {
+          newX = 95;
           newDir = -1;
-        } else if (newX <= 12) {
-          newX = 12;
+        } else if (newX <= 5) {
+          newX = 5;
           newDir = 1;
         }
 
