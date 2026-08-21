@@ -76,7 +76,7 @@ export default function App() {
     syncUserData();
   }, [syncUserData]);
 
-  // ২. Adsgram Ad Controller (Direct Server Verified)
+  // ২. Adsgram Ad Controller (Strict Event Success Check)
   const handlePlayAd = () => {
     return new Promise((resolve) => {
       const tg = window.Telegram?.WebApp;
@@ -95,11 +95,13 @@ export default function App() {
             userId: String(currentTelegramId)
           });
 
+          // Adsgram থেকে ডিরেক্ট ইম্প্রেশন/সাফল্যের রেজাল্ট চেক
           AdController.show()
             .then(async (result) => {
-              // Adsgram SDK কনফার্ম করলে আমরা সার্ভারে ভেরিফিকেশনের জন্য পাঠাব
-              if (result && result.done) {
+              // 🛑 কেবল Adsgram ডিরেক্ট 'done: true' (Impression Counted) দিলেই ভেতরে ঢুকবে
+              if (result && result.done === true) {
                 try {
+                  // সার্ভারে কল করে কনফার্ম করা
                   const response = await fetch(`${BACKEND_URL}/api/adsgram-verify`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -108,30 +110,30 @@ export default function App() {
                   
                   const data = await response.json();
 
-                  // 🔴 শুধুমাত্র সার্ভার True দিলেই গেম এলাউ হবে
                   if (data && data.success && data.verified) {
-                    resolve(true);
+                    resolve(true); // ✅ ইম্প্রেশন সফল ও সার্ভার ভেরিফাইড -> গেম/কয়েন ডাবল এলাউড
                   } else {
-                    alert("❌ Server verification failed! Cheat attempt detected.");
+                    alert("❌ Server verification failed!");
                     resolve(false);
                   }
                 } catch (err) {
-                  console.error("Adsgram server verification error:", err);
+                  console.error("Adsgram verification error:", err);
                   alert("❌ Network Error: Could not verify ad with server.");
                   resolve(false);
                 }
               } else {
-                alert("❌ Ad was skipped or closed early. Rewarded action cancelled.");
+                // ❌ যদি ইউজার অ্যাড স্কিপ করে, কেটে দেয় বা ইম্প্রেশন না হয়
+                alert("❌ Ad impression failed or closed early. Action cancelled!");
                 resolve(false);
               }
             })
             .catch((err) => {
-              console.error("Adsgram Error/Invalid Ad:", err);
+              console.error("Adsgram Error:", err);
               alert("❌ Unable to load Ad or Adblocker detected!");
               resolve(false);
             });
         } catch (error) {
-          console.error("Adsgram Controller Init Error:", error);
+          console.error("Adsgram Init Error:", error);
           alert("❌ Failed to trigger Ad network.");
           resolve(false);
         }
