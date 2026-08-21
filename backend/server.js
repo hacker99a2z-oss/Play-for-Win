@@ -272,13 +272,37 @@ app.get('/api/match/history/:telegramId', async (req, res) => {
   try {
     const { telegramId } = req.params;
     const history = await Match.find({ 'players.telegramId': String(telegramId) })
-      .sort({ createdAt: -1 })
-      .limit(5);
+      .sort({ createdAt: -1 }) // নতুন ম্যাচ সবার ওপরে দেখাবে
+      .limit(5);               // সবসময় লেটেস্ট ৫টি ম্যাচ ফিল্টার করবে
 
     const formattedHistory = history.map(m => {
       const matchObj = m.toObject();
-      const potentialPrize = matchObj.mode === 2 ? 0.10 : 0.10;
 
+      // ১. প্লেয়ারদের হিট (hits) এবং টাইম (timeTaken) অনুযায়ী র‍্যাঙ্ক সাজানো
+      matchObj.players.sort((a, b) => {
+        const hitsA = a.hits || 0;
+        const hitsB = b.hits || 0;
+        if (hitsB !== hitsA) return hitsB - hitsA;
+        return (a.timeTaken || 0) - (b.timeTaken || 0);
+      });
+
+      // ২. ইউজারের বর্তমান র‍্যাঙ্ক ইনডেক্স খুঁজে বের করা
+      const userRankIndex = matchObj.players.findIndex(
+        p => String(p.telegramId) === String(telegramId)
+      );
+
+      // ৩. মোড ও র‍্যাঙ্ক অনুযায়ী প্রাইস সেট করা
+      let potentialPrize = 0.00;
+      if (matchObj.mode === 2) {
+        potentialPrize = userRankIndex === 0 ? 0.10 : 0.00;
+      } else if (matchObj.mode === 4) {
+        if (userRankIndex === 0) potentialPrize = 0.10;
+        else if (userRankIndex === 1) potentialPrize = 0.07;
+        else if (userRankIndex === 2) potentialPrize = 0.03;
+        else potentialPrize = 0.00;
+      }
+
+      // ৪. পেন্ডিং থাকা অবস্থায় সম্ভাব্য প্রাইজ যুক্ত করা
       matchObj.players = matchObj.players.map(p => {
         if (m.status === 'pending' && String(p.telegramId) === String(telegramId)) {
           return {
