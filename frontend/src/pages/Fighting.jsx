@@ -7,7 +7,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
   const [showModeModal, setShowModeModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // ১. হিস্ট্রি ডাটা ফেচ করার ফাংশন
+  // ১. লাস্ট ৫টি ম্যাচের হিস্ট্রি লোড
   const fetchHistory = useCallback(() => {
     if (user?.telegramId) {
       fetch(`https://play-for-win.onrender.com/api/match/history/${user.telegramId}`)
@@ -21,11 +21,11 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
     }
   }, [user?.telegramId]);
 
-  // ২. প্রথমবার এবং পেজ ভিজিবল হলে হিস্ট্রি অটো-লোড হবে
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
 
+  // ২. ম্যাচ জয়েন লজিক (/api/match/join)
   const handleStartGame = async (mode) => {
     if ((user?.mainCoins || 0) < 250) {
       alert("⚠️ Insufficient coins! 250 Coins required.");
@@ -34,24 +34,28 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
 
     setLoading(true);
     try {
-      // ব্যাকএন্ডে ২৫০ কয়েন কাটার API কল
-      const res = await fetch(`https://play-for-win.onrender.com/api/user/deduct-coins`, {
+      const res = await fetch(`https://play-for-win.onrender.com/api/match/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegramId: user.telegramId, amount: 250 })
+        body: JSON.stringify({
+          telegramId: user.telegramId,
+          firstName: user.firstName || 'Player',
+          mode: mode
+        })
       });
 
       const data = await res.json();
-      if (data.success) {
-        if (refreshUserData) refreshUserData(); // ফ্রন্টএন্ড ব্যালেন্স রিফ্রেশ
+      if (data.success && data.matchId) {
+        if (refreshUserData) refreshUserData(); 
         setShowModeModal(false);
-        onNavigate('battle', { mode });
+        // battle পেজে matchId ও mode পাঠানো হচ্ছে
+        onNavigate('battle', { mode: mode, matchId: data.matchId });
       } else {
-        alert(data.message || "Failed to enter match");
+        alert(data.error || "Failed to join match");
       }
     } catch (err) {
       console.error(err);
-      alert("Network error!");
+      alert("Network error joining match!");
     } finally {
       setLoading(false);
     }
@@ -89,30 +93,18 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
               <button 
                 disabled={loading}
                 onClick={() => handleStartGame(2)} 
-                style={{ 
-                  backgroundColor: '#f59e0b', 
-                  color: '#000000', 
-                  borderRadius: '12px',
-                  fontWeight: 'bold',
-                  padding: '10px 0'
-                }}
+                style={{ backgroundColor: '#f59e0b', color: '#000000', borderRadius: '12px', fontWeight: 'bold', padding: '10px 0' }}
                 className="flex-1 active:scale-95 transition disabled:opacity-50 cursor-pointer"
               >
-                2 Players
+                {loading ? 'Joining...' : '2 Players'}
               </button>
               <button 
                 disabled={loading}
                 onClick={() => handleStartGame(4)} 
-                style={{ 
-                  backgroundColor: '#f59e0b', 
-                  color: '#000000', 
-                  borderRadius: '12px',
-                  fontWeight: 'bold',
-                  padding: '10px 0'
-                }}
+                style={{ backgroundColor: '#f59e0b', color: '#000000', borderRadius: '12px', fontWeight: 'bold', padding: '10px 0' }}
                 className="flex-1 active:scale-95 transition disabled:opacity-50 cursor-pointer"
               >
-                4 Players
+                {loading ? 'Joining...' : '4 Players'}
               </button>
             </div>
 
@@ -127,7 +119,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
         </div>
       )}
 
-      {/* Last 5 Matches History (Solid Dark Background Fix) */}
+      {/* Recent 5 Matches History */}
       <div 
         style={{ 
           backgroundColor: '#0f172a', 
@@ -159,10 +151,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
               <div 
                 key={match._id || idx} 
                 onClick={() => setSelectedMatch(match)}
-                style={{ 
-                  backgroundColor: '#1e293b', 
-                  border: '1px solid #475569' 
-                }}
+                style={{ backgroundColor: '#1e293b', border: '1px solid #475569' }}
                 className="p-3 rounded-xl flex justify-between items-center cursor-pointer hover:brightness-125 transition"
               >
                 <div>
@@ -197,7 +186,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
                 <div key={i} className="flex justify-between items-center text-xs bg-slate-800 p-2.5 rounded-lg border border-white/5">
                   <div>
                     <p className="text-slate-200 font-bold">{i + 1}. {p.firstName || 'Player'}</p>
-                    <p className="text-[10px] text-slate-400">{p.timeTaken ? `${p.timeTaken.toFixed(1)}s` : 'N/A'}</p>
+                    <p className="text-[10px] text-slate-400">{p.timeTaken ? `${Number(p.timeTaken).toFixed(1)}s` : 'N/A'}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-amber-400 font-bold">{p.hits || 0} Hits</p>
