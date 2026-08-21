@@ -25,7 +25,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
     fetchHistory();
   }, [fetchHistory, user?.telegramId]);
 
-  // ২. ম্যাচ জয়েন লজিক (/api/match/join)
+  // ২. ম্যাচ জয়েন লজিক (/api/match/join) - [Updated with Error Limit Alert]
   const handleStartGame = async (mode) => {
     if ((user?.mainCoins || 0) < 250) {
       alert("⚠️ Insufficient coins! 250 Coins required.");
@@ -46,6 +46,12 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
 
       const data = await res.json();
       
+      // ✅ যদি সফল না হয় (যেমন: ৩টি পেন্ডিং ম্যাচ অলরেডি থাকে)
+      if (!data.success) {
+        alert(data.error || "Failed to join match");
+        return;
+      }
+
       // ✅ সঠিকভাবে matchId রিসিভ করে battle পেজে পাঠানো হচ্ছে
       if (data.success && data.matchId) {
         if (refreshUserData) refreshUserData(); 
@@ -54,8 +60,6 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
         if (onNavigate) {
           onNavigate('battle', { mode: mode, matchId: data.matchId });
         }
-      } else {
-        alert(data.error || "Failed to join match");
       }
     } catch (err) {
       console.error("Join match error:", err);
@@ -210,7 +214,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
               finishedAt: new Date()
             }];
 
-        // Hits অনুযায়ী সর্ট
+        // Hits অনুযায়ী সর্ট
         rawPlayers.sort((a, b) => {
           const hitsA = a.hits || 0;
           const hitsB = b.hits || 0;
