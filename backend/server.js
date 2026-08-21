@@ -123,54 +123,46 @@ app.post('/api/user/deduct-coins', async (req, res) => {
   }
 });
 
-// ১. POST /api/match/join - নতুন প্লেয়ার জয়েন
+// Backend Route (Example Fix)
 app.post('/api/match/join', async (req, res) => {
   try {
     const { telegramId, firstName, mode } = req.body;
 
-    if (!telegramId || !mode) {
-      return res.status(400).json({ error: 'telegramId and mode required' });
+    if (!telegramId) {
+      return res.status(400).json({ success: false, error: "Telegram ID is required" });
     }
 
-    const user = await User.findOne({ telegramId });
-    if (!user || (user.mainCoins || 0) < 250) {
-      return res.status(400).json({ error: 'Insufficient mainCoins' });
+    // ডাটাবেজ অপারেশন ফেইল যেন না হয়
+    let match = await Match.findOne({ status: 'pending', mode: mode });
+
+    if (!match) {
+      match = new Match({
+        mode: mode,
+        status: 'pending',
+        players: [{ telegramId, firstName, hits: 0, timeTaken: 0 }]
+      });
+    } else {
+      // প্লেয়ার অলরেডি জয়েন করা আছে কিনা চেক
+      const exists = match.players.some(p => String(p.telegramId) === String(telegramId));
+      if (!exists) {
+        match.players.push({ telegramId, firstName, hits: 0, timeTaken: 0 });
+      }
     }
 
-    user.mainCoins -= 250;
-    await user.save();
+    await match.save();
 
-    let match = await Match.findOne({
-      mode: Number(mode),
-      status: 'pending',
-      'players.telegramId': { $ne: telegramId },
-      $where: `this.players.length < ${mode}`
+    return res.status(200).json({ 
+      success: true, 
+      matchId: match._id 
     });
 
-    const newPlayer = {
-      telegramId: String(telegramId),
-      firstName: firstName || 'Player',
-      hits: 0,
-      timeTaken: 0,
-      prizeUSD: 0,
-      finishedAt: null
-    };
-
-    if (match) {
-      match.players.push(newPlayer);
-      await match.save();
-    } else {
-      match = new Match({
-        mode: Number(mode),
-        players: [newPlayer]
-      });
-      await match.save();
-    }
-
-    res.json({ success: true, matchId: match._id, remainingCoins: user.mainCoins });
   } catch (err) {
-    console.error('Match Join Error:', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Match join error:", err);
+    // সার্ভার ক্র্যাশ আটকাতে সঠিক জেসন মেসেজ
+    return res.status(500).json({ 
+      success: false, 
+      error: "Server internal error! Check Render backend logs." 
+    });
   }
 });
 
