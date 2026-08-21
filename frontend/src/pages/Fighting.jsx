@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import fightBtnImg from '../assets/FIGHT.png';
 
 const Fighting = ({ user, refreshUserData, onNavigate }) => {
@@ -7,14 +7,24 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
   const [showModeModal, setShowModeModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  // ১. হিস্ট্রি ডাটা ফেচ করার ফাংশন
+  const fetchHistory = useCallback(() => {
     if (user?.telegramId) {
       fetch(`https://play-for-win.onrender.com/api/match/history/${user.telegramId}`)
         .then(res => res.json())
-        .then(data => setHistory(data.slice(0, 5)))
-        .catch(err => console.error(err));
+        .then(data => {
+          if (Array.isArray(data)) {
+            setHistory(data.slice(0, 5));
+          }
+        })
+        .catch(err => console.error("History fetch error:", err));
     }
-  }, [user]);
+  }, [user?.telegramId]);
+
+  // ২. প্রথমবার এবং পেজ ভিজিবল হলে হিস্ট্রি অটো-লোড হবে
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   const handleStartGame = async (mode) => {
     if ((user?.mainCoins || 0) < 250) {
@@ -127,9 +137,17 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
         }} 
         className="p-4 w-full"
       >
-        <h3 style={{ color: '#fbbf24' }} className="text-sm font-bold mb-3 uppercase tracking-wider">
-          Recent 5 Matches
-        </h3>
+        <div className="flex justify-between items-center mb-3">
+          <h3 style={{ color: '#fbbf24' }} className="text-sm font-bold uppercase tracking-wider">
+            Recent 5 Matches
+          </h3>
+          <button 
+            onClick={fetchHistory}
+            className="text-[10px] text-slate-400 hover:text-amber-400 underline cursor-pointer"
+          >
+            Refresh
+          </button>
+        </div>
 
         <div className="space-y-2">
           {history.length === 0 ? (
@@ -139,7 +157,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
           ) : (
             history.map((match, idx) => (
               <div 
-                key={idx} 
+                key={match._id || idx} 
                 onClick={() => setSelectedMatch(match)}
                 style={{ 
                   backgroundColor: '#1e293b', 
@@ -149,10 +167,10 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
               >
                 <div>
                   <span style={{ color: '#cbd5e1' }} className="text-xs font-bold">
-                    {match.mode} Players Match
+                    {match.mode || 2} Players Match
                   </span>
                   <p style={{ color: '#64748b' }} className="text-[10px]">
-                    {new Date(match.createdAt).toLocaleTimeString()}
+                    {match.createdAt ? new Date(match.createdAt).toLocaleTimeString() : 'Recent'}
                   </p>
                 </div>
 
@@ -161,7 +179,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
                     ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
                     : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                 }`}>
-                  {match.status}
+                  {match.status || 'Completed'}
                 </span>
               </div>
             ))
@@ -171,8 +189,8 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
 
       {/* Match Details Modal */}
       {selectedMatch && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-700 p-5 rounded-2xl w-full max-w-sm space-y-3">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-700 p-5 rounded-2xl w-full max-w-sm space-y-3 shadow-2xl">
             <h4 className="text-sm font-bold text-amber-400">Match Details ({selectedMatch.status})</h4>
             <div className="space-y-2">
               {selectedMatch.players?.map((p, i) => (
@@ -188,7 +206,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
                 </div>
               ))}
             </div>
-            <button onClick={() => setSelectedMatch(null)} className="w-full bg-slate-800 text-slate-300 py-2 rounded-xl text-xs font-bold">Close</button>
+            <button onClick={() => setSelectedMatch(null)} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl text-xs font-bold transition">Close</button>
           </div>
         </div>
       )}
