@@ -143,14 +143,15 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
   const throwStone = () => {
     setIsThrown(true);
     const targetY = 28;
-    const targetX = stonePos.x;
+    const currentStoneX = stonePos.x;
 
-    // পাথরকে ইঁদুরের পজিশনে পাঠানো হলো
-    setStonePos({ x: targetX, y: targetY });
+    // পাথরকে নিচ থেকে ওপরের দিকে পাঠানো হলো
+    setStonePos({ x: currentStoneX, y: targetY });
 
-    // পাথর যখন ইঁদুরের কাছাকাছি পৌঁছাবে (প্রায় ২০০ মিলিগ্রাম বা অ্যানিমেশনের সঠিক সময়ে) তখন হিট চেক হবে
+    // পাথরটি যখন ইঁদুরের কাছে পৌঁছাবে (৩০০ মিলি সেকেন্ড পর), 
+    // ঠিক সেই মুহূর্তের ইঁদুরের পজিশন (`mouse.x`) চেক করা হবে
     setTimeout(() => {
-      checkHit(targetX);
+      checkHit(mouse.x); // এখানে currentStoneX এর বদলে সরাসরি mouse.x দেওয়া হলো
     }, 300);
 
     setTimeout(() => {
@@ -172,11 +173,14 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     }, 400);
   };
 
-const checkHit = (thrownPercentX) => {
-    const thrownPixelX = (thrownPercentX / 100) * 360;
-    const distance = Math.abs(mouse.x - thrownPixelX);
+  const checkHit = (currentMouseX) => {
+    // পাথর ছোড়ার সময় পাথরের এক্স পজিশন কত ছিল, সেটি পাথরের সাথে সামঞ্জস্য রাখা হলো
+    const thrownPixelX = (stonePos.x / 100) * 360; 
+    
+    // ইঁদুরের রিয়েল-টাইম পজিশনের সাথে দূরত্ব মাপা হলো
+    const distance = Math.abs(currentMouseX - thrownPixelX);
 
-    // দূরত্ব ৩৫ পিক্সেলের মধ্যে থাকলে (অর্থাৎ ঠিক ইঁদুরের গায়ে লাগলে) হিট কাউন্ট হবে
+    // দূরত্ব ৩৫ পিক্সেলের কম হলে হিট কাউন্ট হবে
     if (distance < 35 && !mouse.isFalling) {
       setHits((h) => h + 1);
       
