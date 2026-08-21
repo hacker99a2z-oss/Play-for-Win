@@ -30,7 +30,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
   const arenaRef = useRef(null);
 
-  // ইঁদুরের চলাচলের লজিক (স্ক্রিনের একদম বাম থেকে ডান প্রান্ত পর্যন্ত)
+  // ইঁদুরের চলাচলের লজিক
   useEffect(() => {
     if (gameOver) return;
     const interval = setInterval(() => {
@@ -40,21 +40,17 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         let newX = prev.x + prev.speed * prev.direction;
         let newDir = prev.direction;
 
-        // একদম স্ক্রিনের বাম মাথা (২%) থেকে ডান মাথা (৯৮%) পর্যন্ত যাবে
         if (newX >= 98) {
           newX = 98;
-          newDir = -1; // বাম দিকে ঘুরবে
+          newDir = -1;
         } else if (newX <= 2) {
           newX = 2;
-          newDir = 1;  // ডান দিকে ঘুরবে
+          newDir = 1;
         }
 
         return { ...prev, x: newX, direction: newDir };
       });
     }, 30);
-
-    return () => clearInterval(interval);
-  }, [gameOver]);
 
     return () => clearInterval(interval);
   }, [gameOver]);
