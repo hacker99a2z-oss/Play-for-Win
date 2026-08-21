@@ -13,9 +13,9 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
   const startTimeRef = useRef(Date.now());
 
   const [mouse, setMouse] = useState({
-    x: 50,
+    x: 180, // স্ক্রিনের ঠিক মাঝখান থেকে শুরু হবে (৩৬০ এর অর্ধেক)
     y: 28,
-    speed: 2.2,
+    speed: 4, // পিক্সেল স্পিড একটু বাড়িয়ে দেওয়া হলো
     direction: 1,
     isFalling: false
   });
@@ -30,7 +30,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
   const arenaRef = useRef(null);
 
-  // ইঁদুরের চলাচলের লজিক
+// ইঁদুরের চলাচলের লজিক (পিক্সেল দিয়ে মাপা)
   useEffect(() => {
     if (gameOver) return;
     const interval = setInterval(() => {
@@ -40,12 +40,13 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         let newX = prev.x + prev.speed * prev.direction;
         let newDir = prev.direction;
 
-        if (newX >= 98) {
-          newX = 98;
-          newDir = -1;
-        } else if (newX <= 2) {
-          newX = 2;
-          newDir = 1;
+        // গেম স্ক্রিনের চওড়া ৩৬০ পিক্সেল, তাই ১০ থেকে ৩৫০ পিক্সেল পর্যন্ত যাবে
+        if (newX >= 350) {
+          newX = 350;
+          newDir = -1; // বাম দিকে ঘুরবে
+        } else if (newX <= 10) {
+          newX = 10;
+          newDir = 1;  // ডান দিকে ঘুরবে
         }
 
         return { ...prev, x: newX, direction: newDir };
@@ -231,12 +232,12 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           </span>
         </div>
 
-        {/* ৩. Mouse (ইঁদুর - নিচে পড়ে যাওয়ার অ্যানিমেশন সহ) */}
+        {/* ৩. Mouse */}
         <div className="absolute inset-0 pointer-events-none z-10">
           <div
             className="absolute transition-all duration-300 ease-in-out"
             style={{
-              left: `${mouse.x}%`,
+              left: `${mouse.x}px`, // এখানে % এর বদলে px করে দেওয়া হলো!
               top: mouse.isFalling ? `${mouse.y + 25}%` : `${mouse.y}%`,
               opacity: mouse.isFalling ? 0 : 1,
               transform: `translate(-50%, -50%) scaleX(${mouse.direction === 1 ? -1 : 1}) ${mouse.isFalling ? 'rotate(60deg)' : ''}`
