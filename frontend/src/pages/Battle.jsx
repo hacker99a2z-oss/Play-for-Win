@@ -15,7 +15,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
   const [mouse, setMouse] = useState({
     x: 50,
     y: 28,
-    speed: 1.6,
+    speed: 2,
     direction: 1,
     isFalling: false
   });
@@ -38,11 +38,11 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         let newX = prev.x + prev.speed * prev.direction;
         let newDir = prev.direction;
 
-        if (newX >= 95) {
-          newX = 95;
+        if (newX >= 90) {
+          newX = 90;
           newDir = -1;
-        } else if (newX <= 5) {
-          newX = 5;
+        } else if (newX <= 10) {
+          newX = 10;
           newDir = 1;
         }
 
@@ -180,9 +180,9 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
       // ১ সেকেন্ড (1000ms) পর নতুন ইঁদুর স্পawn করবে
       setTimeout(() => {
         setMouse({
-          x: Math.random() > 0.5 ? 15 : 85,
+          x: Math.random() > 0.5 ? 12 : 88,
           y: 28,
-          speed: 1.6 + Math.random() * 0.5,
+          speed: 2 + Math.random() * 0.5,
           direction: Math.random() > 0.5 ? 1 : -1,
           isFalling: false
         });
