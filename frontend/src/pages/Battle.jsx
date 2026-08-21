@@ -251,60 +251,60 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           </div>
         )}
 
-      {/* ৬. Game Over Modal - Inline Style Fixed */}
-      {gameOver && (
-        <div 
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(6px)' }}
-          className="fixed inset-0 flex items-center justify-center z-50 p-4"
-        >
-          <div
-            style={{ 
-              backgroundColor: '#0f172a', 
-              border: '2px solid #334155', 
-              borderRadius: '16px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
-              width: '100%',
-              maxWidth: '280px',
-              padding: '24px',
-              textAlign: 'center'
-            }}
-            className="space-y-4"
+        {/* ৬. Game Over Modal - Arena Screen Centered */}
+        {gameOver && (
+          <div 
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.65)' }}
+            className="absolute inset-0 flex items-center justify-center z-50 p-4"
           >
-            <h3 style={{ color: '#fbbf24', fontSize: '20px', fontWeight: 'bold' }}>
-              Game Over!
-            </h3>
-            
-            <p style={{ color: '#cbd5e1', fontSize: '14px' }}>
-              Total Hits: <span style={{ color: '#34d399', fontWeight: 'bold' }}>{hits}</span>
-            </p>
-
-            {submitting ? (
-              <p style={{ color: '#fbbf24', fontSize: '12px', fontWeight: '500' }} className="animate-pulse">
-                Saving Score...
+            <div
+              style={{ 
+                backgroundColor: 'rgba(15, 23, 42, 0.95)', 
+                border: '2px solid #cbd5e1', 
+                borderRadius: '20px',
+                width: '100%',
+                maxWidth: '260px',
+                padding: '24px 16px',
+                textAlign: 'center',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.8)'
+              }}
+              className="space-y-4"
+            >
+              <h3 style={{ color: '#ffffff', fontSize: '22px', fontWeight: '800', letterSpacing: '0.5px' }}>
+                Game Over!
+              </h3>
+              
+              <p style={{ color: '#ffffff', fontSize: '15px', fontWeight: '600' }}>
+                Total Hits: <span style={{ color: '#ffffff', fontWeight: '900' }}>{hits}</span>
               </p>
-            ) : (
-              <button
-                onClick={() => onNavigate && onNavigate('fighting')}
-                style={{
-                  backgroundColor: '#059669',
-                  color: '#ffffff',
-                  width: '100%',
-                  padding: '10px 0',
-                  borderRadius: '12px',
-                  fontWeight: 'bold',
-                  fontSize: '14px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(5, 150, 105, 0.4)'
-                }}
-                className="active:scale-95 transition"
-              >
-                Back to Arena
-              </button>
-            )}
+
+              {submitting ? (
+                <p style={{ color: '#fbbf24', fontSize: '13px', fontWeight: '600' }} className="animate-pulse">
+                  Saving Score...
+                </p>
+              ) : (
+                <button
+                  onClick={() => onNavigate && onNavigate('fighting')}
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: '#ffffff',
+                    width: '100%',
+                    padding: '10px 0',
+                    borderRadius: '12px',
+                    fontWeight: 'bold',
+                    fontSize: '14px',
+                    border: '1.5px solid #ffffff',
+                    cursor: 'pointer',
+                  }}
+                  className="active:scale-95 transition hover:bg-white/10"
+                >
+                  Back to Arena
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
