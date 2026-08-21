@@ -30,7 +30,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
   const arenaRef = useRef(null);
 
-  // ইঁদুরের চলাচলের লজিক
+  // ইঁদুরের চলাচলের লজিক (চূড়ান্ত মান)
   useEffect(() => {
     if (gameOver) return;
     const interval = setInterval(() => {
@@ -40,13 +40,13 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         let newX = prev.x + prev.speed * prev.direction;
         let newDir = prev.direction;
 
-        // সীমানা একদম বাড়িয়ে ২% থেকে ৯৮% করা হলো
-        if (newX >= 98) {
-          newX = 98;
+        // ব্রিজের একদম শেষ মাথা পর্যন্ত যাওয়ার জন্য ১০% এবং ৯০% দেওয়া হলো
+        if (newX >= 90) {
+          newX = 90;
           newDir = -1; // বাম দিকে ঘুরবে
-        } else if (newX <= 2) {
-          newX = 2;
-          newDir = 1;  // ডান দিকে ঘুরবে
+        } else if (newX <= 10) {
+          newX = 10;
+          newDir =  1; // ডান দিকে ঘুরবে
         }
 
         return { ...prev, x: newX, direction: newDir };
