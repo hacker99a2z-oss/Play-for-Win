@@ -172,7 +172,10 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
   };
 
   const checkHit = (thrownX) => {
-    const distance = Math.abs(mouse.x - thrownX);
+    // এখানে thrownX কে পার্সেন্ট থেকে পিক্সেলে কনভার্ট করে দূরত্ব মাপা হবে
+    const mousePixelX = (mouse.x / 360) * 100; // তুলনার জন্য পার্সেন্টে রূপান্তর
+    const distance = Math.abs(mousePixelX - thrownX);
+
     if (distance < 12) {
       setHits((h) => h + 1);
       
@@ -180,9 +183,9 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
       setTimeout(() => {
         setMouse({
-          x: Math.random() > 0.5 ? 5 : 95, // একদম কোণা থেকে শুরু হবে
+          x: Math.random() > 0.5 ? 30 : 330, // পিক্সেলের কোণা থেকে শুরু হবে
           y: 28,
-          speed: 2.2 + Math.random() * 0.8,
+          speed: 4 + Math.random() * 2,
           direction: Math.random() > 0.5 ? 1 : -1,
           isFalling: false
         });
