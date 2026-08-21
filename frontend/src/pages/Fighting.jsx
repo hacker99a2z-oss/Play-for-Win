@@ -38,23 +38,27 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          telegramId: user.telegramId,
-          firstName: user.firstName || 'Player',
+          telegramId: user?.telegramId,
+          firstName: user?.firstName || 'Player',
           mode: mode
         })
       });
 
       const data = await res.json();
+      
+      // ✅ সঠিকভাবে matchId রিসিভ করে battle পেজে পাঠানো হচ্ছে
       if (data.success && data.matchId) {
         if (refreshUserData) refreshUserData(); 
         setShowModeModal(false);
-        // battle পেজে matchId ও mode পাঠানো হচ্ছে
-        onNavigate('battle', { mode: mode, matchId: data.matchId });
+        
+        if (onNavigate) {
+          onNavigate('battle', { mode: mode, matchId: data.matchId });
+        }
       } else {
         alert(data.error || "Failed to join match");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Join match error:", err);
       alert("Network error joining match!");
     } finally {
       setLoading(false);
