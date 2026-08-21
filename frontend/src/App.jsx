@@ -14,11 +14,16 @@ const BACKEND_URL = 'https://play-for-win.onrender.com';
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [matchMode, setMatchMode] = useState(2);
+  const [matchId, setMatchId] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  // ✅ ২. নেভিগেশনে params থেকে matchId গ্রহণ ও সেভ
   const handleNavigate = (tab, params = {}) => {
     if (params.mode) {
       setMatchMode(params.mode);
+    }
+    if (params.matchId) {
+      setMatchId(params.matchId);
     }
     setActiveTab(tab);
   };
@@ -135,6 +140,7 @@ export default function App() {
       <Battle 
         user={user} 
         mode={matchMode} 
+        matchId={matchId} // ✅ ৩. Battle কম্পোনেন্টে সঠিকভাবে matchId পাস করা হলো
         refreshUserData={syncUserData} 
         onNavigate={handleNavigate} 
       />
