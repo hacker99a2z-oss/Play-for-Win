@@ -297,9 +297,12 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
                 </p>
               ) : (
                 <button
-                  onClick={() => onNavigate && onNavigate('fighting')}
+                  onClick={() => {
+                    if (refreshUserData) refreshUserData();
+                    if (onNavigate) onNavigate('fighting');
+                  }}
                   style={{
-                    backgroundColor: 'transparent',
+                    backgroundColor: '#16a34a',
                     color: '#ffffff',
                     width: '100%',
                     padding: '10px 0',
