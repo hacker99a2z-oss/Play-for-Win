@@ -123,38 +123,37 @@ app.post('/api/user/deduct-coins', async (req, res) => {
   }
 });
 
-// ১. POST /api/match/join - ২৫০ কয়েন কেটে ম্যাচ জয়েন করা (FIXED)
+// ১. POST /api/match/join - নতুন প্লেয়ার জয়েন
 app.post('/api/match/join', async (req, res) => {
   try {
     const { telegramId, firstName, mode } = req.body;
 
     if (!telegramId || !mode) {
-      return res.status(400).json({ error: 'telegramId and mode are required' });
+      return res.status(400).json({ error: 'telegramId and mode required' });
     }
 
     const user = await User.findOne({ telegramId });
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    
-    if ((user.mainCoins || 0) < 250) {
-      return res.status(400).json({ error: 'Insufficient mainCoins balance' });
+    if (!user || (user.mainCoins || 0) < 250) {
+      return res.status(400).json({ error: 'Insufficient mainCoins' });
     }
 
     user.mainCoins -= 250;
     await user.save();
 
-    // পেন্ডিং ম্যাচ খোঁজা
     let match = await Match.findOne({
       mode: Number(mode),
       status: 'pending',
-      'players.telegramId': { $ne: telegramId }
+      'players.telegramId': { $ne: telegramId },
+      $where: `this.players.length < ${mode}`
     });
 
     const newPlayer = {
-      telegramId,
+      telegramId: String(telegramId),
       firstName: firstName || 'Player',
       hits: 0,
       timeTaken: 0,
-      prizeUSD: 0
+      prizeUSD: 0,
+      finishedAt: null
     };
 
     if (match) {
@@ -171,49 +170,50 @@ app.post('/api/match/join', async (req, res) => {
     res.json({ success: true, matchId: match._id, remainingCoins: user.mainCoins });
   } catch (err) {
     console.error('Match Join Error:', err);
-    res.status(500).json({ error: 'Server error joining match' });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-// ২. POST /api/match/submit-score - (FIXED WITH ESTIMATED PENDING PRIZE)
+// ২. POST /api/match/submit-score - স্কোর সাবমিট (FIXED)
 app.post('/api/match/submit-score', async (req, res) => {
   try {
     const { matchId, telegramId, hits, timeTaken } = req.body;
 
-    if (!matchId) return res.status(400).json({ error: 'matchId is required' });
+    if (!matchId || !telegramId) {
+      return res.status(400).json({ error: 'matchId and telegramId required' });
+    }
 
     const match = await Match.findById(matchId);
     if (!match) return res.status(404).json({ error: 'Match not found' });
 
-    const playerIndex = match.players.findIndex(p => String(p.telegramId) === String(telegramId));
-    
-    if (playerIndex !== -1) {
-      match.players[playerIndex].hits = Number(hits) || 0;
-      match.players[playerIndex].timeTaken = Number(timeTaken) || 0;
-      match.players[playerIndex].finishedAt = new Date();
+    let player = match.players.find(p => String(p.telegramId) === String(telegramId));
+
+    if (player) {
+      player.hits = Number(hits) || 0;
+      player.timeTaken = Number(timeTaken) || 0;
+      player.finishedAt = new Date();
     } else {
       match.players.push({
-        telegramId,
+        telegramId: String(telegramId),
         hits: Number(hits) || 0,
         timeTaken: Number(timeTaken) || 0,
         finishedAt: new Date()
       });
     }
 
-    // প্লেয়ার ক্যাপাসিটি চেক
+    // সব প্লেয়ার খেলেছে কিনা চেক
     const isFull = match.players.length >= match.mode;
     const allFinished = isFull && match.players.every(p => p.finishedAt);
 
     if (allFinished) {
       match.status = 'completed';
 
-      // সর্টিং (Hits বেশি, Time কম)
       match.players.sort((a, b) => {
         if (b.hits !== a.hits) return b.hits - a.hits;
         return (a.timeTaken || 0) - (b.timeTaken || 0);
       });
 
-      // প্রাইজ বিতরণ
+      // প্রাইজ বন্টন
       if (match.mode === 2) {
         if (match.players[0]) match.players[0].prizeUSD = 0.10;
         if (match.players[1]) match.players[1].prizeUSD = 0.00;
@@ -224,7 +224,6 @@ app.post('/api/match/submit-score', async (req, res) => {
         if (match.players[3]) match.players[3].prizeUSD = 0.00;
       }
 
-      // বিজয়ী ব্যালেন্স আপডেট
       for (const p of match.players) {
         if (p.prizeUSD > 0) {
           await User.findOneAndUpdate(
@@ -239,7 +238,7 @@ app.post('/api/match/submit-score', async (req, res) => {
     res.json({ success: true, match });
   } catch (err) {
     console.error('Submit Score Error:', err);
-    res.status(500).json({ error: 'Server error submitting score' });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
