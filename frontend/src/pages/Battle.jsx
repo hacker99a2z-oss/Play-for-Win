@@ -145,11 +145,13 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     const targetY = 28;
     const targetX = stonePos.x;
 
+    // পাথরকে ইঁদুরের পজিশনে পাঠানো হলো
     setStonePos({ x: targetX, y: targetY });
 
+    // পাথর যখন ইঁদুরের কাছাকাছি পৌঁছাবে (প্রায় ২০০ মিলিগ্রাম বা অ্যানিমেশনের সঠিক সময়ে) তখন হিট চেক হবে
     setTimeout(() => {
       checkHit(targetX);
-    }, 200);
+    }, 180);
 
     setTimeout(() => {
       setStonesLeft((prev) => {
@@ -170,15 +172,12 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     }, 400);
   };
 
-  const checkHit = (thrownPercentX) => {
-    // thrownPercentX হলো পার্সেন্টেজ (যেমন 50%)， এটিকে ৩৬০ পিক্সেলের মাপে রূপান্তর করা হলো
+const checkHit = (thrownPercentX) => {
     const thrownPixelX = (thrownPercentX / 100) * 360;
-
-    // এখন mouse.x এবং thrownPixelX দুটিই পিক্সেলে রয়েছে, তাই সঠিক দূরত্ব মাপা যাবে
     const distance = Math.abs(mouse.x - thrownPixelX);
 
-    // দূরত্ব ৩০ পিক্সেলের কম হলে নিখুঁতভাবে হিট কাউন্ট হবে
-    if (distance < 30) {
+    // দূরত্ব ৩৫ পিক্সেলের মধ্যে থাকলে (অর্থাৎ ঠিক ইঁদুরের গায়ে লাগলে) হিট কাউন্ট হবে
+    if (distance < 35 && !mouse.isFalling) {
       setHits((h) => h + 1);
       
       setMouse((prev) => ({ ...prev, isFalling: true }));
