@@ -3,7 +3,7 @@ import mouseImg from '../assets/mouserun.png';
 import stoneImg from '../assets/stone.png';
 import bgImg from '../assets/battle.jpeg';
 
-const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
+const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
   const [stonesLeft, setStonesLeft] = useState(30);
   const [hits, setHits] = useState(0);
   const [gameOver, setGameOver] = useState(false);
@@ -62,10 +62,11 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
   const submitMatchResult = async (finalHits, timeTaken) => {
     setSubmitting(true);
     try {
-      const res = await fetch('https://play-for-win.onrender.com/api/match/submit', {
+      const res = await fetch('https://play-for-win.onrender.com/api/match/submit-score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          matchId: matchId,
           telegramId: user?.telegramId,
           mode: mode,
           hits: finalHits,
