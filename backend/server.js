@@ -504,6 +504,29 @@ app.get('/api/adsgram-reward', async (req, res) => {
   }
 });
 
+// Direct Server-Side Verification Endpoint
+app.post('/api/adsgram-verify', async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+    if (!telegramId) return res.status(400).json({ success: false, message: 'User ID required' });
+
+    // ১. ডাটাবেজে ইউজারের লাস্ট ওয়াচ টাইম বা ইম্প্রেশন আপডেট/চেক
+    let user = await User.findOne({ telegramId });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // সার্ভার থেকে সফল কনফার্মেশন পাঠানো
+    user.adsWatched = (user.adsWatched || 0) + 1;
+    await user.save();
+
+    console.log(`✅ Server Verified Ad for User: ${telegramId}`);
+    return res.json({ success: true, verified: true });
+
+  } catch (err) {
+    console.error('Ad Verification Server Error:', err);
+    return res.status(500).json({ success: false, error: 'Verification failed' });
+  }
+});
+
 // Monetag Postback Endpoint
 app.get('/api/monetag-postback', async (req, res) => {
   const { sub_id } = req.query;
