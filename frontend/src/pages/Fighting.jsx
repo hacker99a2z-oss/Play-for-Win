@@ -23,7 +23,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
 
   useEffect(() => {
     fetchHistory();
-  }, [fetchHistory]);
+  }, [fetchHistory, user?.telegramId]);
 
   // ২. ম্যাচ জয়েন লজিক (/api/match/join)
   const handleStartGame = async (mode) => {
