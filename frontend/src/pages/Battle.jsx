@@ -189,7 +189,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         {/* ২. TARGETS HIT (0) - ফিক্সড পিক্সেল পজিশন */}
         <div
           className="absolute z-20 pointer-events-none flex items-center justify-center"
-          style={{ top: '50px', right: '35px', width: '40px', height: '24px' }}
+          style={{ top: '45px', right: '37px', width: '40px', height: '24px' }}
         >
           <span className="text-lg font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
             {hits}
@@ -219,7 +219,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         {/* ৪. STONES (30) - ফিক্সড পিক্সেল পজিশন */}
         <div
           className="absolute z-20 pointer-events-none flex items-center justify-center"
-          style={{ bottom: '72px', left: '35px', width: '40px', height: '24px' }}
+          style={{ bottom: '72px', left: '37px', width: '40px', height: '24px' }}
         >
           <span className="text-sm font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
             {stonesLeft}
