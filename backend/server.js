@@ -172,28 +172,29 @@ app.post('/api/match/join', async (req, res) => {
 // ২. POST /api/match/submit-score - স্কোর ও টাইম সেভ করে বিজয়ী নির্ধারণ
 app.post('/api/match/submit-score', async (req, res) => {
   try {
-    const { matchId, telegramId, hits } = req.body;
+    const { matchId, telegramId, hits, timeTaken } = req.body; // timeTaken যুক্ত করা হলো
+
+    if (!matchId) return res.status(400).json({ error: 'matchId is required' });
 
     const match = await Match.findById(matchId);
     if (!match) return res.status(404).json({ error: 'Match not found' });
 
     const playerIndex = match.players.findIndex(p => p.telegramId === telegramId);
     if (playerIndex !== -1) {
-      match.players[playerIndex].hits = hits;
-      match.players[playerIndex].timeTaken = timeTaken || 0;
+      match.players[playerIndex].hits = hits || 0;
+      match.players[playerIndex].timeTaken = timeTaken || 0; // সময় সেভ হবে
       match.players[playerIndex].finishedAt = new Date();
     } else {
       return res.status(400).json({ error: 'Player not in this match' });
     }
 
-    // সবাই সাবমিট করেছে কি না চেক
-    const allFinished = match.players.length === match.mode && 
-                        match.players.every(p => p.finishedAt);
+    // সবাই সাবমিট করেছে কি না অথবা সোলো টেস্ট ম্যাচ
+    const allFinished = match.players.every(p => p.finishedAt);
 
     if (allFinished) {
       match.status = 'completed';
 
-      // স্কোর এবং টাইম দিয়ে সর্টিং (Hits বেশি এবং সময় কম হলে ১ নম্বর)
+      // স্কোর এবং টাইম দিয়ে সর্টিং
       match.players.sort((a, b) => {
         if (b.hits !== a.hits) return b.hits - a.hits;
         return (a.timeTaken || 0) - (b.timeTaken || 0);
@@ -201,8 +202,8 @@ app.post('/api/match/submit-score', async (req, res) => {
 
       // প্রাইজ বিতরণ
       if (match.mode === 2) {
-        match.players[0].prizeUSD = 0.10;
-        match.players[1].prizeUSD = 0.00;
+        if (match.players[0]) match.players[0].prizeUSD = 0.10;
+        if (match.players[1]) match.players[1].prizeUSD = 0.00;
       } else if (match.mode === 4) {
         if (match.players[0]) match.players[0].prizeUSD = 0.10;
         if (match.players[1]) match.players[1].prizeUSD = 0.07;
@@ -210,7 +211,7 @@ app.post('/api/match/submit-score', async (req, res) => {
         if (match.players[3]) match.players[3].prizeUSD = 0.00;
       }
 
-      // ডলার ব্যালেন্সে জমা করা (bonusBalanceUSD)
+      // বিজয়ী ডলার ব্যালেন্স যোগ করা
       for (const p of match.players) {
         if (p.prizeUSD > 0) {
           await User.findOneAndUpdate(
@@ -228,7 +229,6 @@ app.post('/api/match/submit-score', async (req, res) => {
     res.status(500).json({ error: 'Server error submitting score' });
   }
 });
-
 // ৩. GET /api/match/history/:telegramId - লাস্ট ৫টি ম্যাচের হিস্ট্রি
 app.get('/api/match/history/:telegramId', async (req, res) => {
   try {
