@@ -236,7 +236,7 @@ const checkHit = (thrownPercentX) => {
           </span>
         </div>
 
-        {/* ৩. Mouse */}
+        {/* ৩. Mouse (সঠিক দিক এবং আকৃতির জন্য) */}
         <div className="absolute inset-0 pointer-events-none z-10">
           <div
             className="absolute"
@@ -244,8 +244,9 @@ const checkHit = (thrownPercentX) => {
               left: `${mouse.x}px`,
               top: mouse.isFalling ? `${mouse.y + 25}%` : `${mouse.y}%`,
               opacity: mouse.isFalling ? 0 : 1,
-              // এখানে ডানে যাওয়ার সময় সাইজ ছোট না হয়ে যেন শুধু দিক বদলায় তার ব্যবস্থা করা হলো
-              transform: `translate(-50%, -50%) scaleX(${mouse.direction === 1 ? 1 : -1}) ${mouse.isFalling ? 'rotate(60deg)' : ''}`
+              // এখানে direction 1 হলে একমুখী এবং -1 হলে সঠিক উল্টোমুখী হবে, সাইজ সবসময় সমান থাকবে
+              transform: `translate(-50%, -50%) scaleX(${mouse.direction === 1 ? -1 : 1}) ${mouse.isFalling ? 'rotate(60deg)' : ''}`,
+              transformOrigin: 'center center'
             }}
           >
             <img src={mouseImg} alt="Mouse" className="w-14 h-16 object-contain drop-shadow-md" />
