@@ -14,7 +14,8 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {
-            setHistory(data.slice(0, 5));
+            const sorted = [...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            setHistory(sorted.slice(0, 5));
           }
         })
         .catch(err => console.error("History fetch error:", err));
