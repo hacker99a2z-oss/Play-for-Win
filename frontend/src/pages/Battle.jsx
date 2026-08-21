@@ -140,26 +140,42 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     }
   };
 
+  // ১. পাথর ছোড়ার ফাংশন
   const throwStone = () => {
+    if (isThrown || gameOver) return;
     setIsThrown(true);
-    const targetY = 28;
-    const currentStoneX = stonePos.x;
+    
+    // বর্তমান মাউসের পজিশন কপি করে রাখা হলো (যাতে ফিজিক্স হিসাব করা যায়)
+    const currentStoneX = stonePos.x; 
 
-    // পাথরকে ওপরের দিকে পাঠানো হলো
-    setStonePos({ x: currentStoneX, y: targetY });
+    // পাথরকে ওপরের দিকে টার্গেটে পাঠানো হলো
+    setStonePos({ x: currentStoneX, y: 28 });
 
-    // ৩০০ মিলি সেকেন্ড পর পাথর যখন পৌঁছাবে, তখন ঠিক ওই মুহূর্তের পাথরের পিক্সেল এবং ইঁদুরের পিক্সেল তুলনা করা হবে
+    // পাথর ওড়ার সময় (যেমন: ২৫০ মিলি সেকেন্ড পর) ইঁদুর এবং পাথরের সঠিক দূরত্ব চেক করা হবে
+    const hitCheckTimer = setTimeout(() => {
+      // এই মুহূর্তে ইঁদুর যেখানে আছে, তার পিক্সেল এবং পাথরের পিক্সেলের দূরত্ব মাপা হবে
+      const thrownPixelX = (currentStoneX / 100) * 360;
+      const distance = Math.abs(mouse.x - thrownPixelX);
+
+      // যদি দূরত্ব ৩৫ পিক্সেলের মধ্যে হয় এবং ইঁদুর আগে থেকেই না পড়ে যায়
+      if (distance < 35 && !mouse.isFalling) {
+        setHits((h) => h + 1);
+        setMouse((prev) => ({ ...prev, isFalling: true }));
+
+        setTimeout(() => {
+          setMouse({
+            x: Math.random() > 0.5 ? 20 : 340,
+            y: 28,
+            speed: 3.5 + Math.random() * 1.5,
+            direction: Math.random() > 0.5 ? 1 : -1,
+            isFalling: false
+          });
+        }, 1000);
+      }
+    }, 250); // পাথরের ওঠার গতির সাথে মিল রেখে সময় নির্ধারণ
+
+    // পাথর রিসেট হওয়ার লজিক
     setTimeout(() => {
-      checkHit(currentStoneX);
-    }, 300);
-
-    setTimeout(() => {
-      setStonesLeft((prev) => {
-        const remaining = prev - 1;
-        if (remaining <= 0) setGameOver(true);
-        return remaining;
-      });
-
       setIsThrown(false);
       setStonePos({ x: 22, y: 78 });
 
@@ -168,33 +184,14 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           setStonePos({ x: 50, y: 85 });
         }
       }, 50);
-
     }, 400);
-  };
-  
-  const checkHit = (thrownPercentX) => {
-    // পাথরটি স্ক্রিনের ঠিক কত পিক্সেলে গিয়ে পড়েছে সেটি বের করা হলো
-    const thrownPixelX = (thrownPercentX / 100) * 360; 
 
-    // ইঁদুরের বর্তমান পিক্সেল পজিশনের সাথে পাথরের দূরত্বের ব্যবধান মাপা হলো
-    const distance = Math.abs(mouse.x - thrownPixelX);
-
-    // ফিজিক্স নিয়ম অনুযায়ী: পাথর পড়ার জায়গা এবং ইঁদুরের মধ্যকার দূরত্ব ৩০ পিক্সেলের মধ্যে থাকলেই হিট গণ্য হবে
-    if (distance < 30 && !mouse.isFalling) {
-      setHits((h) => h + 1);
-      
-      setMouse((prev) => ({ ...prev, isFalling: true }));
-
-      setTimeout(() => {
-        setMouse({
-          x: Math.random() > 0.5 ? -40 : 400,
-          y: 28,
-          speed: 3.5 + Math.random() * 1.5,
-          direction: Math.random() > 0.5 ? 1 : -1,
-          isFalling: false
-        });
-      }, 1000);
-    }
+    // পাথর ফুরিয়ে যাওয়ার লজিক
+    setStonesLeft((prev) => {
+      const remaining = prev - 1;
+      if (remaining <= 0) setGameOver(true);
+      return remaining;
+    });
   };
 
   return (
