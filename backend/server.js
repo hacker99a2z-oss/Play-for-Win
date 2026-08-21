@@ -138,7 +138,7 @@ app.post('/api/user/deduct-coins', async (req, res) => {
   }
 });
 
-// ২. ম্যাচ মেকিং / জয়েন রুট
+// ম্যাচ জয়েনিং ও পেন্ডিং লিমিট চেক API
 app.post('/api/match/join', async (req, res) => {
   try {
     const { telegramId, firstName, mode } = req.body;
@@ -148,19 +148,40 @@ app.post('/api/match/join', async (req, res) => {
     }
 
     const matchMode = Number(mode) || 2;
-    let match = await Match.findOne({ status: 'pending', mode: matchMode });
+    const playerTelegramId = String(telegramId);
 
+    // ১. চেক করা প্লেয়ারটির বর্তমানে কয়টি পেন্ডিং ম্যাচ আছে
+    const userPendingCount = await Match.countDocuments({
+      status: 'pending',
+      'players.telegramId': playerTelegramId
+    });
+
+    // ২. যদি ইতোমধ্যে ৩টি পেন্ডিং ম্যাচ থাকে তবে নতুন গেম খেলতে দেওয়া হবে না
+    if (userPendingCount >= 3) {
+      return res.status(400).json({
+        success: false,
+        error: "You are already in 3 pending matches. Please wait for them to complete!"
+      });
+    }
+
+    // ৩. আগে তৈরি থাকা ফাঁকা পেন্ডিং ম্যাচ খোঁজা (যেখানে প্লেয়ার সংখ্যা মোডের চেয়ে কম এবং ইউজার নিজে যুক্ত নেই)
+    let match = await Match.findOne({
+      status: 'pending',
+      mode: matchMode,
+      $expr: { $lt: [{ $size: "$players" }, matchMode] },
+      'players.telegramId': { $ne: playerTelegramId }
+    });
+
+    // ৪. যদি ফাঁকা ম্যাচ না থাকে, তবে নতুন ম্যাচ তৈরি করা
     if (!match) {
       match = new Match({
         mode: matchMode,
         status: 'pending',
-        players: [{ telegramId: String(telegramId), firstName: firstName || 'Player', hits: 0, timeTaken: 0 }]
+        players: [{ telegramId: playerTelegramId, firstName: firstName || 'Player', hits: 0, timeTaken: 0 }]
       });
     } else {
-      const exists = match.players.some(p => String(p.telegramId) === String(telegramId));
-      if (!exists) {
-        match.players.push({ telegramId: String(telegramId), firstName: firstName || 'Player', hits: 0, timeTaken: 0 });
-      }
+      // ফাঁকা ম্যাচ থাকলে প্লেয়ারকে যুক্ত করা
+      match.players.push({ telegramId: playerTelegramId, firstName: firstName || 'Player', hits: 0, timeTaken: 0 });
     }
 
     await match.save();
