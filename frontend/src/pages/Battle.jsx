@@ -15,7 +15,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
   const [mouse, setMouse] = useState({
     x: 180, // স্ক্রিনের ঠিক মাঝখান থেকে শুরু হবে (৩৬০ এর অর্ধেক)
     y: 28,
-    speed: 4, // পিক্সেল স্পিড একটু বাড়িয়ে দেওয়া হলো
+    speed: 6, // পিক্সেল স্পিড একটু বাড়িয়ে দেওয়া হলো
     direction: 1,
     isFalling: false
   });
