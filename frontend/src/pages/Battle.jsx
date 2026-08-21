@@ -27,11 +27,14 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
   const arenaRef = useRef(null);
 
+  // ইঁদুরের চলাচলের লজিক (সঠিক করা হয়েছে)
   useEffect(() => {
-    if (gameOver || mouse.isFalling) return;
+    if (gameOver) return;
     const interval = setInterval(() => {
       setMouse((prev) => {
+        // যদি ইঁদুর পড়ে যাওয়ার অবস্থায় থাকে, তবে মুভমেন্ট বন্ধ থাকবে কিন্তু আগের পজিশন ঠিক থাকবে
         if (prev.isFalling) return prev;
+
         let newX = prev.x + prev.speed * prev.direction;
         let newDir = prev.direction;
 
@@ -48,7 +51,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     }, 30);
 
     return () => clearInterval(interval);
-  }, [gameOver, mouse.isFalling]);
+  }, [gameOver]);
 
   useEffect(() => {
     if (gameOver) {
