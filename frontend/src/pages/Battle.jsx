@@ -168,12 +168,12 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
       onMouseUp={handleTouchEnd}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="w-full h-screen bg-slate-900 text-white relative overflow-hidden flex flex-col justify-between select-none touch-none max-w-md mx-auto"
+      className="w-screen h-screen bg-slate-900 text-white relative overflow-hidden flex flex-col justify-between select-none touch-none"
       style={
         bgImg
           ? {
               backgroundImage: `url(${bgImg})`,
-              backgroundSize: '100% 100%',
+              backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat'
             }
@@ -192,10 +192,10 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
       {/* ২. HITS এর নম্বর (উপরের ডানপাশের বোর্ডের ভেতর পজিশন করতে top ও right এর % বদলাবেন) */}
       <div
-        className="absolute z-20 pointer-events-none"
-        style={{ top: '6.6%', right: '14%' }}
+        className="absolute z-20 pointer-events-none flex items-center justify-center min-w-[50px]"
+        style={{ top: '6.2%', right: '10%' }}
       >
-        <span className="text-xl font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+        <span className="text-lg sm:text-2xl font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
           {hits}
         </span>
       </div>
@@ -222,10 +222,10 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
       {/* ৪. STONES এর নম্বর (নিচের বামপাশের ট্রলি বক্সের ভেতর পজিশন করতে bottom ও left এর % বদলাবেন) */}
       <div
-        className="absolute z-20 pointer-events-none"
-        style={{ bottom: '11.3%', left: '14%' }}
+        className="absolute z-20 pointer-events-none flex items-center justify-center min-w-[40px]"
+        style={{ bottom: '11.8%', left: '16%' }}
       >
-        <span className="text-base font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+        <span className="text-sm sm:text-base font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
           {stonesLeft}
         </span>
       </div>
