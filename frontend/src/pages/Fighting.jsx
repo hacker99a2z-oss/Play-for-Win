@@ -61,7 +61,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
     }
   };
 
-  // ৩. পেন্ডিং ম্যাচের জন্য ডায়নামিক র‍্যাঙ্ক অনুযায়ী Estimated USD Prize বের করার হেলপার
+  // ৩. পেন্ডিং ম্যাচের জন্য ডায়নামিক র‍্যাঙ্ক অনুযায়ী Estimated USD Prize বের করার হেলপার
   const getEstimatedPrizeUSD = (rankIndex, mode) => {
     if (mode === 2) {
       // ২ জন প্লেয়ার: ১ম প্রাইজ $0.10, ২য় প্রাইজ $0.00
@@ -191,83 +191,87 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
         </div>
       </div>
 
-      {/* Match Details Modal (Fixed Dynamic Leaderboard & Prize Logic) */}
+      {/* Match Details Modal (Fixed Layout & UI Overlap) */}
       {selectedMatch && (() => {
         const mode = selectedMatch.mode || 2;
         const entryFee = selectedMatch.entryFeeCoins || 250;
 
-        // ১. প্লেয়ার লিস্ট প্রস্তুতকরণ (যদি ব্যাকএন্ডে লিস্ট খালি থাকে তবে ফলব্যাক কারেন্ট ইউজার ডাটা)
         let rawPlayers = (selectedMatch.players && selectedMatch.players.length > 0)
           ? [...selectedMatch.players]
           : [{
               telegramId: user?.telegramId,
               firstName: user?.firstName || 'You',
-              hits: selectedMatch.hits ?? selectedMatch.userHits ?? 0,
-              timeTaken: selectedMatch.timeTaken ?? 0,
-              prizeUSD: 0
+              hits: 0,
+              timeTaken: 0,
+              finishedAt: new Date()
             }];
 
-        // ২. Hits দিয়ে প্লেয়ারদের সর্ট (Sorting) করা (Hits বেশি হলে আগে থাকবে, সমান হলে সময় কম লাগা প্লেয়ার আগে থাকবে)
+        // Hits অনুযায়ী সর্ট
         rawPlayers.sort((a, b) => {
-          const hitsA = a.hits ?? a.score ?? 0;
-          const hitsB = b.hits ?? b.score ?? 0;
+          const hitsA = a.hits || 0;
+          const hitsB = b.hits || 0;
           if (hitsB !== hitsA) return hitsB - hitsA;
           return (a.timeTaken || 0) - (b.timeTaken || 0);
         });
 
         return (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-slate-900 border border-slate-700 p-5 rounded-2xl w-full max-w-sm space-y-3 shadow-2xl">
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[999] p-4 backdrop-blur-md">
+            <div className="bg-slate-900 border border-amber-500/50 p-5 rounded-2xl w-full max-w-xs space-y-4 shadow-2xl relative z-[1000]">
+              
+              {/* Modal Header */}
               <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-                <h4 className="text-sm font-bold text-amber-400 capitalize">
-                  Match Details ({selectedMatch.status || 'Pending'})
-                </h4>
-                <span className="text-[10px] text-slate-400 font-bold">
-                  Entry: 🪙 {entryFee} Coins
+                <div>
+                  <h4 className="text-sm font-bold text-amber-400 capitalize">
+                    {mode} Players Match
+                  </h4>
+                  <span className="text-[10px] text-slate-400">
+                    Status: <b className="text-amber-400 uppercase">{selectedMatch.status || 'Pending'}</b>
+                  </span>
+                </div>
+                <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-1 rounded border border-slate-700">
+                  🪙 {entryFee} Coins
                 </span>
               </div>
               
-              <div className="space-y-2 max-h-60 overflow-y-auto">
+              {/* Player List */}
+              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                 {rawPlayers.map((p, rankIndex) => {
-                  const playerHits = p.hits ?? p.score ?? 0;
+                  const playerHits = p.hits || 0;
+                  const isYou = String(p.telegramId) === String(user?.telegramId);
                   
-                  // গেম 'completed' হলে ডাটাবেসের স্যাটেলড প্রাইজ দেখাবে, আর 'pending' থাকলে র‍্যাঙ্ক অনুযায়ী ডায়নামিক প্রাইজ হিসেব হবে
                   const finalPrizeUSD = selectedMatch.status === 'completed'
                     ? (p.prizeUSD || 0)
                     : getEstimatedPrizeUSD(rankIndex, mode);
 
-                  const isYou = String(p.telegramId) === String(user?.telegramId);
-
                   return (
                     <div 
                       key={p.telegramId || rankIndex} 
-                      className={`flex justify-between items-center text-xs p-2.5 rounded-xl border ${
+                      className={`flex justify-between items-center text-xs p-3 rounded-xl border ${
                         isYou 
-                          ? 'bg-amber-500/10 border-amber-500/50' 
-                          : 'bg-slate-800/90 border-slate-700'
+                          ? 'bg-amber-500/10 border-amber-500/60' 
+                          : 'bg-slate-800/80 border-slate-700'
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${
                           rankIndex === 0 ? 'bg-amber-500 text-black' :
-                          rankIndex === 1 ? 'bg-slate-300 text-black' :
-                          rankIndex === 2 ? 'bg-amber-700 text-white' : 'bg-slate-700 text-white'
+                          rankIndex === 1 ? 'bg-slate-300 text-black' : 'bg-slate-700 text-white'
                         }`}>
                           #{rankIndex + 1}
                         </span>
                         <div>
                           <p className="text-slate-200 font-bold">
-                            {p.firstName || p.name || 'Player'} {isYou && <span className="text-amber-400 text-[10px]">(You)</span>}
+                            {p.firstName || 'Player'} {isYou && <span className="text-amber-400 text-[10px]">(You)</span>}
                           </p>
                           <p className="text-[10px] text-slate-400">
-                            {p.timeTaken ? `${Number(p.timeTaken).toFixed(1)}s` : 'Playing...'}
+                            {p.finishedAt ? `${Number(p.timeTaken || 0).toFixed(1)}s` : 'Playing...'}
                           </p>
                         </div>
                       </div>
 
                       <div className="text-right">
                         <p className="text-amber-400 font-bold">{playerHits} Hits</p>
-                        <p className="text-emerald-400 font-bold">
+                        <p className="text-emerald-400 text-[11px] font-bold">
                           Est. Prize: ${Number(finalPrizeUSD).toFixed(2)}
                         </p>
                       </div>
@@ -276,9 +280,10 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
                 })}
               </div>
 
+              {/* Close Button */}
               <button 
                 onClick={() => setSelectedMatch(null)} 
-                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer border border-slate-600/30"
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer border border-slate-700"
               >
                 Close
               </button>
