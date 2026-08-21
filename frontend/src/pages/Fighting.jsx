@@ -176,55 +176,67 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
         </div>
       </div>
 
-      {/* Match Details Modal (Updated Prize & Player Data) */}
-      {selectedMatch && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-700 p-5 rounded-2xl w-full max-w-sm space-y-3 shadow-2xl">
-            <h4 className="text-sm font-bold text-amber-400 capitalize">
-              Match Details ({selectedMatch.status})
-            </h4>
-            
-            <div className="space-y-2 max-h-52 overflow-y-auto">
-              {selectedMatch.players && selectedMatch.players.length > 0 ? (
-                selectedMatch.players.map((p, i) => {
-                  // ১. প্রাইজের ডায়নামিক গণনা
-                  const entryFee = selectedMatch.entryFee || 250;
-                  const modeCount = selectedMatch.mode || 2;
-                  const estimatedPrize = Math.floor((modeCount * entryFee) * 0.8);
-                  
-                  // ২. ব্যাকএন্ড ডাটা ফালব্যাক
+      {/* Match Details Modal (Fixed for Pending State) */}
+      {selectedMatch && (() => {
+        // প্রাইজের ডায়নামিক হিসাব (যেমন: ২ জনের খেলা হলে ৪২০ কয়েন/ডলার বা রিওয়ার্ড)
+        const mode = selectedMatch.mode || 2;
+        const entryFee = selectedMatch.entryFee || 250;
+        const poolPrize = Math.floor((mode * entryFee) * 0.8);
+
+        // প্লেয়ার ডাটা ফালব্যাক ফিল্টারিং
+        const displayPlayers = (selectedMatch.players && selectedMatch.players.length > 0)
+          ? selectedMatch.players
+          : [{
+              firstName: user?.firstName || 'You',
+              hits: selectedMatch.hits ?? selectedMatch.userHits ?? 0,
+              timeTaken: selectedMatch.timeTaken ?? 0,
+              prizeUSD: selectedMatch.prizeUSD ?? selectedMatch.prizeWon ?? poolPrize
+            }];
+
+        return (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="bg-slate-900 border border-slate-700 p-5 rounded-2xl w-full max-w-sm space-y-3 shadow-2xl">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h4 className="text-sm font-bold text-amber-400 capitalize">
+                  Match Details ({selectedMatch.status || 'Pending'})
+                </h4>
+                <span className="text-[10px] text-slate-400">
+                  Pool: 🪙 {mode * entryFee}
+                </span>
+              </div>
+              
+              <div className="space-y-2 max-h-52 overflow-y-auto">
+                {displayPlayers.map((p, i) => {
                   const playerHits = p.hits ?? p.score ?? 0;
-                  const playerPrize = p.prizeUSD ?? p.prizeWon ?? (i === 0 ? estimatedPrize : 0);
+                  const playerPrize = p.prizeUSD ?? p.prizeWon ?? (i === 0 ? poolPrize : 0);
 
                   return (
                     <div key={i} className="flex justify-between items-center text-xs bg-slate-800/90 p-2.5 rounded-xl border border-slate-700">
                       <div>
-                        <p className="text-slate-200 font-bold">{i + 1}. {p.firstName || 'Player'}</p>
+                        <p className="text-slate-200 font-bold">{i + 1}. {p.firstName || p.name || 'Player'}</p>
                         <p className="text-[10px] text-slate-400">
-                          {p.timeTaken ? `${Number(p.timeTaken).toFixed(1)}s` : 'N/A'}
+                          {p.timeTaken ? `${Number(p.timeTaken).toFixed(1)}s` : 'Playing...'}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="text-amber-400 font-bold">{playerHits} Hits</p>
-                        <p className="text-emerald-400 font-bold">+${playerPrize}</p>
+                        <p className="text-emerald-400 font-bold">Prize: {playerPrize} Coins</p>
                       </div>
                     </div>
                   );
-                })
-              ) : (
-                <p className="text-xs text-slate-400 text-center py-2">No player data available</p>
-              )}
-            </div>
+                })}
+              </div>
 
-            <button 
-              onClick={() => setSelectedMatch(null)} 
-              className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer border border-slate-600/30"
-            >
-              Close
-            </button>
+              <button 
+                onClick={() => setSelectedMatch(null)} 
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer border border-slate-600/30"
+              >
+                Close
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };
