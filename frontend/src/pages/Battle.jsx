@@ -151,7 +151,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     // পাথর যখন ইঁদুরের কাছাকাছি পৌঁছাবে (প্রায় ২০০ মিলিগ্রাম বা অ্যানিমেশনের সঠিক সময়ে) তখন হিট চেক হবে
     setTimeout(() => {
       checkHit(targetX);
-    }, 180);
+    }, 300);
 
     setTimeout(() => {
       setStonesLeft((prev) => {
