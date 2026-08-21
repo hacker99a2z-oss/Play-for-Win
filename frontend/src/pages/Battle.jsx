@@ -23,6 +23,9 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
   const mouseRef = useRef(mouse);
   mouseRef.current = mouse;
 
+  const hitsRef = useRef(hits);
+  hitsRef.current = hits;
+
   const [stonePos, setStonePos] = useState({ x: 50, y: 85 });
   const [isDragging, setIsDragging] = useState(false);
   const [isThrown, setIsThrown] = useState(false);
@@ -92,6 +95,46 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     }
   }, [matchId, user?.telegramId, mode, refreshUserData]);
 
+  // ৩. Game Over হলে একবারই সঠিক Hits এবং Time ব্যাকএন্ডে যাবে
+  useEffect(() => {
+    if (gameOver && !hasSubmittedRef.current) {
+      const timeTaken = (Date.now() - startTimeRef.current) / 1000;
+      submitMatchResult(hits, timeTaken);
+    }
+  }, [gameOver, hits, submitMatchResult]);
+
+  // 🔴 নতুন যোগ করা হয়েছে: মাঝপথে Exit করার ফাংশন
+  const handleExitGame = async () => {
+    if (!hasSubmittedRef.current) {
+      const timeTaken = (Date.now() - startTimeRef.current) / 1000;
+      await submitMatchResult(hitsRef.current, timeTaken);
+    }
+    if (onNavigate) onNavigate('fighting');
+  };
+
+  // 🟢 নতুন যোগ করা হয়েছে: অ্যাপ হঠাৎ ব্যাকগ্রাউন্ডে কেটে দিলে অটো সেভ করার লজিক
+  useEffect(() => {
+    return () => {
+      if (!hasSubmittedRef.current && matchId && user?.telegramId) {
+        hasSubmittedRef.current = true;
+        const timeTaken = (Date.now() - startTimeRef.current) / 1000;
+        const payload = JSON.stringify({
+          matchId: matchId,
+          telegramId: user?.telegramId,
+          mode: mode,
+          hits: Number(hitsRef.current) || 0,
+          timeTaken: Number(timeTaken) || 0
+        });
+
+        // sendBeacon ব্যাকগ্রাউন্ডে ব্রাউজার বন্ধ হলেও ডাটা পাঠাতে সক্ষম
+        navigator.sendBeacon(
+          'https://play-for-win.onrender.com/api/match/submit-score',
+          new Blob([payload], { type: 'application/json' })
+        );
+      }
+    };
+  }, [matchId, user?.telegramId, mode]);
+
   const handleTouchStart = (e) => {
     if (isThrown || stonesLeft <= 0 || gameOver) return;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -117,14 +160,6 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
       });
     }
   };
-
-  // ৩. Game Over হলে একবারই সঠিক Hits এবং Time ব্যাকএন্ডে যাবে
-  useEffect(() => {
-    if (gameOver && !hasSubmittedRef.current) {
-      const timeTaken = (Date.now() - startTimeRef.current) / 1000;
-      submitMatchResult(hits, timeTaken);
-    }
-  }, [gameOver, hits, submitMatchResult]);
 
   const handleTouchEnd = (e) => {
     if (!isDragging || isThrown) return;
@@ -217,10 +252,10 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           backgroundRepeat: 'no-repeat'
         }}
       >
-        {/* ১. Exit Button */}
+        {/* ১. Exit Button (আপডেট করা হয়েছে) */}
         <div className="absolute top-[16px] left-[16px] z-20">
           <button
-            onClick={() => onNavigate && onNavigate('fighting')}
+            onClick={handleExitGame}
             className="bg-red-600/90 text-white px-3 py-1 rounded-xl text-xs font-bold active:scale-95 transition cursor-pointer shadow-lg border border-red-500/30"
           >
             Exit
