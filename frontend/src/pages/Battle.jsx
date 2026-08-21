@@ -16,7 +16,8 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     x: 50,
     y: 28,
     speed: 1.6,
-    direction: 1
+    direction: 1,
+    isFalling: false
   });
 
   const [stonePos, setStonePos] = useState({ x: 50, y: 85 });
@@ -27,9 +28,10 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
   const arenaRef = useRef(null);
 
   useEffect(() => {
-    if (gameOver) return;
+    if (gameOver || mouse.isFalling) return;
     const interval = setInterval(() => {
       setMouse((prev) => {
+        if (prev.isFalling) return prev;
         let newX = prev.x + prev.speed * prev.direction;
         let newDir = prev.direction;
 
@@ -46,7 +48,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     }, 30);
 
     return () => clearInterval(interval);
-  }, [gameOver]);
+  }, [gameOver, mouse.isFalling]);
 
   useEffect(() => {
     if (gameOver) {
@@ -142,7 +144,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
     setTimeout(() => {
       checkHit(targetX);
-    }, 250);
+    }, 200);
 
     setTimeout(() => {
       setStonesLeft((prev) => {
@@ -151,19 +153,37 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         return remaining;
       });
 
-      setStonePos({ x: 50, y: 85 });
       setIsThrown(false);
-    }, 450);
+      setStonePos({ x: 22, y: 78 });
+
+      setTimeout(() => {
+        if (!gameOver) {
+          setStonePos({ x: 50, y: 85 });
+        }
+      }, 50);
+
+    }, 400);
   };
 
+  // পরিবর্তন: ইঁদুর পড়ে যাওয়া এবং ১ সেকেন্ড পর নতুন ইঁদুর আসার লজিক
   const checkHit = (thrownX) => {
     const distance = Math.abs(mouse.x - thrownX);
     if (distance < 12) {
       setHits((h) => h + 1);
-      setMouse((prev) => ({
-        ...prev,
-        x: prev.direction === 1 ? 20 : 80
-      }));
+      
+      // ইঁদুর ব্রিজ থেকে নিচে পড়ে যাওয়ার স্টেট
+      setMouse((prev) => ({ ...prev, isFalling: true })); // নতুন যোগ
+
+      // ১ সেকেন্ড (1000ms) পর নতুন ইঁদুর স্পawn করবে
+      setTimeout(() => {
+        setMouse({
+          x: Math.random() > 0.5 ? 15 : 85,
+          y: 28,
+          speed: 1.6 + Math.random() * 0.5,
+          direction: Math.random() > 0.5 ? 1 : -1,
+          isFalling: false
+        });
+      }, 1000); // নতুন যোগ
     }
   };
 
@@ -209,23 +229,18 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           </span>
         </div>
 
-        {/* ৩. Mouse (ইঁদুর) */}
+        {/* ৩. Mouse (ইঁদুর - নিচে পড়ে যাওয়ার অ্যানিমেশন সহ) */}
         <div className="absolute inset-0 pointer-events-none z-10">
           <div
-            className="absolute transition-all duration-75 ease-linear"
+            className="absolute transition-all duration-300 ease-in-out"
             style={{
               left: `${mouse.x}%`,
-              top: `${mouse.y}%`,
-              transform: `translate(-50%, -50%) scaleX(${mouse.direction === 1 ? -1 : 1})`
+              top: mouse.isFalling ? `${mouse.y + 25}%` : `${mouse.y}%`,
+              opacity: mouse.isFalling ? 0 : 1,
+              transform: `translate(-50%, -50%) scaleX(${mouse.direction === 1 ? -1 : 1}) ${mouse.isFalling ? 'rotate(60deg)' : ''}`
             }}
           >
-            {mouseImg ? (
-              <img src={mouseImg} alt="Mouse" className="w-14 h-16 object-contain drop-shadow-md" />
-            ) : (
-              <div className="w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center font-bold text-xs">
-                MOUSE
-              </div>
-            )}
+            <img src={mouseImg} alt="Mouse" className="w-14 h-16 object-contain drop-shadow-md" />
           </div>
         </div>
 
