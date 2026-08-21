@@ -30,7 +30,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
   const arenaRef = useRef(null);
 
-  // ইঁদুরের চলাচলের লজিক (চূড়ান্ত মান)
+  // ইঁদুরের চলাচলের লজিক (ব্রিজের মাপে ৩০% থেকে ৭০%)
   useEffect(() => {
     if (gameOver) return;
     const interval = setInterval(() => {
@@ -40,13 +40,13 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         let newX = prev.x + prev.speed * prev.direction;
         let newDir = prev.direction;
 
-        // ব্রিজের একদম শেষ মাথা পর্যন্ত যাওয়ার জন্য ১০% এবং ৯০% দেওয়া হলো
-        if (newX >= 90) {
-          newX = 90;
+        // ব্রিজের সঠিক দৃশ্যমান সীমানা ৩০% এবং ৭০%
+        if (newX >= 70) {
+          newX = 70;
           newDir = -1; // বাম দিকে ঘুরবে
-        } else if (newX <= 10) {
-          newX = 10;
-          newDir =  1; // ডান দিকে ঘুরবে
+        } else if (newX <= 30) {
+          newX = 30;
+          newDir = 1;  // ডান দিকে ঘুরবে
         }
 
         return { ...prev, x: newX, direction: newDir };
@@ -180,7 +180,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
       setTimeout(() => {
         setMouse({
-          x: Math.random() > 0.5 ? 5 : 95, // একদম কোণা থেকে শুরু হবে
+          x: Math.random() > 0.5 ? 32 : 68, // ব্রিজের দুই কোণা থেকে শুরু হবে
           y: 28,
           speed: 2.2 + Math.random() * 0.8,
           direction: Math.random() > 0.5 ? 1 : -1,
