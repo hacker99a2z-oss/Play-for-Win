@@ -192,7 +192,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
       {/* ২. HITS এর নম্বর (উপরের ডানপাশের বোর্ডের ভেতর পজিশন করতে top ও right এর % বদলাবেন) */}
       <div
         className="absolute z-20 pointer-events-none"
-        style={{ top: '7%', right: '14%' }}
+        style={{ top: '6.5%', right: '14%' }}
       >
         <span className="text-xl font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
           {hits}
@@ -222,7 +222,7 @@ const Battle = ({ user, mode = 2, onNavigate, refreshUserData }) => {
       {/* ৪. STONES এর নম্বর (নিচের বামপাশের ট্রলি বক্সের ভেতর পজিশন করতে bottom ও left এর % বদলাবেন) */}
       <div
         className="absolute z-20 pointer-events-none"
-        style={{ bottom: '11.5%', left: '14%' }}
+        style={{ bottom: '11%', left: '14%' }}
       >
         <span className="text-base font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
           {stonesLeft}
