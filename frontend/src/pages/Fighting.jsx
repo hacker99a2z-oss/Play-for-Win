@@ -25,7 +25,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
     fetchHistory();
   }, [fetchHistory, user?.telegramId]);
 
-  // ২. ম্যাচ জয়েন লজিক (/api/match/join) - [Updated with Error Limit Alert]
+  // ২. ম্যাচ জয়েন লজিক
   const handleStartGame = async (mode) => {
     if ((user?.mainCoins || 0) < 250) {
       alert("⚠️ Insufficient coins! 250 Coins required.");
@@ -46,13 +46,11 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
 
       const data = await res.json();
       
-      // ✅ যদি সফল না হয় (যেমন: ৩টি পেন্ডিং ম্যাচ অলরেডি থাকে)
       if (!data.success) {
         alert(data.error || "Failed to join match");
         return;
       }
 
-      // ✅ সঠিকভাবে matchId রিসিভ করে battle পেজে পাঠানো হচ্ছে
       if (data.success && data.matchId) {
         if (refreshUserData) refreshUserData(); 
         setShowModeModal(false);
@@ -69,13 +67,11 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
     }
   };
 
-  // ৩. পেন্ডিং ম্যাচের জন্য ডায়নামিক র‍্যাঙ্ক অনুযায়ী Estimated USD Prize বের করার হেলপার
+  // ৩. Estimated USD Prize বের করার হেলপার
   const getEstimatedPrizeUSD = (rankIndex, mode) => {
     if (mode === 2) {
-      // ২ জন প্লেয়ার: ১ম প্রাইজ $0.10, ২য় প্রাইজ $0.00
       return rankIndex === 0 ? 0.10 : 0.00;
     } else if (mode === 4) {
-      // ৪ জন প্লেয়ার: ১ম $0.10, ২য় $0.07, ৩য় $0.03, ৪র্থ $0.00
       if (rankIndex === 0) return 0.10;
       if (rankIndex === 1) return 0.07;
       if (rankIndex === 2) return 0.03;
@@ -85,7 +81,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
   };
 
   return (
-    <div className="w-full flex flex-col gap-4 py-4 text-white">
+    <div className="w-full flex flex-col gap-4 py-4 text-white relative">
       {/* Fight Button */}
       <button 
         onClick={() => setShowModeModal(true)}
@@ -97,17 +93,17 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
       {/* Mode Selection Modal */}
       {showModeModal && (
         <div 
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(6px)' }} 
-          className="fixed inset-0 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 flex items-center justify-center z-[9999] p-4"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(8px)' }}
         >
           <div 
             style={{ 
               backgroundColor: '#0f172a', 
               border: '2px solid #f59e0b', 
               borderRadius: '16px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.7)' 
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.9)' 
             }} 
-            className="p-6 w-full max-w-xs text-center space-y-4"
+            className="p-6 w-full max-w-xs text-center space-y-4 relative z-[10000]"
           >
             <h3 style={{ color: '#fbbf24' }} className="text-xl font-bold">Select Arena Mode</h3>
             <p style={{ color: '#f1f5f9' }} className="text-xs font-semibold">Entry Fee: 🪙 250 Coins</p>
@@ -199,7 +195,7 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
         </div>
       </div>
 
-      {/* Match Details Modal (Fixed Layout & UI Overlap) */}
+      {/* Match Details Modal (FIXED OVERLAP & VISIBILITY) */}
       {selectedMatch && (() => {
         const mode = selectedMatch.mode || 2;
         const entryFee = selectedMatch.entryFeeCoins || 250;
@@ -214,7 +210,6 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
               finishedAt: new Date()
             }];
 
-        // Hits অনুযায়ী সর্ট
         rawPlayers.sort((a, b) => {
           const hitsA = a.hits || 0;
           const hitsB = b.hits || 0;
@@ -223,11 +218,20 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
         });
 
         return (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[999] p-4 backdrop-blur-md">
-            <div className="bg-slate-900 border border-amber-500/50 p-5 rounded-2xl w-full max-w-xs space-y-4 shadow-2xl relative z-[1000]">
-              
+          <div 
+            className="fixed inset-0 flex items-center justify-center z-[99999] p-4"
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.90)', backdropFilter: 'blur(10px)' }}
+          >
+            <div 
+              style={{ 
+                backgroundColor: '#090d16', 
+                border: '2px solid #f59e0b',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 1)'
+              }} 
+              className="p-5 rounded-2xl w-full max-w-xs space-y-4 relative z-[100000]"
+            >
               {/* Modal Header */}
-              <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-3">
                 <div>
                   <h4 className="text-sm font-bold text-amber-400 capitalize">
                     {mode} Players Match
@@ -236,13 +240,13 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
                     Status: <b className="text-amber-400 uppercase">{selectedMatch.status || 'Pending'}</b>
                   </span>
                 </div>
-                <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-1 rounded border border-slate-700">
+                <span className="text-[10px] bg-slate-800 text-amber-400 px-2.5 py-1 rounded-md border border-slate-700 font-bold">
                   🪙 {entryFee} Coins
                 </span>
               </div>
               
               {/* Player List */}
-              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                 {rawPlayers.map((p, rankIndex) => {
                   const playerHits = p.hits || 0;
                   const isYou = String(p.telegramId) === String(user?.telegramId);
@@ -254,11 +258,11 @@ const Fighting = ({ user, refreshUserData, onNavigate }) => {
                   return (
                     <div 
                       key={p.telegramId || rankIndex} 
-                      className={`flex justify-between items-center text-xs p-3 rounded-xl border ${
-                        isYou 
-                          ? 'bg-amber-500/10 border-amber-500/60' 
-                          : 'bg-slate-800/80 border-slate-700'
-                      }`}
+                      style={{ 
+                        backgroundColor: isYou ? '#1e1b11' : '#111827',
+                        borderColor: isYou ? '#d97706' : '#1f2937'
+                      }}
+                      className="flex justify-between items-center text-xs p-3 rounded-xl border"
                     >
                       <div className="flex items-center gap-2.5">
                         <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${
