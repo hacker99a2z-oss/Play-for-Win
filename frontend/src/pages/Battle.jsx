@@ -140,25 +140,28 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     }
   };
 
-  // ১. পাথর ছোড়ার ফাংশন
+  // ১. পাথর ছোড়ার ফাংশন (নিখুঁত ফিজিক্স এবং রিয়েল-টাইম হিট ডিটেকশন)
   const throwStone = () => {
     if (isThrown || gameOver) return;
     setIsThrown(true);
     
-    // বর্তমান মাউসের পজিশন কপি করে রাখা হলো (যাতে ফিজিক্স হিসাব করা যায়)
+    // আপনি স্ক্রিনের ঠিক যেখানে ক্লিক করে পাথর ছুড়েছেন, সেই পিক্সেল বা পার্সেন্টেজ পজিশন
     const currentStoneX = stonePos.x; 
 
     // পাথরকে ওপরের দিকে টার্গেটে পাঠানো হলো
     setStonePos({ x: currentStoneX, y: 28 });
 
-    // পাথর ওড়ার সময় (যেমন: ২৫০ মিলি সেকেন্ড পর) ইঁদুর এবং পাথরের সঠিক দূরত্ব চেক করা হবে
-    const hitCheckTimer = setTimeout(() => {
-      // এই মুহূর্তে ইঁদুর যেখানে আছে, তার পিক্সেল এবং পাথরের পিক্সেলের দূরত্ব মাপা হবে
+    // পাথরটি যখন ওপরে পৌঁছাবে (২৫০ মিলি সেকেন্ড পর)
+    setTimeout(() => {
+      // আপনি যেখানে ক্লিক করেছেন সেটিকে পিক্সেলের মাপে রূপান্তর করা হলো
       const thrownPixelX = (currentStoneX / 100) * 360;
-      const distance = Math.abs(mouse.x - thrownPixelX);
 
-      // যদি দূরত্ব ৩৫ পিক্সেলের মধ্যে হয় এবং ইঁদুর আগে থেকেই না পড়ে যায়
-      if (distance < 35 && !mouse.isFalling) {
+      // এই মুহূর্তে ইঁদুরটি ঠিক যেখানে আছে (`mouseRef.current.x`) তার সাথে পাথরের দূরত্বের ব্যবধান মাপা হলো
+      const currentMouseX = mouseRef.current.x;
+      const distance = Math.abs(currentMouseX - thrownPixelX);
+
+      // ফিজিক্স রুল: পাথর পড়ার জায়গা এবং ইঁদুরের মধ্যকার দূরত্ব ৩৫ পিক্সেলের মধ্যে থাকলেই কেবল হিট গণ্য হবে
+      if (distance < 35 && !mouseRef.current.isFalling) {
         setHits((h) => h + 1);
         setMouse((prev) => ({ ...prev, isFalling: true }));
 
@@ -172,9 +175,9 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           });
         }, 1000);
       }
-    }, 250); // পাথরের ওঠার গতির সাথে মিল রেখে সময় নির্ধারণ
+    }, 250);
 
-    // পাথর রিসেট হওয়ার লজিক
+    // পাথর রিসেট ও গেমের বাকি লজিক
     setTimeout(() => {
       setIsThrown(false);
       setStonePos({ x: 22, y: 78 });
@@ -186,7 +189,6 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
       }, 50);
     }, 400);
 
-    // পাথর ফুরিয়ে যাওয়ার লজিক
     setStonesLeft((prev) => {
       const remaining = prev - 1;
       if (remaining <= 0) setGameOver(true);
