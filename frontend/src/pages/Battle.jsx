@@ -20,6 +20,9 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     isFalling: false
   });
 
+  const mouseRef = useRef(mouse);
+  mouseRef.current = mouse;
+
   const [stonePos, setStonePos] = useState({ x: 50, y: 85 });
   const [isDragging, setIsDragging] = useState(false);
   const [isThrown, setIsThrown] = useState(false);
@@ -27,7 +30,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
   const arenaRef = useRef(null);
 
-// ইঁদুরের চলাচলের লজিক (পুরো ব্রিজ কভার করার জন্য আপডেট করা হলো)
+  // ইঁদুরের চলাচলের লজিক (useRef সহ)
   useEffect(() => {
     if (gameOver) return;
     const interval = setInterval(() => {
@@ -37,13 +40,13 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         let newX = prev.x + prev.speed * prev.direction;
         let newDir = prev.direction;
 
-        // সীমানা একদম বাড়িয়ে দেওয়া হলো যেন পুরো স্ক্রিন বা ব্রিজ কভার করে
+        // ব্রিজের এমাথা থেকে ওমাথা (৫% থেকে ৯৫%) যাওয়ার সীমানা
         if (newX >= 95) {
           newX = 95;
-          newDir = -1; // ডান কোণায় গেলে বাম দিকে ফিরবে
+          newDir = -1; // বাম দিকে ঘুরবে
         } else if (newX <= 5) {
           newX = 5;
-          newDir = 1;  // বাম কোণায় গেলে ডান দিকে ফিরবে
+          newDir = 1;  // ডান দিকে ঘুরবে
         }
 
         return { ...prev, x: newX, direction: newDir };
@@ -168,21 +171,20 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     }, 400);
   };
 
-  // পরিবর্তন: ইঁদুর পড়ে যাওয়া এবং ১ সেকেন্ড পর নতুন ইঁদুর আসার লজিক
   const checkHit = (thrownX) => {
-    const distance = Math.abs(mouse.x - thrownX);
+    const currentMouseX = mouseRef.current.x;
+    const distance = Math.abs(currentMouseX - thrownX);
+
     if (distance < 12) {
       setHits((h) => h + 1);
       
-      // ইঁদুর ব্রিজ থেকে নিচে পড়ে যাওয়ার স্টেট
-      setMouse((prev) => ({ ...prev, isFalling: true })); // নতুন যোগ
+      setMouse((prev) => ({ ...prev, isFalling: true }));
 
-      // ১ সেকেন্ড (1000ms) পর নতুন ইঁদুর স্পawn করবে
       setTimeout(() => {
         setMouse({
           x: Math.random() > 0.5 ? 10 : 90, // একদম কোণা থেকে শুরু হবে
           y: 28,
-          speed: 2.2 + Math.random() * 0.8, // আপনার পছন্দমতো স্পিড
+          speed: 2.2 + Math.random() * 0.8,
           direction: Math.random() > 0.5 ? 1 : -1,
           isFalling: false
         });
