@@ -168,7 +168,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           setMouse({
             x: Math.random() > 0.5 ? 20 : 340,
             y: 28,
-            speed: 3.5 + Math.random() * 1.5,
+            speed: 6,
             direction: Math.random() > 0.5 ? 1 : -1,
             isFalling: false
           });
