@@ -96,9 +96,15 @@ export default function App() {
           });
 
           AdController.show()
-            .then((result) => {
-              // Adsgram ইম্প্রেশন ও দেখা শেষ হলে (result.done: true)
+            .then(async (result) => {
+              // Adsgram বিজ্ঞাপন সম্পূর্ণ দেখা শেষ হলে (result.done: true)
               if (result && result.done) {
+                // ব্যাকএন্ডে বিজ্ঞাপন দেখার কাউন্ট আপডেট করার জন্য কল পাঠানো যেতে পারে
+                try {
+                  await fetch(`${BACKEND_URL}/api/adsgram-reward?userId=${currentTelegramId}`);
+                } catch (err) {
+                  console.error("Adsgram backend sync error:", err);
+                }
                 resolve(true);
               } else {
                 alert("❌ Ad was skipped or closed early. Rewarded action cancelled.");
