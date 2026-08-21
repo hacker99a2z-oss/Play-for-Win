@@ -76,7 +76,7 @@ export default function App() {
     syncUserData();
   }, [syncUserData]);
 
-  // ২. Adsgram Ad Controller (Full Reward & Exception Handling)
+  // ২. Adsgram Ad Controller (Direct Server Verified)
   const handlePlayAd = () => {
     return new Promise((resolve) => {
       const tg = window.Telegram?.WebApp;
@@ -97,15 +97,29 @@ export default function App() {
 
           AdController.show()
             .then(async (result) => {
-              // Adsgram বিজ্ঞাপন সম্পূর্ণ দেখা শেষ হলে (result.done: true)
+              // Adsgram SDK কনফার্ম করলে আমরা সার্ভারে ভেরিফিকেশনের জন্য পাঠাব
               if (result && result.done) {
-                // ব্যাকএন্ডে বিজ্ঞাপন দেখার কাউন্ট আপডেট করার জন্য কল পাঠানো যেতে পারে
                 try {
-                  await fetch(`${BACKEND_URL}/api/adsgram-reward?userId=${currentTelegramId}`);
+                  const response = await fetch(`${BACKEND_URL}/api/adsgram-verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ telegramId: currentTelegramId })
+                  });
+                  
+                  const data = await response.json();
+
+                  // 🔴 শুধুমাত্র সার্ভার True দিলেই গেম এলাউ হবে
+                  if (data && data.success && data.verified) {
+                    resolve(true);
+                  } else {
+                    alert("❌ Server verification failed! Cheat attempt detected.");
+                    resolve(false);
+                  }
                 } catch (err) {
-                  console.error("Adsgram backend sync error:", err);
+                  console.error("Adsgram server verification error:", err);
+                  alert("❌ Network Error: Could not verify ad with server.");
+                  resolve(false);
                 }
-                resolve(true);
               } else {
                 alert("❌ Ad was skipped or closed early. Rewarded action cancelled.");
                 resolve(false);
