@@ -41,11 +41,11 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         let newDir = prev.direction;
 
         // গেম স্ক্রিনের চওড়া ৩৬০ পিক্সেল, তাই ১০ থেকে ৩৫০ পিক্সেল পর্যন্ত যাবে
-        if (newX >= 350) {
-          newX = 350;
+        if (newX >= 360) {
+          newX = 360;
           newDir = -1; // বাম দিকে ঘুরবে
-        } else if (newX <= 10) {
-          newX = 10;
+        } else if (newX <= 0) {
+          newX = 0;
           newDir = 1;  // ডান দিকে ঘুরবে
         }
 
@@ -183,7 +183,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
       setTimeout(() => {
         setMouse({
-          x: Math.random() > 0.5 ? 30 : 330, // পিক্সেলের কোণা থেকে শুরু হবে
+          x: Math.random() > 0.5 ? 0 : 360, // পিক্সেলের কোণা থেকে শুরু হবে
           y: 28,
           speed: 4 + Math.random() * 2,
           direction: Math.random() > 0.5 ? 1 : -1,
