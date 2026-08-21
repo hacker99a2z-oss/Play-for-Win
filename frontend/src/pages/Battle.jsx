@@ -9,10 +9,8 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
   const [gameOver, setGameOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // ১. সময় গণনার জন্য টাইম ট্র্যাক
   const startTimeRef = useRef(Date.now());
 
-  // ১টি মাত্র ইঁদুর যা ব্রিজের ওপর ডানে-বামে মুভ করবে
   const [mouse, setMouse] = useState({
     x: 50,
     y: 28,
@@ -20,7 +18,6 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     direction: 1
   });
 
-  // পাথর নিক্ষেপের স্টেট
   const [stonePos, setStonePos] = useState({ x: 50, y: 85 });
   const [isDragging, setIsDragging] = useState(false);
   const [isThrown, setIsThrown] = useState(false);
@@ -28,7 +25,6 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
   const arenaRef = useRef(null);
 
-  // ইঁদুরের ডানে-বামে মুভ করার লজিক
   useEffect(() => {
     if (gameOver) return;
     const interval = setInterval(() => {
@@ -51,7 +47,6 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     return () => clearInterval(interval);
   }, [gameOver]);
 
-  // ২. গেম ওভার হলে ব্যাকএন্ডে ডেটা সাবমিট করার এফেক্ট
   useEffect(() => {
     if (gameOver) {
       const timeTaken = (Date.now() - startTimeRef.current) / 1000;
@@ -85,7 +80,6 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     }
   };
 
-  // ড্র্যাগ হ্যান্ডলার
   const handleTouchStart = (e) => {
     if (isThrown || stonesLeft <= 0 || gameOver) return;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -126,7 +120,6 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     }
   };
 
-  // পাথর ছোঁড়া এবং হিট চেক
   const throwStone = () => {
     setIsThrown(true);
     const targetY = 28;
@@ -162,123 +155,123 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
   };
 
   return (
-    <div
-      ref={arenaRef}
-      onMouseMove={handleTouchMove}
-      onMouseUp={handleTouchEnd}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      className="w-screen h-screen bg-slate-900 text-white relative overflow-hidden flex flex-col justify-between select-none touch-none"
-      style={
-        bgImg
-          ? {
-              backgroundImage: `url(${bgImg})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
-            }
-          : {}
-      }
-    >
-      {/* ১. টপ বার (Exit বাটন) */}
-      <div className="absolute top-4 left-4 z-20">
-        <button
-          onClick={() => onNavigate && onNavigate('fighting')}
-          className="bg-red-600/90 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold active:scale-95 transition cursor-pointer shadow-lg border border-red-500/30"
-        >
-          Exit
-        </button>
-      </div>
-
-      {/* ২. HITS এর নম্বর (উপরের ডানপাশের বোর্ডের ভেতর পজিশন করতে top ও right এর % বদলাবেন) */}
+    // মেইন ব্যাকগ্রাউন্ড কন্টেইনার (পিসি ও মোবাইলে সেন্টারে থাকবে)
+    <div className="w-full h-screen bg-slate-950 flex items-center justify-center overflow-hidden">
+      {/* গেম এরিয়া: aspect-[9/16] দিয়ে ব্যাকগ্রাউন্ড ও এলিমেন্ট ফিক্সড রাখা হয়েছে */}
       <div
-        className="absolute z-20 pointer-events-none flex items-center justify-center min-w-[50px]"
-        style={{ top: '6.2%', right: '10%' }}
+        ref={arenaRef}
+        onMouseMove={handleTouchMove}
+        onMouseUp={handleTouchEnd}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className="relative w-full h-full max-h-screen aspect-[9/16] bg-slate-900 text-white overflow-hidden select-none touch-none shadow-2xl"
+        style={{
+          backgroundImage: `url(${bgImg})`,
+          backgroundSize: '100% 100%',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
       >
-        <span className="text-lg sm:text-2xl font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-          {hits}
-        </span>
-      </div>
-
-      {/* ৩. ১টি ইঁদুর */}
-      <div className="absolute inset-0 pointer-events-none z-10">
-        <div
-          className="absolute transition-all duration-75 ease-linear"
-          style={{
-            left: `${mouse.x}%`,
-            top: `${mouse.y}%`,
-            transform: `translate(-50%, -50%) scaleX(${mouse.direction === 1 ? -1 : 1})`
-          }}
-        >
-          {mouseImg ? (
-            <img src={mouseImg} alt="Mouse" className="w-16 h-20 object-contain drop-shadow-md" />
-          ) : (
-            <div className="w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center font-bold text-xs">
-              MOUSE
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ৪. STONES এর নম্বর (নিচের বামপাশের ট্রলি বক্সের ভেতর পজিশন করতে bottom ও left এর % বদলাবেন) */}
-      <div
-        className="absolute z-20 pointer-events-none flex items-center justify-center min-w-[40px]"
-        style={{ bottom: '11.8%', left: '16%' }}
-      >
-        <span className="text-sm sm:text-base font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-          {stonesLeft}
-        </span>
-      </div>
-
-      {/* ৫. মেইন পাথর */}
-      {!gameOver && stonesLeft > 0 && (
-        <div
-          onMouseDown={handleTouchStart}
-          onTouchStart={handleTouchStart}
-          className={`absolute z-30 cursor-grab active:cursor-grabbing transition-all ${
-            isThrown ? 'duration-500 ease-out' : 'duration-75'
-          }`}
-          style={{
-            left: `${stonePos.x}%`,
-            top: `${stonePos.y}%`,
-            transform: `translate(-50%, -50%) scale(${isThrown ? 0.35 : 1.1})`,
-            opacity: isThrown ? 0.7 : 1
-          }}
-        >
-          {stoneImg ? (
-            <img src={stoneImg} alt="Stone" className="w-16 h-16 object-contain drop-shadow-2xl" />
-          ) : (
-            <div className="w-12 h-12 bg-gray-400 rounded-full border-2 border-gray-200 shadow-xl flex items-center justify-center font-bold text-[10px]">
-              STONE
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ৬. গেম ওভার পপআপ */}
-      {gameOver && (
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div
-            style={{ backgroundColor: '#0f172a', border: '2px solid #334155' }}
-            className="p-6 rounded-2xl w-full max-w-xs text-center space-y-4 shadow-2xl"
+        {/* Exit Button */}
+        <div className="absolute top-[3%] left-[4%] z-20">
+          <button
+            onClick={() => onNavigate && onNavigate('fighting')}
+            className="bg-red-600/90 text-white px-3 py-1 rounded-xl text-xs font-bold active:scale-95 transition cursor-pointer shadow-lg border border-red-500/30"
           >
-            <h3 className="text-xl font-bold text-amber-400">Game Over!</h3>
-            <p className="text-sm text-slate-300">
-              Total Hits: <span className="text-emerald-400 font-bold">{hits}</span>
-            </p>
-            {submitting ? (
-              <p className="text-xs text-amber-400 animate-pulse font-medium">Saving Score...</p>
+            Exit
+          </button>
+        </div>
+
+        {/* HITS Score (ডানপাশের বোর্ডের ভেতর ফিক্সড) */}
+        <div
+          className="absolute z-20 pointer-events-none flex items-center justify-center w-[18%]"
+          style={{ top: '6.5%', right: '13%' }}
+        >
+          <span className="text-lg sm:text-2xl font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+            {hits}
+          </span>
+        </div>
+
+        {/* Mouse */}
+        <div className="absolute inset-0 pointer-events-none z-10">
+          <div
+            className="absolute transition-all duration-75 ease-linear"
+            style={{
+              left: `${mouse.x}%`,
+              top: `${mouse.y}%`,
+              transform: `translate(-50%, -50%) scaleX(${mouse.direction === 1 ? -1 : 1})`
+            }}
+          >
+            {mouseImg ? (
+              <img src={mouseImg} alt="Mouse" className="w-14 h-16 sm:w-16 sm:h-20 object-contain drop-shadow-md" />
             ) : (
-              <button
-                onClick={() => onNavigate && onNavigate('fighting')}
-                className="w-full bg-amber-500 hover:bg-amber-400 font-bold py-2.5 rounded-xl text-black active:scale-95 transition cursor-pointer"
-              >
-                Back to Arena
-              </button>
+              <div className="w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center font-bold text-xs">
+                MOUSE
+              </div>
             )}
           </div>
         </div>
-      )}
+
+        {/* STONES Count (বামপাশের ঝুড়ির ভেতর ফিক্সড) */}
+        <div
+          className="absolute z-20 pointer-events-none flex items-center justify-center w-[15%]"
+          style={{ bottom: '11.2%', left: '15%' }}
+        >
+          <span className="text-sm sm:text-base font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+            {stonesLeft}
+          </span>
+        </div>
+
+        {/* Slingshot Stone */}
+        {!gameOver && stonesLeft > 0 && (
+          <div
+            onMouseDown={handleTouchStart}
+            onTouchStart={handleTouchStart}
+            className={`absolute z-30 cursor-grab active:cursor-grabbing transition-all ${
+              isThrown ? 'duration-500 ease-out' : 'duration-75'
+            }`}
+            style={{
+              left: `${stonePos.x}%`,
+              top: `${stonePos.y}%`,
+              transform: `translate(-50%, -50%) scale(${isThrown ? 0.35 : 1.1})`,
+              opacity: isThrown ? 0.7 : 1
+            }}
+          >
+            {stoneImg ? (
+              <img src={stoneImg} alt="Stone" className="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow-2xl" />
+            ) : (
+              <div className="w-12 h-12 bg-gray-400 rounded-full border-2 border-gray-200 shadow-xl flex items-center justify-center font-bold text-[10px]">
+                STONE
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Game Over Modal */}
+        {gameOver && (
+          <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div
+              style={{ backgroundColor: '#0f172a', border: '2px solid #334155' }}
+              className="p-6 rounded-2xl w-full max-w-xs text-center space-y-4 shadow-2xl"
+            >
+              <h3 className="text-xl font-bold text-amber-400">Game Over!</h3>
+              <p className="text-sm text-slate-300">
+                Total Hits: <span className="text-emerald-400 font-bold">{hits}</span>
+              </p>
+              {submitting ? (
+                <p className="text-xs text-amber-400 animate-pulse font-medium">Saving Score...</p>
+              ) : (
+                <button
+                  onClick={() => onNavigate && onNavigate('fighting')}
+                  className="w-full bg-amber-500 hover:bg-amber-400 font-bold py-2.5 rounded-xl text-black active:scale-95 transition cursor-pointer"
+                >
+                  Back to Arena
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
