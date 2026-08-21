@@ -251,28 +251,60 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           </div>
         )}
 
-        {/* ৬. Game Over Modal */}
-        {gameOver && (
-          <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl w-full max-w-xs text-center space-y-4 shadow-2xl">
-              <h3 className="text-xl font-bold text-amber-400">Game Over!</h3>
-              <p className="text-sm text-slate-300">
-                Total Hits: <span className="text-emerald-400 font-bold">{hits}</span>
+      {/* ৬. Game Over Modal - Inline Style Fixed */}
+      {gameOver && (
+        <div 
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(6px)' }}
+          className="fixed inset-0 flex items-center justify-center z-50 p-4"
+        >
+          <div
+            style={{ 
+              backgroundColor: '#0f172a', 
+              border: '2px solid #334155', 
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+              width: '100%',
+              maxWidth: '280px',
+              padding: '24px',
+              textAlign: 'center'
+            }}
+            className="space-y-4"
+          >
+            <h3 style={{ color: '#fbbf24', fontSize: '20px', fontWeight: 'bold' }}>
+              Game Over!
+            </h3>
+            
+            <p style={{ color: '#cbd5e1', fontSize: '14px' }}>
+              Total Hits: <span style={{ color: '#34d399', fontWeight: 'bold' }}>{hits}</span>
+            </p>
+
+            {submitting ? (
+              <p style={{ color: '#fbbf24', fontSize: '12px', fontWeight: '500' }} className="animate-pulse">
+                Saving Score...
               </p>
-              {submitting ? (
-                <p className="text-xs text-amber-400 animate-pulse font-medium">Saving Score...</p>
-              ) : (
-                <button
-                  onClick={() => onNavigate && onNavigate('fighting')}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2.5 rounded-xl text-white shadow-lg active:scale-95 transition cursor-pointer border border-emerald-400/30"
-                >
-                  Back to Arena
-                </button>
-              )}
-            </div>
+            ) : (
+              <button
+                onClick={() => onNavigate && onNavigate('fighting')}
+                style={{
+                  backgroundColor: '#059669',
+                  color: '#ffffff',
+                  width: '100%',
+                  padding: '10px 0',
+                  borderRadius: '12px',
+                  fontWeight: 'bold',
+                  fontSize: '14px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(5, 150, 105, 0.4)'
+                }}
+                className="active:scale-95 transition"
+              >
+                Back to Arena
+              </button>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
