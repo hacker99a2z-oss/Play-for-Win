@@ -123,7 +123,7 @@ app.post('/api/user/deduct-coins', async (req, res) => {
   }
 });
 
-// ১. POST /api/match/join - ২৫০ কয়েন কেটে ম্যাচ জয়েন করা
+// ১. POST /api/match/join - ২৫০ কয়েন কেটে ম্যাচ জয়েন করা (FIXED)
 app.post('/api/match/join', async (req, res) => {
   try {
     const { telegramId, firstName, mode } = req.body;
@@ -135,29 +135,35 @@ app.post('/api/match/join', async (req, res) => {
     const user = await User.findOne({ telegramId });
     if (!user) return res.status(404).json({ error: 'User not found' });
     
-    // ২৫০ কয়েন ব্যালেন্স চেক (mainCoins)
     if ((user.mainCoins || 0) < 250) {
       return res.status(400).json({ error: 'Insufficient mainCoins balance' });
     }
 
-    // কয়েন কেটে নেওয়া
     user.mainCoins -= 250;
     await user.save();
 
-    // পেন্ডিং ম্যাচ খোঁজা (যাতে খালি জায়গায় জয়েন করা যায়)
+    // পেন্ডিং ম্যাচ খোঁজা
     let match = await Match.findOne({
       mode: Number(mode),
       status: 'pending',
       'players.telegramId': { $ne: telegramId }
     });
 
+    const newPlayer = {
+      telegramId,
+      firstName: firstName || 'Player',
+      hits: 0,
+      timeTaken: 0,
+      prizeUSD: 0
+    };
+
     if (match) {
-      match.players.push({ telegramId, firstName });
+      match.players.push(newPlayer);
       await match.save();
     } else {
       match = new Match({
         mode: Number(mode),
-        players: [{ telegramId, firstName }]
+        players: [newPlayer]
       });
       await match.save();
     }
@@ -169,32 +175,39 @@ app.post('/api/match/join', async (req, res) => {
   }
 });
 
-// ২. POST /api/match/submit-score - স্কোর ও টাইম সেভ করে বিজয়ী নির্ধারণ
+// ২. POST /api/match/submit-score - (FIXED WITH ESTIMATED PENDING PRIZE)
 app.post('/api/match/submit-score', async (req, res) => {
   try {
-    const { matchId, telegramId, hits, timeTaken } = req.body; // timeTaken যুক্ত করা হলো
+    const { matchId, telegramId, hits, timeTaken } = req.body;
 
     if (!matchId) return res.status(400).json({ error: 'matchId is required' });
 
     const match = await Match.findById(matchId);
     if (!match) return res.status(404).json({ error: 'Match not found' });
 
-    const playerIndex = match.players.findIndex(p => p.telegramId === telegramId);
+    const playerIndex = match.players.findIndex(p => String(p.telegramId) === String(telegramId));
+    
     if (playerIndex !== -1) {
-      match.players[playerIndex].hits = hits || 0;
-      match.players[playerIndex].timeTaken = timeTaken || 0; // সময় সেভ হবে
+      match.players[playerIndex].hits = Number(hits) || 0;
+      match.players[playerIndex].timeTaken = Number(timeTaken) || 0;
       match.players[playerIndex].finishedAt = new Date();
     } else {
-      return res.status(400).json({ error: 'Player not in this match' });
+      match.players.push({
+        telegramId,
+        hits: Number(hits) || 0,
+        timeTaken: Number(timeTaken) || 0,
+        finishedAt: new Date()
+      });
     }
 
-    // সবাই সাবমিট করেছে কি না অথবা সোলো টেস্ট ম্যাচ
-    const allFinished = match.players.every(p => p.finishedAt);
+    // প্লেয়ার ক্যাপাসিটি চেক
+    const isFull = match.players.length >= match.mode;
+    const allFinished = isFull && match.players.every(p => p.finishedAt);
 
     if (allFinished) {
       match.status = 'completed';
 
-      // স্কোর এবং টাইম দিয়ে সর্টিং
+      // সর্টিং (Hits বেশি, Time কম)
       match.players.sort((a, b) => {
         if (b.hits !== a.hits) return b.hits - a.hits;
         return (a.timeTaken || 0) - (b.timeTaken || 0);
@@ -211,7 +224,7 @@ app.post('/api/match/submit-score', async (req, res) => {
         if (match.players[3]) match.players[3].prizeUSD = 0.00;
       }
 
-      // বিজয়ী ডলার ব্যালেন্স যোগ করা
+      // বিজয়ী ব্যালেন্স আপডেট
       for (const p of match.players) {
         if (p.prizeUSD > 0) {
           await User.findOneAndUpdate(
@@ -229,7 +242,8 @@ app.post('/api/match/submit-score', async (req, res) => {
     res.status(500).json({ error: 'Server error submitting score' });
   }
 });
-// ৩. GET /api/match/history/:telegramId - লাস্ট ৫টি ম্যাচের হিস্ট্রি
+
+// ৩. GET /api/match/history/:telegramId - লাস্ট ৫টি ম্যাচের হিস্ট্রি (ENHANCED)
 app.get('/api/match/history/:telegramId', async (req, res) => {
   try {
     const { telegramId } = req.params;
@@ -237,7 +251,27 @@ app.get('/api/match/history/:telegramId', async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(5);
 
-    res.json(history);
+    // ফ্রন্টএন্ডে পেন্ডিং ম্যাচের সম্ভাব্য হিট এবং প্রাইজ রিড নিশ্চিত করা
+    const formattedHistory = history.map(m => {
+      const matchObj = m.toObject();
+      
+      // সম্ভাব্য প্রাইজ পুল (যদি পেন্ডিং থাকে)
+      const potentialPrize = matchObj.mode === 2 ? 0.10 : 0.10;
+
+      matchObj.players = matchObj.players.map(p => {
+        if (m.status === 'pending' && String(p.telegramId) === String(telegramId)) {
+          return {
+            ...p,
+            prizeUSD: p.prizeUSD > 0 ? p.prizeUSD : potentialPrize
+          };
+        }
+        return p;
+      });
+
+      return matchObj;
+    });
+
+    res.json(formattedHistory);
   } catch (err) {
     console.error('Match History Error:', err);
     res.status(500).json({ error: 'Server error fetching history' });
