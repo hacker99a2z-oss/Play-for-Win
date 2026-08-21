@@ -219,7 +219,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         {/* ৪. STONES (30) - ফিক্সড পিক্সেল পজিশন */}
         <div
           className="absolute z-20 pointer-events-none flex items-center justify-center"
-          style={{ bottom: '72px', left: '38px', width: '40px', height: '24px' }}
+          style={{ bottom: '72px', left: '39px', width: '40px', height: '24px' }}
         >
           <span className="text-sm font-black text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
             {stonesLeft}
