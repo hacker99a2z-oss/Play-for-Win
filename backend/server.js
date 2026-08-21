@@ -11,11 +11,13 @@ const User = require('./models/User');
 
 const app = express();
 app.set('trust proxy', true);
+
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.get('/', (req, res) => {
-  res.status(200).send('Server is alive!');
+  res.status(200).send('Server is alive and running!');
 });
 
 // ============ MATCH SCHEMA ============
@@ -66,7 +68,7 @@ bot.start((ctx) => {
 });
 
 if (process.env.BOT_TOKEN) {
-  const WEBHOOK_URL = 'https://play-for-win.onrender.com/telegram-webhook';
+  const WEBHOOK_URL = process.env.WEBHOOK_URL || 'https://play-for-win.onrender.com/telegram-webhook';
   bot.telegram.setWebhook(WEBHOOK_URL)
     .then(() => console.log('✅ Webhook Configured Successfully'))
     .catch((err) => console.error('Webhook Error:', err.message));
@@ -103,27 +105,40 @@ const getClientIpAndCountry = async (req, frontendIp) => {
   return { clientIp, countryName: 'Unknown', isVpnOrProxy: false };
 };
 
-// ১.১ ডেডিকেটেড কয়েন কাটার API (Fighting.jsx এর জন্য)
+// ১. কয়েন কাটার API (Fighting / Battle Start এর জন্য)
 app.post('/api/user/deduct-coins', async (req, res) => {
   try {
     const { telegramId, amount } = req.body;
-    const user = await User.findOne({ telegramId });
+    const deductAmount = Number(amount);
 
+    if (!telegramId || isNaN(deductAmount) || deductAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid payload' });
+    }
+
+    const user = await User.findOne({ telegramId });
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    if ((user.mainCoins || 0) < amount) {
+    if ((user.mainCoins || 0) < deductAmount) {
       return res.status(400).json({ success: false, message: 'Insufficient coins' });
     }
 
-    user.mainCoins -= amount;
-    await user.save();
+    const updatedUser = await User.findOneAndUpdate(
+      { telegramId, mainCoins: { $gte: deductAmount } },
+      { $inc: { mainCoins: -deductAmount } },
+      { new: true }
+    );
 
-    res.json({ success: true, remainingCoins: user.mainCoins });
+    if (!updatedUser) {
+      return res.status(400).json({ success: false, message: 'Transaction failed/Insufficient balance' });
+    }
+
+    res.json({ success: true, remainingCoins: updatedUser.mainCoins });
   } catch (err) {
+    console.error('Deduct coins error:', err);
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 });
 
-// Backend Route (Example Fix)
+// ২. ম্যাচ মেকিং / জয়েন রুট
 app.post('/api/match/join', async (req, res) => {
   try {
     const { telegramId, firstName, mode } = req.body;
@@ -132,20 +147,19 @@ app.post('/api/match/join', async (req, res) => {
       return res.status(400).json({ success: false, error: "Telegram ID is required" });
     }
 
-    // ডাটাবেজ অপারেশন ফেইল যেন না হয়
-    let match = await Match.findOne({ status: 'pending', mode: mode });
+    const matchMode = Number(mode) || 2;
+    let match = await Match.findOne({ status: 'pending', mode: matchMode });
 
     if (!match) {
       match = new Match({
-        mode: mode,
+        mode: matchMode,
         status: 'pending',
-        players: [{ telegramId, firstName, hits: 0, timeTaken: 0 }]
+        players: [{ telegramId: String(telegramId), firstName: firstName || 'Player', hits: 0, timeTaken: 0 }]
       });
     } else {
-      // প্লেয়ার অলরেডি জয়েন করা আছে কিনা চেক
       const exists = match.players.some(p => String(p.telegramId) === String(telegramId));
       if (!exists) {
-        match.players.push({ telegramId, firstName, hits: 0, timeTaken: 0 });
+        match.players.push({ telegramId: String(telegramId), firstName: firstName || 'Player', hits: 0, timeTaken: 0 });
       }
     }
 
@@ -158,7 +172,6 @@ app.post('/api/match/join', async (req, res) => {
 
   } catch (err) {
     console.error("Match join error:", err);
-    // সার্ভার ক্র্যাশ আটকাতে সঠিক জেসন মেসেজ
     return res.status(500).json({ 
       success: false, 
       error: "Server internal error! Check Render backend logs." 
@@ -166,7 +179,7 @@ app.post('/api/match/join', async (req, res) => {
   }
 });
 
-// ২. POST /api/match/submit-score - স্কোর সাবমিট (FIXED)
+// ৩. স্কোর সাবমিট API
 app.post('/api/match/submit-score', async (req, res) => {
   try {
     const { matchId, telegramId, hits, timeTaken } = req.body;
@@ -193,7 +206,6 @@ app.post('/api/match/submit-score', async (req, res) => {
       });
     }
 
-    // সব প্লেয়ার খেলেছে কিনা চেক
     const isFull = match.players.length >= match.mode;
     const allFinished = isFull && match.players.every(p => p.finishedAt);
 
@@ -205,7 +217,7 @@ app.post('/api/match/submit-score', async (req, res) => {
         return (a.timeTaken || 0) - (b.timeTaken || 0);
       });
 
-      // প্রাইজ বন্টন
+      // প্রাইজ ডিস্ট্রিবিউশন
       if (match.mode === 2) {
         if (match.players[0]) match.players[0].prizeUSD = 0.10;
         if (match.players[1]) match.players[1].prizeUSD = 0.00;
@@ -234,19 +246,16 @@ app.post('/api/match/submit-score', async (req, res) => {
   }
 });
 
-// ৩. GET /api/match/history/:telegramId - লাস্ট ৫টি ম্যাচের হিস্ট্রি (ENHANCED)
+// ৪. লাস্ট ৫টি ম্যাচের হিস্ট্রি
 app.get('/api/match/history/:telegramId', async (req, res) => {
   try {
     const { telegramId } = req.params;
-    const history = await Match.find({ 'players.telegramId': telegramId })
+    const history = await Match.find({ 'players.telegramId': String(telegramId) })
       .sort({ createdAt: -1 })
       .limit(5);
 
-    // ফ্রন্টএন্ডে পেন্ডিং ম্যাচের সম্ভাব্য হিট এবং প্রাইজ রিড নিশ্চিত করা
     const formattedHistory = history.map(m => {
       const matchObj = m.toObject();
-      
-      // সম্ভাব্য প্রাইজ পুল (যদি পেন্ডিং থাকে)
       const potentialPrize = matchObj.mode === 2 ? 0.10 : 0.10;
 
       matchObj.players = matchObj.players.map(p => {
@@ -269,7 +278,7 @@ app.get('/api/match/history/:telegramId', async (req, res) => {
   }
 });
 
-// ==================== API ENDPOINTS FOR FRONTEND ====================
+// ==================== API ENDPOINTS FOR USER & SYNC ====================
 
 app.post('/api/save-user-location', async (req, res) => {
   try {
@@ -309,7 +318,7 @@ app.post('/api/user/sync', async (req, res) => {
 
     if (!user) {
       user = new User({
-        telegramId,
+        telegramId: String(telegramId),
         firstName: firstName || 'User',
         username: username || '',
         photoUrl: photoUrl || '',
@@ -319,7 +328,7 @@ app.post('/api/user/sync', async (req, res) => {
       });
       await user.save();
 
-      if (referrerId && referrerId !== telegramId) {
+      if (referrerId && String(referrerId) !== String(telegramId)) {
         await User.findOneAndUpdate(
           { telegramId: referrerId },
           {
@@ -358,7 +367,7 @@ app.post('/api/user/sync', async (req, res) => {
   }
 });
 
-// ৩. গেম খেলে রিওয়ার্ড ক্লেইম (Anti-Cheat Validation Added)
+// ৫. রিওয়ার্ড ক্লেইম (Anti-Cheat Security)
 app.post('/api/game/reward', async (req, res) => {
   try {
     const { telegramId, coins } = req.body;
@@ -368,7 +377,6 @@ app.post('/api/game/reward', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid payload' });
     }
 
-    // 🔒 Security Check: ১৫ সেকেন্ডে ডাবল এড সহ সর্বোচ্চ ৩০০ কয়েন সম্ভব
     const MAX_ALLOWED_COINS = 300; 
     if (rewardCoins > MAX_ALLOWED_COINS) {
       console.warn(`🚨 Anti-Cheat Triggered for User: ${telegramId}. Attempted coins: ${rewardCoins}`);
@@ -411,7 +419,7 @@ app.post('/api/game/reward', async (req, res) => {
   }
 });
 
-// ৪. AdsGram Webhook Endpoint
+// AdsGram Webhook Endpoint
 app.get('/api/adsgram-reward', async (req, res) => {
   const targetUserId = req.query.userId || req.query.userid;
 
@@ -435,7 +443,7 @@ app.get('/api/adsgram-reward', async (req, res) => {
   }
 });
 
-// ৪.২. Monetag Server-to-Server Postback Endpoint
+// Monetag Postback Endpoint
 app.get('/api/monetag-postback', async (req, res) => {
   const { sub_id } = req.query;
 
@@ -460,7 +468,7 @@ app.get('/api/monetag-postback', async (req, res) => {
   }
 });
 
-// ডেইলি টাইমার এন্ডপয়েন্ট
+// ডেইলি টাইমার এন্ডপয়েন্ট
 app.get('/api/contest/timer', (req, res) => {
   const now = new Date();
   const bdNowStr = now.toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
@@ -482,7 +490,7 @@ app.get('/api/contest/timer', (req, res) => {
   });
 });
 
-// ==================== CHECK MEMBERSHIP API ====================
+// CHECK MEMBERSHIP API
 app.post('/api/check-membership', async (req, res) => {
   const { telegramId } = req.body;
   
@@ -523,7 +531,7 @@ app.post('/api/check-membership', async (req, res) => {
   }
 });
 
-// ==================== 5. 3-TIER DYNAMIC COUNTRY WITHDRAW API ====================
+// 3-TIER DYNAMIC WITHDRAW API
 app.post('/api/user/withdraw', async (req, res) => {
   try {
     const { telegramId, wallet, amount } = req.body;
@@ -616,8 +624,8 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Connected Successfully'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// ==================== DAILY CONTEST RESET ====================
-cron.schedule('0 0 * * *', async () => {
+// ==================== DAILY CONTEST RESET LOGIC ====================
+const executeDailyContestReset = async () => {
   console.log('🏆 Running Daily Contest Reset & Distributing Prizes...');
   try {
     const topUsers = await User.find({ dailyCoins: { $gt: 0 } }).sort({ dailyCoins: -1 }).limit(10);
@@ -634,13 +642,28 @@ cron.schedule('0 0 * * *', async () => {
 
     await User.updateMany({ dailyCoins: { $gt: 0 } }, { $set: { dailyCoins: 0 } });
     console.log('✅ Daily Contest Reset Successfully!');
-
+    return true;
   } catch (error) {
     console.error('❌ Reset Error:', error);
+    return false;
   }
-}, {
+};
+
+// Cron schedule (Midnight Asia/Dhaka)
+cron.schedule('0 0 * * *', executeDailyContestReset, {
   scheduled: true,
   timezone: "Asia/Dhaka"
+});
+
+// (Optional) Manual Trigger for Admin Testing
+app.post('/api/admin/reset-daily-contest', async (req, res) => {
+  const { adminSecret } = req.body;
+  if (adminSecret !== process.env.ADMIN_SECRET) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  const result = await executeDailyContestReset();
+  if (result) res.json({ success: true, message: 'Contest reset manually.' });
+  else res.status(500).json({ success: false, error: 'Reset failed.' });
 });
 
 const PORT = process.env.PORT || 5000;
