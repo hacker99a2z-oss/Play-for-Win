@@ -138,7 +138,7 @@ app.post('/api/user/deduct-coins', async (req, res) => {
   }
 });
 
-// ম্যাচ জয়েনিং ও পেন্ডিং লিমিট চেক API
+// ২. ম্যাচ জয়েনিং, কয়েন কাটা ও পেন্ডিং লিমিট চেক API
 app.post('/api/match/join', async (req, res) => {
   try {
     const { telegramId, firstName, mode } = req.body;
@@ -149,14 +149,24 @@ app.post('/api/match/join', async (req, res) => {
 
     const matchMode = Number(mode) || 2;
     const playerTelegramId = String(telegramId);
+    const entryFee = 250;
 
-    // ১. চেক করা প্লেয়ারটির বর্তমানে কয়টি পেন্ডিং ম্যাচ আছে
+    // ১. ইউজার খুঁজে কয়েন চেক করা
+    const user = await User.findOne({ telegramId: playerTelegramId });
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    if ((user.mainCoins || 0) < entryFee) {
+      return res.status(400).json({ success: false, error: "Insufficient coins! 250 Coins required." });
+    }
+
+    // ২. পেন্ডিং ম্যাচ সংখ্যা লিমিট চেক করা (সর্বোচ্চ ৩টি)
     const userPendingCount = await Match.countDocuments({
       status: 'pending',
       'players.telegramId': playerTelegramId
     });
 
-    // ২. যদি ইতোমধ্যে ৩টি পেন্ডিং ম্যাচ থাকে তবে নতুন গেম খেলতে দেওয়া হবে না
     if (userPendingCount >= 3) {
       return res.status(400).json({
         success: false,
@@ -164,7 +174,11 @@ app.post('/api/match/join', async (req, res) => {
       });
     }
 
-    // ৩. আগে তৈরি থাকা ফাঁকা পেন্ডিং ম্যাচ খোঁজা (যেখানে প্লেয়ার সংখ্যা মোডের চেয়ে কম এবং ইউজার নিজে যুক্ত নেই)
+    // 🔴 ৩. ইউজারের অ্যাকাউন্ট থেকে ২৫০ কয়েন কেটে নেওয়া
+    user.mainCoins -= entryFee;
+    await user.save();
+
+    // ৪. আগের তৈরি থাকা ফাঁকা পেন্ডিং ম্যাচ খোঁজা
     let match = await Match.findOne({
       status: 'pending',
       mode: matchMode,
@@ -172,15 +186,16 @@ app.post('/api/match/join', async (req, res) => {
       'players.telegramId': { $ne: playerTelegramId }
     });
 
-    // ৪. যদি ফাঁকা ম্যাচ না থাকে, তবে নতুন ম্যাচ তৈরি করা
+    // ৫. যদি ফাঁকা ম্যাচ না থাকে, তবে নতুন ম্যাচ তৈরি করা
     if (!match) {
       match = new Match({
         mode: matchMode,
+        entryFeeCoins: entryFee,
         status: 'pending',
         players: [{ telegramId: playerTelegramId, firstName: firstName || 'Player', hits: 0, timeTaken: 0 }]
       });
     } else {
-      // ফাঁকা ম্যাচ থাকলে প্লেয়ারকে যুক্ত করা
+      // ফাঁকা ম্যাচ থাকলে নতুন প্লেয়ারকে যুক্ত করা
       match.players.push({ telegramId: playerTelegramId, firstName: firstName || 'Player', hits: 0, timeTaken: 0 });
     }
 
@@ -188,7 +203,8 @@ app.post('/api/match/join', async (req, res) => {
 
     return res.status(200).json({ 
       success: true, 
-      matchId: match._id 
+      matchId: match._id,
+      remainingCoins: user.mainCoins
     });
 
   } catch (err) {
