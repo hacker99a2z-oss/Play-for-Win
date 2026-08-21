@@ -8,6 +8,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
   const [hits, setHits] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const hasSubmittedRef = useRef(false);
 
   const startTimeRef = useRef(Date.now());
 
@@ -54,8 +55,12 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     }
   }, [gameOver]);
 
-  const submitMatchResult = async (finalHits, timeTaken) => {
+  // ২. স্কোর সাবমিট করার নির্ভরযোগ্য ফাংশন
+  const submitMatchResult = useCallback(async (finalHits, timeTaken) => {
+    if (hasSubmittedRef.current) return; // ২বার সাবমিশন আটকাবে
+    hasSubmittedRef.current = true;
     setSubmitting(true);
+
     try {
       const res = await fetch('https://play-for-win.onrender.com/api/match/submit-score', {
         method: 'POST',
@@ -64,8 +69,8 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           matchId: matchId,
           telegramId: user?.telegramId,
           mode: mode,
-          hits: finalHits,
-          timeTaken: timeTaken
+          hits: Number(finalHits) || 0,
+          timeTaken: Number(timeTaken) || 0
         })
       });
 
@@ -78,7 +83,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [matchId, user?.telegramId, mode, refreshUserData]);
 
   const handleTouchStart = (e) => {
     if (isThrown || stonesLeft <= 0 || gameOver) return;
@@ -105,6 +110,14 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
       });
     }
   };
+
+  // ৩. Game Over হলে একবারই সঠিক Hits এবং Time ব্যাকএন্ডে যাবে
+  useEffect(() => {
+    if (gameOver && !hasSubmittedRef.current) {
+      const timeTaken = (Date.now() - startTimeRef.current) / 1000;
+      submitMatchResult(hits, timeTaken);
+    }
+  }, [gameOver, hits, submitMatchResult]);
 
   const handleTouchEnd = (e) => {
     if (!isDragging || isThrown) return;
