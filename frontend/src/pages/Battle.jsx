@@ -30,7 +30,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
   const arenaRef = useRef(null);
 
-  // ইঁদুরের চলাচলের লজিক (useRef সহ)
+  // ইঁদুরের চলাচলের লজিক
   useEffect(() => {
     if (gameOver) return;
     const interval = setInterval(() => {
@@ -40,12 +40,12 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         let newX = prev.x + prev.speed * prev.direction;
         let newDir = prev.direction;
 
-        // ব্রিজের এমাথা থেকে ওমাথা (৫% থেকে ৯৫%) যাওয়ার সীমানা
-        if (newX >= 95) {
-          newX = 95;
+        // সীমানা একদম বাড়িয়ে ২% থেকে ৯৮% করা হলো
+        if (newX >= 98) {
+          newX = 98;
           newDir = -1; // বাম দিকে ঘুরবে
-        } else if (newX <= 5) {
-          newX = 5;
+        } else if (newX <= 2) {
+          newX = 2;
           newDir = 1;  // ডান দিকে ঘুরবে
         }
 
@@ -172,9 +172,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
   };
 
   const checkHit = (thrownX) => {
-    const currentMouseX = mouseRef.current.x;
-    const distance = Math.abs(currentMouseX - thrownX);
-
+    const distance = Math.abs(mouse.x - thrownX);
     if (distance < 12) {
       setHits((h) => h + 1);
       
@@ -182,7 +180,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
       setTimeout(() => {
         setMouse({
-          x: Math.random() > 0.5 ? 10 : 90, // একদম কোণা থেকে শুরু হবে
+          x: Math.random() > 0.5 ? 5 : 95, // একদম কোণা থেকে শুরু হবে
           y: 28,
           speed: 2.2 + Math.random() * 0.8,
           direction: Math.random() > 0.5 ? 1 : -1,
