@@ -783,6 +783,11 @@ mongoose.connect(process.env.MONGO_URI)
 
 // ==================== DAILY CONTEST RESET LOGIC ====================
 const executeDailyContestReset = async () => {
+  // 🛑 বোনাস দেওয়া পুরোপুরি বন্ধ রাখতে এই ৩ লাইন যোগ করুন:
+  console.log('⚠️ Contest is OFF. Reset & bonus distribution skipped.');
+  return false;
+
+  /* 🟢 আপনার আসল প্রাইজ দেওয়ার কোড নিচে নিরাপদেই রইলো */
   console.log('🏆 Running Daily Contest Reset & Distributing Prizes...');
   try {
     const topUsers = await User.find({ dailyCoins: { $gt: 0 } }).sort({ dailyCoins: -1 }).limit(10);
