@@ -365,7 +365,7 @@ app.get('/api/match/history/:telegramId', async (req, res) => {
       .limit(5)          // সবসময় লেটেস্ট ৫টি ম্যাচ ফিল্টার করবে
       .lean();
     const formattedHistory = history.map(m => {
-      const matchObj = m.toObject();
+      const matchObj = m;
 
       // ১. প্লেয়ারদের হিট (hits) এবং টাইম (timeTaken) অনুযায়ী র‍্যাঙ্ক সাজানো
       matchObj.players.sort((a, b) => {
