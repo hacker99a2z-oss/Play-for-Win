@@ -184,7 +184,7 @@ app.post('/api/match/join', async (req, res) => {
       mode: matchMode,
       $expr: { $lt: [{ $size: "$players" }, matchMode] },
       'players.telegramId': { $ne: playerTelegramId }
-    });
+    }).lean();
 
     // ৫. যদি ফাঁকা ম্যাচ না থাকে, তবে নতুন ম্যাচ তৈরি করা
     if (!match) {
@@ -362,8 +362,8 @@ app.get('/api/match/history/:telegramId', async (req, res) => {
     const { telegramId } = req.params;
     const history = await Match.find({ 'players.telegramId': String(telegramId) })
       .sort({ createdAt: -1 }) // নতুন ম্যাচ সবার ওপরে দেখাবে
-      .limit(5);               // সবসময় লেটেস্ট ৫টি ম্যাচ ফিল্টার করবে
-
+      .limit(5)          // সবসময় লেটেস্ট ৫টি ম্যাচ ফিল্টার করবে
+      .lean();
     const formattedHistory = history.map(m => {
       const matchObj = m.toObject();
 
@@ -778,7 +778,14 @@ app.post('/api/user/withdraw', async (req, res) => {
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB Connected Successfully'))
+  .then(async () => {
+    console.log('✅ MongoDB Connected Successfully');
+    
+    // দ্রুত খোঁজার জন্য ইনডেক্স তৈরি
+    await User.collection.createIndex({ telegramId: 1 });
+    await User.collection.createIndex({ dailyCoins: -1 });
+    await Match.collection.createIndex({ status: 1, mode: 1 });
+  })
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 // ==================== DAILY CONTEST RESET LOGIC ====================
@@ -790,7 +797,7 @@ const executeDailyContestReset = async () => {
   /* 🟢 আপনার আসল প্রাইজ দেওয়ার কোড নিচে নিরাপদেই রইলো */
   console.log('🏆 Running Daily Contest Reset & Distributing Prizes...');
   try {
-    const topUsers = await User.find({ dailyCoins: { $gt: 0 } }).sort({ dailyCoins: -1 }).limit(10);
+    const topUsers = await User.find({ dailyCoins: { $gt: 0 } }).sort({ dailyCoins: -1 }).limit(10).lean();
     const prizes = [1, 0.80, 0.50, 0.30, 0.20, 0.10, 0.10, 0.10, 0.10, 0.10];
 
     for (let i = 0; i < topUsers.length; i++) {
