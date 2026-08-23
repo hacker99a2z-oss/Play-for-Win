@@ -3,6 +3,17 @@ import React, { useEffect, useState } from 'react';
 const API_URL = "https://play-for-win.onrender.com"; // আপনার ব্যাকএন্ড URL
 
 export default function Contest() {
+  // 🛑 সাময়িকভাবে কনটেস্ট বন্ধের নোটিশ (আপনার কোনো কোড মুছে ফেলা হয়নি)
+  return (
+    <div className="p-6 text-center text-white flex flex-col items-center justify-center min-h-[60vh] gap-4 bg-slate-900/90 border border-slate-800 rounded-2xl m-4 shadow-2xl">
+      <div className="text-5xl animate-bounce">🏆</div>
+      <h2 className="text-xl font-extrabold text-yellow-400">Contest is Temporarily OFF</h2>
+      <p className="text-xs text-gray-300 leading-relaxed max-w-xs">
+        Our daily contest system is currently paused. Please check back later!
+      </p>
+    </div>
+  );
+  
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
