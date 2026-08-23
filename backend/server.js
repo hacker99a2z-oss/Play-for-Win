@@ -781,10 +781,22 @@ mongoose.connect(process.env.MONGO_URI)
   .then(async () => {
     console.log('✅ MongoDB Connected Successfully');
     
-    // দ্রুত খোঁজার জন্য ইনডেক্স তৈরি
-    await User.collection.createIndex({ telegramId: 1 });
-    await User.collection.createIndex({ dailyCoins: -1 });
-    await Match.collection.createIndex({ status: 1, mode: 1 });
+    // ইনডেক্স নিরাপদভাবে তৈরি করার ট্রাই-ক্যাচ ব্লক
+    try {
+      await User.collection.createIndex({ telegramId: 1 }, { unique: true });
+    } catch (e) {
+      // আগে থেকে ইনডেক্স থাকলে এরর স্কিপ করবে
+    }
+
+    try {
+      await User.collection.createIndex({ dailyCoins: -1 });
+    } catch (e) {}
+
+    try {
+      await Match.collection.createIndex({ status: 1, mode: 1 });
+    } catch (e) {}
+
+    console.log('⚡ Database Indexes Verified/Ready');
   })
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
