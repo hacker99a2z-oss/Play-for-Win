@@ -184,7 +184,7 @@ app.post('/api/match/join', async (req, res) => {
       mode: matchMode,
       $expr: { $lt: [{ $size: "$players" }, matchMode] },
       'players.telegramId': { $ne: playerTelegramId }
-    }).lean();
+    });
 
     // ৫. যদি ফাঁকা ম্যাচ না থাকে, তবে নতুন ম্যাচ তৈরি করা
     if (!match) {
