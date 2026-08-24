@@ -102,12 +102,18 @@ export default function App() {
               if (result && result.done === true) {
                 try {
                   await new Promise((res) => setTimeout(res, 500));
+
+                  // 🟢 টেলিগ্রামের অরিজিনাল এনক্রিপ্টেড র-স্ট্রিং
+                  const rawInitData = window.Telegram?.WebApp?.initData || "";
+                  
                   // সার্ভারে কল করে কনফার্ম করা
                   const response = await fetch(`${BACKEND_URL}/api/adsgram-verify`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ telegramId: currentTelegramId })
-                  });
+                    body: JSON.stringify({
+                      telegramId: currentTelegramId,
+                      initData: rawInitData
+                    });
                   
                   const data = await response.json();
 
