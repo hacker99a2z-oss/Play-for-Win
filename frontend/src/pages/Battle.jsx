@@ -12,6 +12,11 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
   const startTimeRef = useRef(Date.now());
 
+  // 🔴 নতুন FX States
+  const [screenShake, setScreenShake] = useState(false);
+  const [particles, setParticles] = useState([]);
+  const [showHitText, setShowHitText] = useState(null);
+
   const [mouse, setMouse] = useState({
     x: 180, // স্ক্রিনের ঠিক মাঝখান থেকে শুরু হবে (৩৬০ এর অর্ধেক)
     y: 28,
@@ -57,6 +62,27 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
 
     return () => clearInterval(interval);
   }, [gameOver]);
+
+  // 🔴 পার্টিকল তৈরির হেল্পার ফাংশন
+  const triggerImpactParticles = (xPercent, yPercent) => {
+    const newParticles = Array.from({ length: 8 }).map((_, i) => ({
+      id: Date.now() + i,
+      x: xPercent,
+      y: yPercent,
+      vx: (Math.random() - 0.5) * 15,
+      vy: (Math.random() - 0.5) * 15,
+      size: Math.random() * 6 + 4,
+      color: Math.random() > 0.5 ? '#f59e0b' : '#d97706'
+    }));
+    setParticles(newParticles);
+    setTimeout(() => setParticles([]), 400);
+  };
+
+  // 🔴 স্ক্রিন শেক ফাংশন
+  const triggerScreenShake = () => {
+    setScreenShake(true);
+    setTimeout(() => setScreenShake(false), 200);
+  };
 
   useEffect(() => {
     if (gameOver) {
@@ -199,6 +225,11 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         setHits((h) => h + 1);
         setMouse((prev) => ({ ...prev, isFalling: true }));
 
+        // 🔴 এই ৩টি লাইন যোগ করুন:
+        triggerScreenShake();
+        triggerImpactParticles(currentStoneX, 28);
+        setShowHitText({ x: currentStoneX, y: 24 });
+        setTimeout(() => setShowHitText(null), 600);
         setTimeout(() => {
           setMouse({
             x: Math.random() > 0.5 ? 20 : 340,
@@ -208,6 +239,9 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
             isFalling: false
           });
         }, 1000);
+      } else {
+        // 🔴 মিস করলে পার্টিকল দেখানোর জন্য এই else অংশ যোগ করুন:
+        triggerImpactParticles(currentStoneX, 28);
       }
     }, 250);
 
@@ -239,12 +273,14 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
         onMouseUp={handleTouchEnd}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="relative overflow-hidden select-none touch-none shadow-2xl shrink-0"
+        className={`relative overflow-hidden select-none touch-none shadow-2xl shrink-0 transition-transform ${
+          screenShake ? 'translate-x-1 translate-y-1 scale-105' : ''
+        }`}
         style={{
           width: '360px',
           height: '640px',
           // স্ক্রিন ছোট বা বড় হলে পুরো গেম অটো স্কেল হবে, কিন্তু পজিশন নড়বে না
-          transform: `scale(${Math.min(window.innerWidth / 360, window.innerHeight / 640)})`,
+          transform: `scale(${Math.min(window.innerWidth / 360, window.innerHeight / 640)}) ${screenShake ? 'rotate(1deg)' : ''}`,
           transformOrigin: 'center center',
           backgroundImage: `url(${bgImg})`,
           backgroundSize: '100% 100%',
@@ -272,6 +308,32 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           </span>
         </div>
 
+        {/* 🔴 ৩. HIT Popup Effect */}
+        {showHitText && (
+          <div
+            className="absolute z-40 font-black text-xl text-yellow-400 animate-bounce pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,1)]"
+            style={{ left: `${showHitText.x}%`, top: `${showHitText.y}%`, transform: 'translate(-50%, -50%)' }}
+          >
+            💥 HIT!
+          </div>
+        )}
+
+        {/* 🔴 ৪. Impact Dust/Spark Particles */}
+        {particles.map((p) => (
+          <div
+            key={p.id}
+            className="absolute rounded-full pointer-events-none z-30 transition-all duration-300 opacity-80"
+            style={{
+              left: `${p.x}%`,
+              top: `${p.y}%`,
+              width: `${p.size}px`,
+              height: `${p.size}px`,
+              backgroundColor: p.color,
+              transform: `translate(${p.vx}px, ${p.vy}px)`
+            }}
+          />
+        ))}
+
         {/* ৩. Mouse (সঠিক দিক এবং আকৃতির জন্য) */}
         <div className="absolute inset-0 pointer-events-none z-10">
           <div
@@ -281,7 +343,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
               top: mouse.isFalling ? `${mouse.y + 25}%` : `${mouse.y}%`,
               opacity: mouse.isFalling ? 0 : 1,
               // এখানে direction 1 হলে একমুখী এবং -1 হলে সঠিক উল্টোমুখী হবে, সাইজ সবসময় সমান থাকবে
-              transform: `translate(-50%, -50%) scaleX(${mouse.direction === 1 ? -1 : 1}) ${mouse.isFalling ? 'rotate(60deg)' : ''}`,
+              transform: `translate(-50%, -50%) scaleX(${mouse.direction === 1 ? -1 : 1}) ${mouse.isFalling ? 'rotate(90deg) scale(0.7)' : ''}`
               transformOrigin: 'center center'
             }}
           >
@@ -299,19 +361,19 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
           </span>
         </div>
 
-        {/* ৫. Slingshot Stone */}
+        {/* 🔴 ৭. Slingshot Stone Animation (Curve arc dynamic scale) */}
         {!gameOver && stonesLeft > 0 && (
           <div
             onMouseDown={handleTouchStart}
             onTouchStart={handleTouchStart}
-            className={`absolute z-30 cursor-grab active:cursor-grabbing transition-all ${
-              isThrown ? 'duration-500 ease-out' : 'duration-75'
+            className={`absolute z-30 cursor-grab active:cursor-grabbing ${
+              isThrown ? 'transition-all duration-300 ease-out' : 'transition-none'
             }`}
             style={{
               left: `${stonePos.x}%`,
               top: `${stonePos.y}%`,
-              transform: `translate(-50%, -50%) scale(${isThrown ? 0.35 : 1.1})`,
-              opacity: isThrown ? 0.7 : 1
+              transform: `translate(-50%, -50%) scale(${isThrown ? 0.3 : 1.1}) rotate(${isThrown ? '360deg' : '0deg'})`,
+              opacity: isThrown ? 0.8 : 1
             }}
           >
             {stoneImg ? (
