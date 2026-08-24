@@ -625,6 +625,39 @@ app.get('/api/monetag-postback', async (req, res) => {
   }
 });
 
+// Ad Reward Endpoint (80 Coins for Main & Daily Coins)
+app.post('/api/user/ad-reward', async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+    if (!telegramId) {
+      return res.status(400).json({ success: false, message: 'Telegram ID is required' });
+    }
+
+    const user = await User.findOne({ telegramId });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const REWARD_COINS = 80;
+
+    // mainCoins এবং dailyCoins দুইটিতেই ৮০ কয়েন যোগ করা
+    user.mainCoins = (user.mainCoins || 0) + REWARD_COINS;
+    user.dailyCoins = (user.dailyCoins || 0) + REWARD_COINS;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Reward added successfully!',
+      mainCoins: user.mainCoins,
+      dailyCoins: user.dailyCoins
+    });
+  } catch (error) {
+    console.error('Error adding ad reward:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // ডেইলি টাইমার এন্ডপয়েন্ট
 app.get('/api/contest/timer', (req, res) => {
   const now = new Date();
