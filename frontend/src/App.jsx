@@ -208,7 +208,7 @@ export default function App() {
 
       {/* নেভিগেশন বার */}
       <div className="relative z-10">
-        <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+        <Navigation activeTab={activeTab} setActiveTab={(tab) => handleNavigate(tab)} />
       </div>
     </div>
   );
