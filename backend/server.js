@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cron = require('node-cron');
 const axios = require('axios');
 const { Telegraf } = require('telegraf'); 
+const crypto = require('crypto');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -104,6 +105,39 @@ const getClientIpAndCountry = async (req, frontendIp) => {
 
   return { clientIp, countryName: 'Unknown', isVpnOrProxy: false };
 };
+
+// 🟢 Telegram WebApp initData Verification Function
+function verifyTelegramWebAppData(telegramInitData) {
+  if (!telegramInitData) return false;
+
+  try {
+    const urlParams = new URLSearchParams(telegramInitData);
+    const hash = urlParams.get('hash');
+    urlParams.delete('hash');
+
+    const paramsChain = [];
+    for (const [key, value] of urlParams.entries()) {
+      paramsChain.push(`${key}=${value}`);
+    }
+    paramsChain.sort();
+    const dataCheckString = paramsChain.join('\n');
+
+    const secretKey = crypto
+      .createHmac('sha256', 'WebAppData')
+      .update(process.env.BOT_TOKEN || BOT_TOKEN)
+      .digest();
+
+    const calculatedHash = crypto
+      .createHmac('sha256', secretKey)
+      .update(dataCheckString)
+      .digest('hex');
+
+    return calculatedHash === hash;
+  } catch (err) {
+    console.error("InitData verification error:", err);
+    return false;
+  }
+}
 
 // ১. কয়েন কাটার API (Fighting / Battle Start এর জন্য)
 app.post('/api/user/deduct-coins', async (req, res) => {
@@ -580,8 +614,19 @@ app.get('/api/adsgram-reward', async (req, res) => {
 // Direct Server-Side Verification Endpoint
 app.post('/api/adsgram-verify', async (req, res) => {
   try {
-    const { telegramId } = req.body;
+    const { telegramId, initData } = req.body;
     if (!telegramId) return res.status(400).json({ success: false, message: 'User ID required' });
+
+    // 🛑 ১. টেলিগ্রাম অফিশিয়াল অ্যাপ ভ্যালিডেশন চেক
+    const isValidTelegramUser = verifyTelegramWebAppData(initData);
+    if (!isValidTelegramUser) {
+      console.warn(`🚨 [SECURITY ALERT] Fake/Modified Telegram client used by ID: ${telegramId}`);
+      return res.status(403).json({ 
+        success: false, 
+        verified: false, 
+        message: 'Unauthorized! Please use the official Telegram app.' 
+      });
+    }
 
     // ১. ডাটাবেজে ইউজারের লাস্ট ওয়াচ টাইম বা ইম্প্রেশন আপডেট/চেক
     let user = await User.findOne({ telegramId });
