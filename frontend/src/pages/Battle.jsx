@@ -343,7 +343,7 @@ const Battle = ({ user, mode = 2, matchId, onNavigate, refreshUserData }) => {
               top: mouse.isFalling ? `${mouse.y + 25}%` : `${mouse.y}%`,
               opacity: mouse.isFalling ? 0 : 1,
               // এখানে direction 1 হলে একমুখী এবং -1 হলে সঠিক উল্টোমুখী হবে, সাইজ সবসময় সমান থাকবে
-              transform: `translate(-50%, -50%) scaleX(${mouse.direction === 1 ? -1 : 1}) ${mouse.isFalling ? 'rotate(90deg) scale(0.7)' : ''}`
+              transform: `translate(-50%, -50%) scaleX(${mouse.direction === 1 ? -1 : 1}) ${mouse.isFalling ? 'rotate(90deg) scale(0.7)' : ''}`,
               transformOrigin: 'center center'
             }}
           >
