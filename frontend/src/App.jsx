@@ -113,7 +113,8 @@ export default function App() {
                     body: JSON.stringify({
                       telegramId: currentTelegramId,
                       initData: rawInitData
-                    });
+                    })
+                  });
                   
                   const data = await response.json();
 
