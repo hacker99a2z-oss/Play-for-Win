@@ -22,6 +22,10 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
   const [isCooldownActive, setIsCooldownActive] = useState(false);
   const [hitIndex, setHitIndex] = useState(null);
 
+  const [adCoinsCooldown, setAdCoinsCooldown] = useState(0);
+  const [isAdCoinsCooldownActive, setIsAdCoinsCooldownActive] = useState(false);
+  const [isAdCoinsLoading, setIsAdCoinsLoading] = useState(false);
+
   const [holes, setHoles] = useState(Array(16).fill(null));
   
   const activeTimeouts = useRef([]);
@@ -46,6 +50,18 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         setIsCooldownActive(true);
       } else {
         localStorage.removeItem('gameCooldownTarget');
+      }
+    }
+
+    // 🔴 এই অংশটুকু যুক্ত করুন:
+    const savedAdCoinsCooldownTarget = localStorage.getItem('adCoinsCooldownTarget');
+    if (savedAdCoinsCooldownTarget) {
+      const remainingAd = Math.ceil((parseInt(savedAdCoinsCooldownTarget, 10) - Date.now()) / 1000);
+      if (remainingAd > 0) {
+        setAdCoinsCooldown(remainingAd);
+        setIsAdCoinsCooldownActive(true);
+      } else {
+        localStorage.removeItem('adCoinsCooldownTarget');
       }
     }
 
@@ -174,6 +190,60 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     }
     return () => clearInterval(timer);
   }, [isCooldownActive, cooldown]);
+
+  // 🔴 এই দুইটি নতুন অংশ যুক্ত করুন:
+  // (ক) ৮০ কয়েন অ্যাডের ৩৫ সেকেন্ড টাইমার
+  useEffect(() => {
+    let timer;
+    if (isAdCoinsCooldownActive && adCoinsCooldown > 0) {
+      timer = setInterval(() => {
+        setAdCoinsCooldown((prev) => prev - 1);
+      }, 1000);
+    } else if (adCoinsCooldown === 0 && isAdCoinsCooldownActive) {
+      setIsAdCoinsCooldownActive(false);
+    }
+    return () => clearInterval(timer);
+  }, [isAdCoinsCooldownActive, adCoinsCooldown]);
+
+  // (খ) ৮০ কয়েন ক্লেইম করার ফাংশন
+  const handleWatchAdForCoins = async () => {
+    if (isAdCoinsLoading || isAdCoinsCooldownActive) return;
+    setIsAdCoinsLoading(true);
+
+    try {
+      const adWatched = await onPlayAd();
+      if (!adWatched) {
+        setIsAdCoinsLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${BACKEND_URL}/api/user/ad-reward`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegramId: user?.telegramId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        alert("🎉 Congratulations! You received 80 Coins!");
+        refreshUserData();
+
+        const cooldownTarget = Date.now() + 35 * 1000;
+        localStorage.setItem('adCoinsCooldownTarget', cooldownTarget.toString());
+
+        setAdCoinsCooldown(35);
+        setIsAdCoinsCooldownActive(true);
+      } else {
+        alert(data.message || "Failed to add reward. Try again!");
+      }
+    } catch (err) {
+      console.error("Ad reward error:", err);
+      alert("Network error. Please try again.");
+    } finally {
+      setIsAdCoinsLoading(false);
+    }
+  };
 
   const handleStartGame = async () => {
     if (isLoading || isCooldownActive) return;
@@ -336,6 +406,31 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
               '🎁 PLAY (1 Daily Free Game)'
             ) : (
               '📺 WATCH AD TO PLAY'
+            )}
+          </button>
+
+          {/* 🔴 ঠিক এই জায়গায় নিচে নতুন বাটনটি যুক্ত করুন: */}
+          <button
+            onClick={handleWatchAdForCoins}
+            disabled={isAdCoinsLoading || isAdCoinsCooldownActive}
+            className={`w-full max-w-xs mt-3 py-3.5 px-6 rounded-2xl font-bold text-base transition-all transform flex items-center justify-center gap-2 border ${
+              isAdCoinsLoading || isAdCoinsCooldownActive
+                ? 'bg-gray-800 text-gray-400 border-gray-700 cursor-not-allowed opacity-80 shadow-none'
+                : 'bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-white border-amber-300/40 shadow-lg shadow-orange-500/30 hover:brightness-110 active:scale-95'
+            }`}
+          >
+            {isAdCoinsLoading ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Loading Ad...</span>
+              </>
+            ) : isAdCoinsCooldownActive ? (
+              `⏳ Wait ${adCoinsCooldown}s...`
+            ) : (
+              '📺 Play Ads = 80 Coins'
             )}
           </button>
         </div>
