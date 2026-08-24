@@ -101,6 +101,7 @@ export default function App() {
               // 🛑 কেবল Adsgram ডিরেক্ট 'done: true' (Impression Counted) দিলেই ভেতরে ঢুকবে
               if (result && result.done === true) {
                 try {
+                  await new Promise((res) => setTimeout(res, 500));
                   // সার্ভারে কল করে কনফার্ম করা
                   const response = await fetch(`${BACKEND_URL}/api/adsgram-verify`, {
                     method: 'POST',
