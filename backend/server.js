@@ -385,7 +385,7 @@ app.post('/api/save-user-location', async (req, res) => {
     const { countryName, isVpnOrProxy } = await getClientIpAndCountry(req, frontendIp);
 
     await User.findOneAndUpdate(
-      { telegramId: userId },
+      { telegramId: String(userId) },
       { 
         country: countryName, 
         isVpn: isVpnOrProxy, 
@@ -411,7 +411,7 @@ app.post('/api/user/sync', async (req, res) => {
   try {
     const { countryName, isVpnOrProxy } = await getClientIpAndCountry(req, frontendIp);
 
-    let user = await User.findOne({ telegramId }).populate('referrals', 'firstName username photoUrl gamesPlayedForReferral');
+    let user = await User.findOne({ telegramId: String(telegramId) }).populate('referrals', 'firstName username photoUrl gamesPlayedForReferral');
 
     if (!user) {
       user = new User({
@@ -427,7 +427,7 @@ app.post('/api/user/sync', async (req, res) => {
 
       if (referrerId && String(referrerId) !== String(telegramId)) {
         await User.findOneAndUpdate(
-          { telegramId: referrerId },
+          { telegramId: String(referrerId) },
           {
             $inc: { referralCount: 1 },
             $push: { referrals: user._id }
@@ -480,7 +480,7 @@ app.post('/api/game/reward', async (req, res) => {
       return res.status(403).json({ success: false, message: 'Cheating detected! Reward denied.' });
     }
 
-    let user = await User.findOne({ telegramId });
+    let user = await User.findOne({ telegramId: String(telegramId) });
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
@@ -491,7 +491,7 @@ app.post('/api/game/reward', async (req, res) => {
 
     if (user.referredBy && user.gamesPlayedForReferral >= 10 && !user.referralBonusGiven) {
       await User.findOneAndUpdate(
-        { telegramId: user.referredBy },
+        { telegramId: String(user.referredBy) },
         {
           $inc: {
             mainCoins: 1000,
@@ -515,6 +515,46 @@ app.post('/api/game/reward', async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
+// 🟢 ১. Generate Ad Token (Frontend-এর জন্য)
+app.post('/api/user/generate-ad-token', async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+    if (!telegramId) return res.status(400).json({ success: false, message: 'Telegram ID required' });
+
+    const subId = `sub_${telegramId}_${Date.now()}`;
+
+    // ডাটাবেজে পন্ডিং subId সেভ হচ্ছে
+    await User.findOneAndUpdate(
+      { telegramId: String(telegramId) },
+      { $set: { pendingSubId: subId } },
+      { upsert: true }
+    );
+
+    res.json({ success: true, subId });
+  } catch (err) {
+    console.error('Generate Ad Token Error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// 🟢 ২. Check Ad Status (Frontend Polling-এর জন্য)
+app.post('/api/user/check-ad-status', async (req, res) => {
+  try {
+    const { telegramId, subId } = req.body;
+    const user = await User.findOne({ telegramId: String(telegramId) });
+
+    if (user && user.lastVerifiedSubId === subId) {
+      res.json({ verified: true });
+    } else {
+      res.json({ verified: false });
+    }
+  } catch (err) {
+    console.error('Check Ad Status Error:', err);
+    res.status(500).json({ verified: false });
+  }
+});
+
 /*
 // AdsGram Webhook Endpoint
 app.get('/api/adsgram-reward', async (req, res) => {
@@ -592,7 +632,9 @@ app.get('/api/monetag-postback', async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ telegramId: String(sub_id) });
+    let user = await User.findOne({
+      $or: [{ pendingSubId: String(sub_id) }, { telegramId: String(sub_id) }]
+    });
 
     if (!user) {
       return res.status(404).send('User not found');
@@ -639,7 +681,7 @@ app.post('/api/monetag-reward', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Telegram ID is required' });
     }
 
-    const user = await User.findOne({ telegramId });
+    const user = await User.findOne({ telegramId: String(telegramId) });
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
@@ -678,7 +720,7 @@ app.post('/api/user/ad-reward', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Telegram ID is required' });
     }
 
-    const user = await User.findOne({ telegramId });
+    const user = await User.findOne({ telegramId: String(telegramId) });
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
@@ -771,7 +813,7 @@ app.post('/api/user/withdraw', async (req, res) => {
   try {
     const { telegramId, wallet, amount } = req.body;
 
-    const user = await User.findOne({ telegramId });
+    const user = await User.findOne({ telegramId: String(telegramId) });
     if (!user) {
       return res.status(404).json({ error: 'User not found!' });
     }
