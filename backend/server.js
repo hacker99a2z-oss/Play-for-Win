@@ -549,51 +549,6 @@ app.post('/api/game/reward', async (req, res) => {
   }
 });
 
-// ১. জেনারেট টোকেন
-router.post('/generate-ad-token', async (req, res) => {
-  try {
-    const { telegramId } = req.body;
-    if (!telegramId) return res.status(400).json({ success: false });
-
-    const token = 'ad_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
-    
-    await User.findOneAndUpdate(
-      { telegramId: String(telegramId) },
-      { pendingAdToken: token, lastAdTokenTime: Date.now() },
-      { upsert: true }
-    );
-
-    res.json({ success: true, subId: token });
-  } catch (err) {
-    res.status(500).json({ success: false });
-  }
-});
-
-// ২. ইন-অ্যাপ অ্যাড কনফার্মেশন (পোস্টব্যাক ছাড়া ভেরিফাই)
-router.post('/check-ad-status', async (req, res) => {
-  try {
-    const { telegramId, subId } = req.body;
-    const user = await User.findOne({ telegramId: String(telegramId) });
-
-    if (!user || !user.pendingAdToken) {
-      return res.json({ verified: false });
-    }
-
-    // ফ্রন্টএন্ড থেকে পাঠানো subId মিললে এবং ২ মিনিটের পুরোনো না হলে
-    if (user.pendingAdToken === subId) {
-      user.coins = (user.coins || 0) + 80; // প্রয়োজনীয় রিওয়ার্ড
-      user.pendingAdToken = null; // টোকেন এক্সপায়ার করা (অ্যান্টি-চিট)
-      await user.save();
-
-      return res.json({ verified: true });
-    }
-
-    res.json({ verified: false });
-  } catch (err) {
-    res.status(500).json({ verified: false });
-  }
-});
-
 /*
 // AdsGram Webhook Endpoint
 app.get('/api/adsgram-reward', async (req, res) => {
