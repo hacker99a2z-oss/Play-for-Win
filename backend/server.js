@@ -11,7 +11,7 @@ const authRoutes = require('./routes/auth');
 const User = require('./models/User'); 
 
 const app = express();
-const cors = require('cors');
+
 app.use(cors({
   origin: '*', // অথবা আপনার Vercel URL
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -19,11 +19,6 @@ app.use(cors({
 }));
 app.set('trust proxy', true);
 
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
