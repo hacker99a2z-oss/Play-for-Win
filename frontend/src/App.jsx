@@ -92,64 +92,25 @@ export default function App() {
     
   }, [syncUserData]);
 
+  // 🟢 ডুপ্লিকেট API কলমুক্ত Monetag Ad Handler
   const handlePlayAd = () => {
-    return new Promise(async (resolve) => {
-      const tg = window.Telegram?.WebApp;
-      const currentTelegramId = user?.telegramId || tg?.initDataUnsafe?.user?.id?.toString();
+    return new Promise((resolve) => {
+      // Monetag SDK-এর গ্লোবাল ফাংশন চেক
+      const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
 
-      if (!currentTelegramId) {
-        alert("⚠️ User data is loading. Please try again!");
-        resolve(false);
-        return;
-      }
-
-      try {
-        const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
-
-        if (typeof showAdFunc === 'function') {
-          // Monetag অ্যাড শো করা
-          showAdFunc()
-            .then(async () => {
-              // অ্যাড দেখা শেষ হলে সার্ভারে ভেরিফাই রিকোয়েস্ট যাবে
-              try {
-                const response = await fetch(`${BACKEND_URL}/api/user/verify-monetag-impression`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    telegramId: currentTelegramId,
-                    initData: window.Telegram?.WebApp?.initData || "",
-                    impressionVerified: true 
-                  })
-                });
-
-                const data = await response.json();
-
-                if (data && data.success) {
-                  syncUserData(); // রিফ্রেশ কয়েন
-                  resolve(true);
-                } else {
-                  // সার্ভার ভেরিফিকেশন ফেইল করলেও ইউজারকে বোনাস দিতে চাইলেresolve(true) করতে পারেন
-                  syncUserData();
-                  resolve(true); 
-                }
-              } catch (err) {
-                console.error("Verification network error:", err);
-                resolve(true); // নেটওয়ার্ক ইস্যু হলেও ফ্রন্টএন্ডে অ্যাপ্রুভ রাখা
-              }
-            })
-            .catch((err) => {
-              console.warn("Monetag promise handled:", err);
-              // Monetag অনেক সময় সফল ইমপ্রেশন হলেও catch বক্সে ফেলে। 
-              // তাই এখানেও ব্যাকএন্ড সিঙ্ক নিশ্চিত করে true রিটার্ন করা নিরাপদ।
-              syncUserData();
-              resolve(true);
-            });
-        } else {
-          alert("⚠️ Ad system is initializing. Please try again in 5 seconds.");
-          resolve(false);
-        }
-      } catch (err) {
-        alert("❌ Error connecting to server!");
+      if (typeof showAdFunc === 'function') {
+        showAdFunc()
+          .then(() => {
+            console.log("✅ Monetag Ad Finished Successfully");
+            resolve(true); // অ্যাড দেখা সম্পন্ন হয়েছে
+          })
+          .catch((err) => {
+            console.warn("⚠️ Monetag Ad Closed or Warning:", err);
+            // Monetag পপআপ বন্ধ বা স্কিপ করলেও ইউজার ফেইল মারবে না
+            resolve(true); 
+          });
+      } else {
+        alert("⚠️ Ad system is initializing. Please try again in 5 seconds.");
         resolve(false);
       }
     });
