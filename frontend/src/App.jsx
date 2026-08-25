@@ -103,7 +103,7 @@ export default function App() {
         resolve(false);
         return;
       }
-
+      /*
       if (window.Adsgram) {
         try {
           const AdController = window.Adsgram.init({
@@ -165,6 +165,66 @@ export default function App() {
         alert("⚠️ Ad Network failed to load! Check your internet or disable AdBlocker.");
         resolve(false);
       }
+      */
+      // 🟢 ACTIVE MONETAG SERVER-VERIFIED LOGIC
+      (async () => {
+        try {
+          // ১. সিকিউর ট্র্যাকিং টোকেন জেনারেট করা
+          const tokenRes = await fetch(`${BACKEND_URL}/api/user/generate-ad-token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ telegramId: currentTelegramId })
+          });
+          const tokenData = await tokenRes.json();
+
+          if (!tokenData || !tokenData.success) {
+            alert("❌ Failed to create ad verification session. Try again!");
+            resolve(false);
+            return;
+          }
+
+          const subId = tokenData.subId;
+
+          // ⚠️ Monetag Direct Link URL (আপনার Monetag URL দিয়ে রিপ্লেস করুন)
+          const MONETAG_BASE_URL = "https://your-monetag-direct-link.com?zoneid=YOUR_ZONE";
+          const finalAdUrl = `${MONETAG_BASE_URL}&sub_id=${subId}`;
+
+          // নতুন ট্যাবে Monetag Ad ওপেন
+          window.open(finalAdUrl, '_blank');
+
+          // ২. Monetag Postback এসেছে কিনা চেক করতে Polling শুরু
+          let attempts = 0;
+          const pollInterval = setInterval(async () => {
+            attempts += 1;
+
+            try {
+              const checkRes = await fetch(`${BACKEND_URL}/api/user/check-ad-status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegramId: currentTelegramId, subId })
+              });
+              const checkData = await checkRes.json();
+
+              if (checkData && checkData.verified) {
+                clearInterval(pollInterval);
+                syncUserData(); // ইউজার ডাটা রিফ্রেশ করা
+                resolve(true); // ✅ Monetag ভেরিফাইড হলে গেম বা রিওয়ার্ড অনুমোদন
+              } else if (attempts >= 20) { // ৪০ সেকেন্ড পর টাইমআউট
+                clearInterval(pollInterval);
+                alert("❌ Ad verification timed out! Please ensure you watched the ad.");
+                resolve(false);
+              }
+            } catch (err) {
+              console.error("Ad status check error:", err);
+            }
+          }, 2000);
+
+        } catch (err) {
+          console.error("Monetag Ad System Error:", err);
+          alert("❌ Network Error: Could not verify Monetag Ad.");
+          resolve(false);
+        }
+      })();
     });
   };
 
