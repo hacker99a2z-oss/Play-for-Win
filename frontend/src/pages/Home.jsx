@@ -210,6 +210,15 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     if (isAdCoinsLoading || isAdCoinsCooldownActive) return;
     setIsAdCoinsLoading(true);
 
+    // ইউজার আইডির ব্যাকআপ নিশ্চিত করা
+    const currentTelegramId = user?.telegramId || user?.id || window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
+
+    if (!currentTelegramId) {
+      alert("User identification failed. Please reload!");
+      setIsAdCoinsLoading(false);
+      return;
+    }
+
     try {
       const adWatched = await onPlayAd();
       if (!adWatched) {
@@ -220,7 +229,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       const response = await fetch(`${BACKEND_URL}/api/user/ad-reward`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegramId: user?.telegramId }),
+        body: JSON.stringify({ telegramId: currentTelegramId }),
       });
 
       const data = await response.json();
