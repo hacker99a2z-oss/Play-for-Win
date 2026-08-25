@@ -124,7 +124,7 @@ export default function App() {
 
         if (typeof showAdFunc === 'function') {
           // [পরিবর্তন ২]: Monetag-এ subId পাঠিয়ে অ্যাড চালু করা
-          showAdFunc({ subId: subId })
+          showAdFunc({ ymid: subId, sub_id: subId })
             .then(() => {
               // [পরিবর্তন ৩]: Postback কনফার্মেশন এর জন্য Polling চেক করা
               let checkCount = 0;
