@@ -13,12 +13,20 @@ const User = require('./models/User');
 const app = express();
 app.set('trust proxy', true);
 
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.get('/', (req, res) => {
   res.status(200).send('Server is alive and running!');
+});
+
+app.get('/ping', (req, res) => {
+  res.status(200).send('Pong');
 });
 
 // ============ MATCH SCHEMA ============
@@ -91,12 +99,12 @@ const getClientIpAndCountry = async (req, frontendIp) => {
   }
 
   try {
-    const ipResponse = await axios.get(`http://ip-api.com/json/${clientIp}?fields=status,country,proxy,hosting`, { timeout: 3000 });
-    if (ipResponse.data.status === 'success') {
+    const ipResponse = await axios.get(`https://ipapi.co/${clientIp}/json/`, { timeout: 3000 });
+    if (ipResponse.data && ipResponse.data.country_name) {
       return {
         clientIp,
-        countryName: ipResponse.data.country || 'Unknown',
-        isVpnOrProxy: Boolean(ipResponse.data.proxy || ipResponse.data.hosting)
+        countryName: ipResponse.data.country_name || 'Unknown',
+        isVpnOrProxy: Boolean(ipResponse.data.security?.is_proxy)
       };
     }
   } catch (err) {
