@@ -473,7 +473,7 @@ app.post('/api/user/sync', async (req, res) => {
   }
 });
 
-// Monetag Impression Verification Route
+// Monetag Impression Verification Route (Fixed Response)
 app.post('/api/user/verify-monetag-impression', async (req, res) => {
   try {
     const { telegramId, impressionVerified } = req.body;
@@ -487,7 +487,7 @@ app.post('/api/user/verify-monetag-impression', async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Anti-Cheat Cooldown (৩০ সেকেন্ড পর পর রিওয়ার্ড দেওয়া হবে)
+    // Anti-Cheat Cooldown (৩০ সেকেন্ড পর পর রিওয়ার্ড দেওয়া হবে)
     const now = Date.now();
     const lastAdTime = user.lastAdWatchedAt ? new Date(user.lastAdWatchedAt).getTime() : 0;
 
@@ -495,14 +495,26 @@ app.post('/api/user/verify-monetag-impression', async (req, res) => {
       return res.status(429).json({ success: false, message: 'Too frequent ad requests' });
     }
 
-    user.coins = (user.coins || 0) + 80;
+    // ৮০ কয়েন আপডেট
+    const REWARD_COINS = 80;
+    user.mainCoins = (user.mainCoins || 0) + REWARD_COINS;
+    user.dailyCoins = (user.dailyCoins || 0) + REWARD_COINS;
+    user.adsWatched = (user.adsWatched || 0) + 1;
     user.lastAdWatchedAt = new Date();
+    
     await user.save();
 
-    res.json({ success: true, verified: true, coins: user.coins });
+    // 🟢 আপডেট করা সঠিক রেসপন্স
+    return res.status(200).json({ 
+      success: true, 
+      verified: true, 
+      mainCoins: user.mainCoins,
+      dailyCoins: user.dailyCoins,
+      adsWatched: user.adsWatched 
+    });
   } catch (err) {
     console.error("Monetag verification error:", err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
