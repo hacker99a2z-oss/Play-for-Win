@@ -92,29 +92,71 @@ export default function App() {
     
   }, [syncUserData]);
 
-  // 🟢 ডুপ্লিকেট API কলমুক্ত Monetag Ad Handler
-  const handlePlayAd = () => {
-    return new Promise((resolve) => {
-      // Monetag SDK-এর গ্লোবাল ফাংশন চেক
-      const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
+// ১. অ্যাড প্লে করার ফাংশন
+const handlePlayAd = () => {
+  return new Promise((resolve) => {
+    // Monetag SDK-এর গ্লোবাল ফাংশন
+    const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
 
-      if (typeof showAdFunc === 'function') {
-        showAdFunc()
-          .then(() => {
-            console.log("✅ Monetag Ad Finished Successfully");
-            resolve(true); // অ্যাড দেখা সম্পন্ন হয়েছে
-          })
-          .catch((err) => {
-            console.warn("⚠️ Monetag Ad Closed or Warning:", err);
-            // Monetag পপআপ বন্ধ বা স্কিপ করলেও ইউজার ফেইল মারবে না
-            resolve(true); 
-          });
+    if (typeof showAdFunc === 'function') {
+      showAdFunc()
+        .then(() => {
+          console.log("✅ Monetag Ad Finished Successfully");
+          resolve(true); // অ্যাড সফলভাবে সম্পূর্ণ হয়েছে
+        })
+        .catch((err) => {
+          console.warn("⚠️ Ad closed early or failed to load:", err);
+          resolve(false); // অ্যাড সম্পন্ন না হলে false রিটার্ন করবে
+        });
+    } else {
+      alert("⚠️ Ad system is initializing. Please try again in 5 seconds.");
+      resolve(false);
+    }
+  });
+};
+
+// ২. বাটন ক্লিকে অ্যাড প্লে এবং ৮০ কয়েন ক্লেইম করার মেইন ফাংশন
+const watchAdAndClaimReward = async () => {
+  const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  
+  if (!telegramId) {
+    alert("Telegram User ID missing!");
+    return;
+  }
+
+  // অ্যাড চালু করুন
+  const isAdFinished = await handlePlayAd();
+
+  // অ্যাড সফলভাবে দেখা হলেই কেবল ব্যাকএন্ডে রিকোয়েস্ট যাবে
+  if (isAdFinished) {
+    try {
+      const response = await fetch('https://play-for-win.onrender.com/api/user/verify-monetag-impression', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          telegramId: String(telegramId),
+          impressionVerified: true
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        alert(`🎉 80 Coins Added! Main Balance: ${data.mainCoins}`);
+        // এখানে আপনার UI-তে কয়েন আপডেট করার ফাংশন থাকলে সেট করুন
       } else {
-        alert("⚠️ Ad system is initializing. Please try again in 5 seconds.");
-        resolve(false);
+        alert(data.message || 'Reward claim failed!');
       }
-    });
-  };
+    } catch (error) {
+      console.error("Fetch Error:", error);
+      alert("Network error. Please try again.");
+    }
+  } else {
+    alert("You must watch the full ad to get 80 coins.");
+  }
+};
 
   // ৩. অ্যাপ লোডিং স্ক্রিন
   if (loading) {
