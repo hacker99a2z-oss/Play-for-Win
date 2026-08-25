@@ -73,7 +73,23 @@ export default function App() {
         // Ignored for unsupported older versions
       }
     }
+
+    // 🟢 অ্যাপ মিনিমাইজ বা ব্যাকগ্রাউন্ডে গেলে ট্র্যাক করার লজিক
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.warn("⚠️ App was minimized or backgrounded!");
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
     syncUserData();
+
+    // 🧹 ক্লিনআপ ফাংশন
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+    
   }, [syncUserData]);
 
   // ২. Adsgram Ad Controller (Strict Event Success Check)
