@@ -185,12 +185,20 @@ export default function App() {
 
           const subId = tokenData.subId;
 
-          // ⚠️ Monetag Direct Link URL (আপনার Monetag URL দিয়ে রিপ্লেস করুন)
-          const MONETAG_BASE_URL = "https://your-monetag-direct-link.com?zoneid=YOUR_ZONE";
-          const finalAdUrl = `${MONETAG_BASE_URL}&sub_id=${subId}`;
+          // ⚠️ আপনার অরিজিনাল Monetag Direct Link URL এখানে বসান
+          const MONETAG_BASE_URL = "https://your-actual-monetag-link.com/zone?zoneid=123456"; // REPLACE THIS
+      
+          // sub_id যুক্ত করে ফাইনাল ইউআরএল
+          const finalAdUrl = MONETAG_BASE_URL.includes('?') 
+            ? `${MONETAG_BASE_URL}&sub_id=${subId}` 
+            : `${MONETAG_BASE_URL}?sub_id=${subId}`;
 
-          // নতুন ট্যাবে Monetag Ad ওপেন
-          window.open(finalAdUrl, '_blank');
+          // 🟢 টেলিগ্রামের ইন-অ্যাপ ব্রাউজারে পপ-আপ ব্লক না করে অ্যাড ওপেন করার সেফ উপায়
+          if (tg && tg.openLink) {
+            tg.openLink(finalAdUrl);
+          } else {
+            window.open(finalAdUrl, '_blank');
+          }
 
           // ২. Monetag Postback এসেছে কিনা চেক করতে Polling শুরু
           let attempts = 0;
@@ -208,10 +216,10 @@ export default function App() {
               if (checkData && checkData.verified) {
                 clearInterval(pollInterval);
                 syncUserData(); // ইউজার ডাটা রিফ্রেশ করা
-                resolve(true); // ✅ Monetag ভেরিফাইড হলে গেম বা রিওয়ার্ড অনুমোদন
+                resolve(true); // ✅ Monetag ভেরিফাইড হলে গেম বা রিওয়ার্ড অনুমোদন
               } else if (attempts >= 20) { // ৪০ সেকেন্ড পর টাইমআউট
                 clearInterval(pollInterval);
-                alert("❌ Ad verification timed out! Please ensure you watched the ad.");
+                alert("❌ Ad verification timed out! Please ensure you watched the ad properly.");
                 resolve(false);
               }
             } catch (err) {
