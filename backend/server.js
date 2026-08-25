@@ -658,6 +658,7 @@ app.get('/api/monetag-postback', async (req, res) => {
     user.adsWatched = (user.adsWatched || 0) + 1;
     user.mainCoins = (user.mainCoins || 0) + 80; // প্রয়োজন অনুযায়ী কয়েন দিন
     user.dailyCoins = (user.dailyCoins || 0) + 80;
+    user.lastVerifiedSubId = String(sub_id);
 
     await user.save();
 
@@ -667,81 +668,6 @@ app.get('/api/monetag-postback', async (req, res) => {
   } catch (err) {
     console.error('Monetag Postback Error:', err);
     return res.status(500).send('Internal Server Error');
-  }
-});
-
-// ২. Monetag Ad Verification & Reward Endpoint (Direct Front-End Verification)
-// ইউজারের Monetag অ্যাড দেখা হলে কয়েন যুক্ত বা কয়েন ডাবল করার জন্য এই API ব্যবহার হবে
-app.post('/api/monetag-reward', async (req, res) => {
-  try {
-    const { telegramId, type, rewardCoins } = req.body; 
-    // type: 'WATCH_AD_COINS' (80 Coins), 'DOUBLE_REWARD' (Game reward x2)
-    
-    if (!telegramId) {
-      return res.status(400).json({ success: false, message: 'Telegram ID is required' });
-    }
-
-    const user = await User.findOne({ telegramId: String(telegramId) });
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    let addedCoins = 80;
-
-    if (type === 'DOUBLE_REWARD' && rewardCoins) {
-      addedCoins = Number(rewardCoins); // ২ গুণ বাড়তি কয়েন
-    }
-
-    user.mainCoins = (user.mainCoins || 0) + addedCoins;
-    user.dailyCoins = (user.dailyCoins || 0) + addedCoins;
-    user.adsWatched = (user.adsWatched || 0) + 1;
-
-    await user.save();
-
-    console.log(`✅ Monetag Ad Verified! User: ${telegramId} received ${addedCoins} coins.`);
-
-    res.json({
-      success: true,
-      message: 'Monetag Ad Reward added successfully!',
-      mainCoins: user.mainCoins,
-      dailyCoins: user.dailyCoins
-    });
-  } catch (error) {
-    console.error('Error verifying Monetag ad reward:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
-
-// ৩. Ad Reward Endpoint (80 Coins - Monetag Compatible)
-app.post('/api/user/ad-reward', async (req, res) => {
-  try {
-    const { telegramId } = req.body;
-    if (!telegramId) {
-      return res.status(400).json({ success: false, message: 'Telegram ID is required' });
-    }
-
-    const user = await User.findOne({ telegramId: String(telegramId) });
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    const REWARD_COINS = 80;
-
-    user.mainCoins = (user.mainCoins || 0) + REWARD_COINS;
-    user.dailyCoins = (user.dailyCoins || 0) + REWARD_COINS;
-    user.adsWatched = (user.adsWatched || 0) + 1;
-
-    await user.save();
-
-    res.json({
-      success: true,
-      message: '80 Coins Reward added via Monetag!',
-      mainCoins: user.mainCoins,
-      dailyCoins: user.dailyCoins
-    });
-  } catch (error) {
-    console.error('Error adding ad reward:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
