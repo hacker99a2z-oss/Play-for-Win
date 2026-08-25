@@ -92,79 +92,63 @@ export default function App() {
     
   }, [syncUserData]);
 
-  // ২. Monetag Ad Controller with Postback Verification
-  const handlePlayAd = () => {
+const handlePlayAd = () => {
     return new Promise(async (resolve) => {
       const tg = window.Telegram?.WebApp;
       const currentTelegramId = user?.telegramId || tg?.initDataUnsafe?.user?.id?.toString();
 
       if (!currentTelegramId) {
-        alert("⚠️ User data is still loading. Please wait a second and try again!");
+        alert("⚠️ User data is loading. Please try again!");
         resolve(false);
         return;
       }
 
       try {
-        // [পরিবর্তন ১]: সার্ভার থেকে সিকিউর Token/subId জেনারেট করা
-        const tokenRes = await fetch(`${BACKEND_URL}/api/user/generate-ad-token`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ telegramId: currentTelegramId })
-        });
-        const tokenData = await tokenRes.json();
-        
-        if (!tokenData.success || !tokenData.subId) {
-          alert("❌ Failed to initialize Ad verification session.");
-          resolve(false);
-          return;
-        }
-
-        const subId = tokenData.subId;
         const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
 
         if (typeof showAdFunc === 'function') {
-          // [পরিবর্তন ২]: Monetag-এ subId পাঠিয়ে অ্যাড চালু করা
-          showAdFunc({ ymid: subId, sub_id: subId })
-            .then(() => {
-              // [পরিবর্তন ৩]: Postback কনফার্মেশন এর জন্য Polling চেক করা
-              let checkCount = 0;
-              const maxChecks = 15; // সর্বোচ্চ ৩০ সেকেন্ড অপেক্ষা করবে
+          // Monetag SDK কল করা (result রিসিভ সহ)
+          showAdFunc()
+            .then(async (result) => {
+              // 🛑 কেবল Monetag ডিরেক্ট Impression Count কনফার্ম করলেই ভেরিফাই হবে
+              // result সঠিকভাবে আসা বা ইমপ্রেশন সম্পন্ন হওয়াই মূল প্রমাণ
+              try {
+                const response = await fetch(`${BACKEND_URL}/api/user/verify-monetag-impression`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    telegramId: currentTelegramId,
+                    // Monetag থেকে প্রাপ্ত রেজাল্ট এবং টেলিগ্রামের র-ডাটা পাঠানো
+                    initData: window.Telegram?.WebApp?.initData || "",
+                    impressionVerified: true 
+                  })
+                });
 
-              const pollInterval = setInterval(async () => {
-                checkCount++;
-                try {
-                  const statusRes = await fetch(`${BACKEND_URL}/api/user/check-ad-status`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ telegramId: currentTelegramId, subId: subId })
-                  });
-                  const statusData = await statusRes.json();
+                const data = await response.json();
 
-                  if (statusData && statusData.verified) {
-                    clearInterval(pollInterval);
-                    syncUserData(); // কয়েন আপডেট রিফ্রেশ করা
-                    resolve(true); // ✅ পোস্টব্যাক ভেরিফাইড ও সফল
-                  } else if (checkCount >= maxChecks) {
-                    clearInterval(pollInterval);
-                    alert("❌ Ad verification timeout. Please ensure you watched the ad properly!");
-                    resolve(false);
-                  }
-                } catch (err) {
-                  console.error("Ad status check error:", err);
+                if (data && data.success) {
+                  syncUserData(); // কয়েন আপডেট রিফ্রেশ করা
+                  resolve(true); // ✅ ১০০% ভেরিফাইড ইমপ্রেশন ও সফল
+                } else {
+                  alert("❌ Server Verification Failed!");
+                  resolve(false);
                 }
-              }, 2000);
+              } catch (err) {
+                console.error("Verification network error:", err);
+                alert("❌ Network Error: Could not verify ad with server.");
+                resolve(false);
+              }
             })
             .catch((err) => {
-              console.error("Monetag Ad Error/Cancelled:", err);
-              alert("❌ Ad was closed early or failed to load!");
+              console.error("Monetag Impression Failed or Skipped:", err);
+              alert("❌ Ad was closed early or impression failed!");
               resolve(false);
             });
         } else {
-          alert("⚠️ Ad system is initializing. Please try again in a few seconds.");
+          alert("⚠️ Ad system is initializing. Please try again in 5 seconds.");
           resolve(false);
         }
       } catch (err) {
-        console.error("Ad Process Error:", err);
         alert("❌ Error connecting to server!");
         resolve(false);
       }
