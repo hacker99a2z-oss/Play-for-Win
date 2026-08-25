@@ -219,7 +219,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     }
 
     try {
-      const adWatched = await onPlayAd();
+      const adWatched = await onPlayAd(currentTelegramId);
       if (!adWatched) {
         setIsAdCoinsLoading(false);
         return;
@@ -264,7 +264,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         setHasFreePlay(false);
         startGame();
       } else {
-        const adWatched = await onPlayAd();
+        const adWatched = await onPlayAd(currentTelegramId);
         if (!adWatched) {
           setIsLoading(false);
           return; 
@@ -365,7 +365,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     };
 
     if (isDouble) {
-      const adWatched = await onPlayAd();
+      const adWatched = await onPlayAd(currentTelegramId);
       if (!adWatched) {
         setIsClaiming(false);
         return;
