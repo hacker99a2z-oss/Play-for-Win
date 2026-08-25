@@ -24,6 +24,10 @@ const userSchema = new mongoose.Schema({
   country: { type: String, default: 'Unknown' },
   isVpn: { type: Boolean, default: false },
 
+  // 🟢 Monetag Polling System (এই ২টা লাইন যোগ করবেন)
+  pendingSubId: { type: String, default: '' },
+  lastVerifiedSubId: { type: String, default: '' },
+
   createdAt: { type: Date, default: Date.now }
 });
 
