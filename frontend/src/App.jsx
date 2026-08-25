@@ -92,70 +92,61 @@ export default function App() {
     
   }, [syncUserData]);
 
-// 🟢 ১. Monetag SDK সেফ অ্যাড ফাংশন (Preload & ymid সহ)
-const handlePlayAd = (telegramId) => {
+// 🟢 ১. Monetag SDK সেফ অ্যাড ফাংশন
+const handlePlayAd = (telegramId = null) => {
   return new Promise((resolve) => {
-    // Monetag-এর আসল ফাংশন
+    // telegramId না থাকলে স্টেট বা SDK থেকে নেওয়া হবে
+    const activeTgId = 
+      telegramId || 
+      user?.telegramId || 
+      user?.id || 
+      window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || 
+      "123456789";
+
     const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
 
+    // ৫ সেকেন্ডের সেফটি টাইমার (অ্যাড না আসলে অ্যাপ যাতে আটকে না যায়)
+    const timeout = setTimeout(() => {
+      console.warn("⚠️ Monetag timeout. Auto resolving...");
+      resolve(true);
+    }, 5000);
+
     if (typeof showAdFunc === 'function') {
-      // ⚠️ Monetag Docs অনুযায়ী ymid পাস করা হলো
-      showAdFunc({ ymid: String(telegramId) })
-        .then(() => {
-          console.log("✅ Monetag Ad Completed Successfully");
+      try {
+        const adResult = showAdFunc({ ymid: String(activeTgId) });
+
+        // যদি SDK Promise রিটার্ন করে
+        if (adResult && typeof adResult.then === 'function') {
+          adResult
+            .then(() => {
+              clearTimeout(timeout);
+              console.log("✅ Monetag Ad Completed Successfully");
+              resolve(true);
+            })
+            .catch((err) => {
+              clearTimeout(timeout);
+              console.warn("⚠️ Monetag SDK Failure/Skip Ignored:", err);
+              resolve(true);
+            });
+        } else {
+          // যদি সরাসরি রান হয় (Non-Promise)
+          clearTimeout(timeout);
+          console.log("✅ Monetag Ad Executed");
           resolve(true);
-        })
-        .catch((err) => {
-          console.warn("⚠️ Monetag SDK Failure/Skip Ignored:", err);
-          // অ্যাড ক্লোজ বা স্কিপ করলেও ক্লেইম আটকাবে না
-          resolve(true);
-        });
+        }
+      } catch (err) {
+        clearTimeout(timeout);
+        console.error("⚠️ Monetag Execution Error:", err);
+        resolve(true);
+      }
     } else {
+      clearTimeout(timeout);
       console.warn("⚠️ Monetag SDK Function Not Loaded Yet!");
       resolve(true);
     }
   });
 };
-
-// 🟢 ২. ক্লেইম বাটনের অরিজিনাল ফাংশন
-const watchAdAndClaimReward = async () => {
-  // Telegram WebApp Ready ঘোষণা
-  if (window.Telegram?.WebApp) {
-    window.Telegram.WebApp.ready();
-  }
-
-  const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || "123456789";
-
-  // ১. Monetag Ad Trigger (ymid সহ)
-  await handlePlayAd(telegramId);
-
-  // ২. ব্যাকএন্ডে ৮০ কয়েন জমার নিরাপদ কল
-  try {
-    const response = await fetch('https://play-for-win.onrender.com/api/user/verify-monetag-impression', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        telegramId: String(telegramId),
-        impressionVerified: true
-      })
-    });
-
-    const data = await response.json().catch(() => ({}));
-
-    if (response.ok && data.success) {
-      alert(`🎉 80 Coins Added! Balance: ${data.mainCoins}`);
-    } else {
-      // ব্যাকএন্ডের আসল বার্তা দেখাবে
-      alert(data.message || `Reward Failed (Status: ${response.status})`);
-    }
-
-  } catch (error) {
-    console.error("Fetch Request Failed:", error);
-    alert("Server sleeping. Please try again after 5 seconds!");
-  }
-};
+  
   // ৩. অ্যাপ লোডিং স্ক্রিন
   if (loading) {
     return (
