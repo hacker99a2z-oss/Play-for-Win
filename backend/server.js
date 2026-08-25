@@ -464,6 +464,39 @@ app.post('/api/user/sync', async (req, res) => {
   }
 });
 
+// Monetag Impression Verification Route
+app.post('/api/user/verify-monetag-impression', async (req, res) => {
+  try {
+    const { telegramId, impressionVerified } = req.body;
+
+    if (!telegramId || !impressionVerified) {
+      return res.status(400).json({ success: false, message: 'Invalid impression request' });
+    }
+
+    const user = await User.findOne({ telegramId: String(telegramId) });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Anti-Cheat Cooldown (৩০ সেকেন্ড পর পর রিওয়ার্ড দেওয়া হবে)
+    const now = Date.now();
+    const lastAdTime = user.lastAdWatchedAt ? new Date(user.lastAdWatchedAt).getTime() : 0;
+
+    if (now - lastAdTime < 30000) { 
+      return res.status(429).json({ success: false, message: 'Too frequent ad requests' });
+    }
+
+    user.coins = (user.coins || 0) + 80;
+    user.lastAdWatchedAt = new Date();
+    await user.save();
+
+    res.json({ success: true, verified: true, coins: user.coins });
+  } catch (err) {
+    console.error("Monetag verification error:", err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // ৫. রিওয়ার্ড ক্লেইম (Anti-Cheat Security)
 app.post('/api/game/reward', async (req, res) => {
   try {
