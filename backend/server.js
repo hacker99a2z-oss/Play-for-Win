@@ -139,7 +139,65 @@ function verifyTelegramWebAppData(telegramInitData) {
   }
 }
 
-// ১. কয়েন কাটার API (Fighting / Battle Start এর জন্য)
+// 🟢 ঠিক এই জায়গায় processMatchCompletion ফাংশনটি বসান
+const processMatchCompletion = async (matchId, telegramId, score, timeTaken) => {
+  let match = await Match.findById(matchId);
+  if (!match) throw new Error('Match not found');
+
+  const playerIndex = match.players.findIndex(p => String(p.telegramId) === String(telegramId));
+  
+  if (playerIndex !== -1) {
+    match.players[playerIndex].hits = Number(score) || 0;
+    match.players[playerIndex].timeTaken = Number(timeTaken) || 0;
+    match.players[playerIndex].finishedAt = new Date();
+  } else {
+    match.players.push({
+      telegramId: String(telegramId),
+      hits: Number(score) || 0,
+      timeTaken: Number(timeTaken) || 0,
+      finishedAt: new Date()
+    });
+  }
+
+  const isFull = match.players.length >= match.mode;
+  const allFinished = isFull && match.players.every(p => p.finishedAt);
+
+  if (allFinished) {
+    match.status = 'completed';
+
+    // স্কোর ও সময় অনুযায়ী র‍্যাঙ্ক নির্ধারণ
+    match.players.sort((a, b) => {
+      if (b.hits !== a.hits) return b.hits - a.hits;
+      return (a.timeTaken || 0) - (b.timeTaken || 0);
+    });
+
+    // প্রাইজ বণ্টন
+    if (match.mode === 2) {
+      if (match.players[0]) match.players[0].prizeUSD = 0.10;
+      if (match.players[1]) match.players[1].prizeUSD = 0.00;
+    } else if (match.mode === 4) {
+      if (match.players[0]) match.players[0].prizeUSD = 0.10;
+      if (match.players[1]) match.players[1].prizeUSD = 0.07;
+      if (match.players[2]) match.players[2].prizeUSD = 0.03;
+      if (match.players[3]) match.players[3].prizeUSD = 0.00;
+    }
+
+    // বিজয়ী প্লেয়ারদের অ্যাকাউন্টে বোনাস ডলার যোগ
+    for (const p of match.players) {
+      if (p.prizeUSD > 0) {
+        await User.findOneAndUpdate(
+          { telegramId: p.telegramId },
+          { $inc: { bonusBalanceUSD: p.prizeUSD } }
+        );
+      }
+    }
+  }
+
+  await match.save();
+  return match;
+};
+
+// Deduct Coins API (Updated for double spend prevention)
 app.post('/api/user/deduct-coins', async (req, res) => {
   try {
     const { telegramId, amount } = req.body;
@@ -149,12 +207,7 @@ app.post('/api/user/deduct-coins', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid payload' });
     }
 
-    const user = await User.findOne({ telegramId });
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    if ((user.mainCoins || 0) < deductAmount) {
-      return res.status(400).json({ success: false, message: 'Insufficient coins' });
-    }
-
+    // 🔴 আপডেট: findOneAndUpdate ব্যবহার করে ব্যালেন্স পর্যাপ্ত থাকলে তবেই কাটা
     const updatedUser = await User.findOneAndUpdate(
       { telegramId, mainCoins: { $gte: deductAmount } },
       { $inc: { mainCoins: -deductAmount } },
@@ -162,7 +215,7 @@ app.post('/api/user/deduct-coins', async (req, res) => {
     );
 
     if (!updatedUser) {
-      return res.status(400).json({ success: false, message: 'Transaction failed/Insufficient balance' });
+      return res.status(400).json({ success: false, message: 'Insufficient balance or user not found' });
     }
 
     res.json({ success: true, remainingCoins: updatedUser.mainCoins });
@@ -172,7 +225,7 @@ app.post('/api/user/deduct-coins', async (req, res) => {
   }
 });
 
-// ২. ম্যাচ জয়েনিং, কয়েন কাটা ও পেন্ডিং লিমিট চেক API
+// Match Join API (Updated with Atomic Operations)
 app.post('/api/match/join', async (req, res) => {
   try {
     const { telegramId, firstName, mode } = req.body;
@@ -185,17 +238,6 @@ app.post('/api/match/join', async (req, res) => {
     const playerTelegramId = String(telegramId);
     const entryFee = 250;
 
-    // ১. ইউজার খুঁজে কয়েন চেক করা
-    const user = await User.findOne({ telegramId: playerTelegramId });
-    if (!user) {
-      return res.status(404).json({ success: false, error: "User not found" });
-    }
-
-    if ((user.mainCoins || 0) < entryFee) {
-      return res.status(400).json({ success: false, error: "Insufficient coins! 250 Coins required." });
-    }
-
-    // ২. পেন্ডিং ম্যাচ সংখ্যা লিমিট চেক করা (সর্বোচ্চ ৩টি)
     const userPendingCount = await Match.countDocuments({
       status: 'pending',
       'players.telegramId': playerTelegramId
@@ -208,19 +250,31 @@ app.post('/api/match/join', async (req, res) => {
       });
     }
 
-    // 🔴 ৩. ইউজারের অ্যাকাউন্ট থেকে ২৫০ কয়েন কেটে নেওয়া
-    user.mainCoins -= entryFee;
-    await user.save();
+    // 🔴 আপডেট: পারমাণবিক উপায়ে (Atomic) ব্যালেন্স চেক ও কাটা
+    const user = await User.findOneAndUpdate(
+      { telegramId: playerTelegramId, mainCoins: { $gte: entryFee } },
+      { $inc: { mainCoins: -entryFee } },
+      { new: true }
+    );
 
-    // ৪. আগের তৈরি থাকা ফাঁকা পেন্ডিং ম্যাচ খোঁজা
-    let match = await Match.findOne({
-      status: 'pending',
-      mode: matchMode,
-      $expr: { $lt: [{ $size: "$players" }, matchMode] },
-      'players.telegramId': { $ne: playerTelegramId }
-    });
+    if (!user) {
+      return res.status(400).json({ success: false, error: "Insufficient coins! 250 Coins required." });
+    }
 
-    // ৫. যদি ফাঁকা ম্যাচ না থাকে, তবে নতুন ম্যাচ তৈরি করা
+    // 🔴 আপডেট: পারমাণবিক উপায়ে (Atomic) প্লেয়ার লিস্টে যুক্ত করা (রুম ফুল হওয়া ঠেকাতে)
+    let match = await Match.findOneAndUpdate(
+      {
+        status: 'pending',
+        mode: matchMode,
+        $expr: { $lt: [{ $size: "$players" }, matchMode] },
+        'players.telegramId': { $ne: playerTelegramId }
+      },
+      {
+        $push: { players: { telegramId: playerTelegramId, firstName: firstName || 'Player', hits: 0, timeTaken: 0 } }
+      },
+      { new: true }
+    );
+
     if (!match) {
       match = new Match({
         mode: matchMode,
@@ -228,12 +282,8 @@ app.post('/api/match/join', async (req, res) => {
         status: 'pending',
         players: [{ telegramId: playerTelegramId, firstName: firstName || 'Player', hits: 0, timeTaken: 0 }]
       });
-    } else {
-      // ফাঁকা ম্যাচ থাকলে নতুন প্লেয়ারকে যুক্ত করা
-      match.players.push({ telegramId: playerTelegramId, firstName: firstName || 'Player', hits: 0, timeTaken: 0 });
+      await match.save();
     }
-
-    await match.save();
 
     return res.status(200).json({ 
       success: true, 
@@ -245,75 +295,27 @@ app.post('/api/match/join', async (req, res) => {
     console.error("Match join error:", err);
     return res.status(500).json({ 
       success: false, 
-      error: "Server internal error! Check Render backend logs." 
+      error: "Server internal error!" 
     });
   }
 });
 
-// ৩. স্কোর সাবমিট API
-app.post('/api/match/submit-score', async (req, res) => {
+// Score Submit / Finish API (Updated)
+app.post(['/api/match/submit-score', '/api/match/finish'], async (req, res) => {
   try {
-    const { matchId, telegramId, hits, timeTaken } = req.body;
+    const { matchId, telegramId, hits, score, timeTaken } = req.body;
+    const finalScore = hits !== undefined ? hits : score;
 
     if (!matchId || !telegramId) {
-      return res.status(400).json({ error: 'matchId and telegramId required' });
+      return res.status(400).json({ success: false, message: 'matchId and telegramId required' });
     }
 
-    const match = await Match.findById(matchId);
-    if (!match) return res.status(404).json({ error: 'Match not found' });
-
-    let player = match.players.find(p => String(p.telegramId) === String(telegramId));
-
-    if (player) {
-      player.hits = Number(hits) || 0;
-      player.timeTaken = Number(timeTaken) || 0;
-      player.finishedAt = new Date();
-    } else {
-      match.players.push({
-        telegramId: String(telegramId),
-        hits: Number(hits) || 0,
-        timeTaken: Number(timeTaken) || 0,
-        finishedAt: new Date()
-      });
-    }
-
-    const isFull = match.players.length >= match.mode;
-    const allFinished = isFull && match.players.every(p => p.finishedAt);
-
-    if (allFinished) {
-      match.status = 'completed';
-
-      match.players.sort((a, b) => {
-        if (b.hits !== a.hits) return b.hits - a.hits;
-        return (a.timeTaken || 0) - (b.timeTaken || 0);
-      });
-
-      // প্রাইজ ডিস্ট্রিবিউশন
-      if (match.mode === 2) {
-        if (match.players[0]) match.players[0].prizeUSD = 0.10;
-        if (match.players[1]) match.players[1].prizeUSD = 0.00;
-      } else if (match.mode === 4) {
-        if (match.players[0]) match.players[0].prizeUSD = 0.10;
-        if (match.players[1]) match.players[1].prizeUSD = 0.07;
-        if (match.players[2]) match.players[2].prizeUSD = 0.03;
-        if (match.players[3]) match.players[3].prizeUSD = 0.00;
-      }
-
-      for (const p of match.players) {
-        if (p.prizeUSD > 0) {
-          await User.findOneAndUpdate(
-            { telegramId: p.telegramId },
-            { $inc: { bonusBalanceUSD: p.prizeUSD } }
-          );
-        }
-      }
-    }
-
-    await match.save();
+    // হেলপার ফাংশনটিকে কল করা হচ্ছে
+    const match = await processMatchCompletion(matchId, telegramId, finalScore, timeTaken);
     res.json({ success: true, match });
   } catch (err) {
     console.error('Submit Score Error:', err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ success: false, error: err.message || 'Server error' });
   }
 });
 
