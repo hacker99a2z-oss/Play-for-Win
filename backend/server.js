@@ -492,7 +492,7 @@ app.post('/api/user/verify-monetag-impression', async (req, res) => {
     const now = Date.now();
     const lastAdTime = user.lastAdWatchedAt ? new Date(user.lastAdWatchedAt).getTime() : 0;
 
-    if (now - lastAdTime < 30000) { 
+    if (now - lastAdTime < 10000) { 
       return res.status(429).json({ success: false, message: 'Too frequent ad requests' });
     }
 
