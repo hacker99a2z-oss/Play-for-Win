@@ -13,9 +13,10 @@ const User = require('./models/User');
 const app = express();
 
 app.use(cors({
-  origin: '*', // অথবা আপনার Vercel URL
+  origin: ['https://play-for-win-bice.vercel.app', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 app.set('trust proxy', true);
 
