@@ -92,23 +92,38 @@ export default function App() {
     
   }, [syncUserData]);
 
-const handleWatchAd = async () => {
-  // ১. টেলিগ্রাম ইউজারের আইডি চেক
-  const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || "123456789";
-
-  // ২. Monetag Ad Trigger (নিরাপদভাবে ট্রাই-ক্যাচ করা)
-  try {
+// 🟢 ১. অ্যাড দেখানোর সেফ ফাংশন (Monetag internal error এড়াতে)
+const handlePlayAd = () => {
+  return new Promise((resolve) => {
     const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
-    if (typeof showAdFunc === 'function') {
-      await showAdFunc().catch((e) => console.log("Ad closed or blocked silently"));
-    } else {
-      console.log("Ad SDK not ready yet");
-    }
-  } catch (err) {
-    console.warn("SDK call error ignored:", err);
-  }
 
-  // ৩. ব্যাকএন্ডে ৮০ কয়েন পাঠানোর রিকোয়েস্ট
+    if (typeof showAdFunc === 'function') {
+      showAdFunc()
+        .then(() => {
+          console.log("✅ Ad Finished Successfully");
+          resolve(true);
+        })
+        .catch((err) => {
+          // Monetag-এর internal pixel/network failed হলেও ইউজারকে রিওয়ার্ড দিন
+          console.warn("⚠️ Monetag SDK Warning/Error Ignored:", err);
+          resolve(true); 
+        });
+    } else {
+      // যদি SDK লোড না-ও হয়, টেস্ট বা ফলব্যাক হিসেবে ক্লেইম অ্যালাউ করবে
+      console.warn("⚠️ Ad SDK function not found, bypassing for reward...");
+      resolve(true);
+    }
+  });
+};
+
+// 🟢 ২. ক্লেইম বাটনের ফাংশন
+const watchAdAndClaimReward = async () => {
+  const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || "123456789"; // টেস্টের জন্য ডিফোল্ট ID
+
+  // অ্যাড কল করা
+  await handlePlayAd();
+
+  // Monetag-এর internal error যাই হোক না কেন, সরাসরি ব্যাকএন্ডে ৮০ কয়েন জমা করার রিকোয়েস্ট যাবে
   try {
     const response = await fetch('https://play-for-win.onrender.com/api/user/verify-monetag-impression', {
       method: 'POST',
@@ -121,23 +136,18 @@ const handleWatchAd = async () => {
       })
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP Error: ${response.status}`);
-    }
-
     const data = await response.json();
 
-    if (data && data.success) {
-      alert(`🎉 80 Coins Added! Main Balance: ${data.mainCoins}`);
+    if (response.ok && data.success) {
+      alert(`🎉 80 Coins Added Successfully! Total: ${data.mainCoins}`);
     } else {
-      alert(data?.message || 'Reward claim failed!');
+      alert(data.message || 'Reward claim failed!');
     }
   } catch (error) {
-    console.error("Backend Error:", error);
-    alert("Server takes time to respond. Please try again after 5 seconds.");
+    console.error("Backend Fetch Error:", error);
+    alert("Backend Server Error. Make sure Render server is awake!");
   }
 };
-
   // ৩. অ্যাপ লোডিং স্ক্রিন
   if (loading) {
     return (
