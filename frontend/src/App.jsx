@@ -92,38 +92,22 @@ export default function App() {
     
   }, [syncUserData]);
 
-// 🟢 ১. অ্যাড দেখানোর সেফ ফাংশন (Monetag internal error এড়াতে)
-const handlePlayAd = () => {
-  return new Promise((resolve) => {
+const handleWatchAd = async () => {
+  // ১. Telegram User ID সংগৃহীত নিশ্চিত করুন
+  const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  const telegramId = tgUser?.id || "123456789"; // ব্যাকআপ টেস্ট ID
+
+  // ২. Monetag Ad Trigger (AdBlocker বা Error হ্যান্ডলিং সহ)
+  try {
     const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
-
     if (typeof showAdFunc === 'function') {
-      showAdFunc()
-        .then(() => {
-          console.log("✅ Ad Finished Successfully");
-          resolve(true);
-        })
-        .catch((err) => {
-          // Monetag-এর internal pixel/network failed হলেও ইউজারকে রিওয়ার্ড দিন
-          console.warn("⚠️ Monetag SDK Warning/Error Ignored:", err);
-          resolve(true); 
-        });
-    } else {
-      // যদি SDK লোড না-ও হয়, টেস্ট বা ফলব্যাক হিসেবে ক্লেইম অ্যালাউ করবে
-      console.warn("⚠️ Ad SDK function not found, bypassing for reward...");
-      resolve(true);
+      await showAdFunc().catch(e => console.warn("Monetag Ad skipped/blocked:", e));
     }
-  });
-};
+  } catch (adErr) {
+    console.warn("SDK Not Ready, bypassing to reward step:", adErr);
+  }
 
-// 🟢 ২. ক্লেইম বাটনের ফাংশন
-const watchAdAndClaimReward = async () => {
-  const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || "123456789"; // টেস্টের জন্য ডিফোল্ট ID
-
-  // অ্যাড কল করা
-  await handlePlayAd();
-
-  // Monetag-এর internal error যাই হোক না কেন, সরাসরি ব্যাকএন্ডে ৮০ কয়েন জমা করার রিকোয়েস্ট যাবে
+  // ৩. ব্যাকএন্ডে ৮০ কয়েন জমা করার রিকোয়েস্ট
   try {
     const response = await fetch('https://play-for-win.onrender.com/api/user/verify-monetag-impression', {
       method: 'POST',
@@ -138,14 +122,14 @@ const watchAdAndClaimReward = async () => {
 
     const data = await response.json();
 
-    if (response.ok && data.success) {
-      alert(`🎉 80 Coins Added Successfully! Total: ${data.mainCoins}`);
+    if (data.success) {
+      alert(`🎉 80 Coins Added! Balance: ${data.mainCoins}`);
     } else {
-      alert(data.message || 'Reward claim failed!');
+      alert(`⚠️ ${data.message || 'Reward failed'}`);
     }
   } catch (error) {
-    console.error("Backend Fetch Error:", error);
-    alert("Backend Server Error. Make sure Render server is awake!");
+    console.error("Fetch Exception:", error);
+    alert("Render server is sleeping. Please wait 10 seconds and try again.");
   }
 };
 
