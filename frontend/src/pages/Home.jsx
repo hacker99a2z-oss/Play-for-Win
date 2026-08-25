@@ -205,12 +205,11 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     return () => clearInterval(timer);
   }, [isAdCoinsCooldownActive, adCoinsCooldown]);
 
-  // (খ) ৮০ কয়েন ক্লেইম করার ফাংশন
+  // ৮০ কয়েন ক্লেইম করার ফিক্সড ফাংশন
   const handleWatchAdForCoins = async () => {
     if (isAdCoinsLoading || isAdCoinsCooldownActive) return;
     setIsAdCoinsLoading(true);
 
-    // ইউজার আইডির ব্যাকআপ নিশ্চিত করা
     const currentTelegramId = user?.telegramId || user?.id || window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
 
     if (!currentTelegramId) {
