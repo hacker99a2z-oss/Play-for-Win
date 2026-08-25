@@ -321,6 +321,13 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       return;
     }
     setIsClaiming(true);
+    const currentTelegramId = user?.telegramId || user?.id || window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
+
+    if (!currentTelegramId) {
+      alert("User identification failed. Please reload!");
+      setIsClaiming(false);
+      return;
+    }
 
     const sendScoreToBackend = async (finalScore) => {
       try {
@@ -328,7 +335,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            telegramId: user?.telegramId,
+            telegramId: currentTelegramId,
             coins: finalScore
           }),
         });
