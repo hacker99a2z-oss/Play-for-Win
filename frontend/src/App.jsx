@@ -186,7 +186,7 @@ export default function App() {
           const subId = tokenData.subId;
 
           // ⚠️ আপনার অরিজিনাল Monetag Direct Link URL এখানে বসান
-          const MONETAG_BASE_URL = "https://your-actual-monetag-link.com/zone?zoneid=123456"; // REPLACE THIS
+          const MONETAG_BASE_URL = "https://omg10.com/4/11648494"; // REPLACE THIS
       
           // sub_id যুক্ত করে ফাইনাল ইউআরএল
           const finalAdUrl = MONETAG_BASE_URL.includes('?') 
