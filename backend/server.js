@@ -11,6 +11,12 @@ const authRoutes = require('./routes/auth');
 const User = require('./models/User'); 
 
 const app = express();
+const cors = require('cors');
+app.use(cors({
+  origin: '*', // অথবা আপনার Vercel URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.set('trust proxy', true);
 
 app.use(cors({
