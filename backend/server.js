@@ -12,12 +12,7 @@ const User = require('./models/User');
 
 const app = express();
 
-app.use(cors({
-  origin: ['https://play-for-win-bice.vercel.app', 'http://localhost:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+app.use(cors({ origin: '*' }));
 app.set('trust proxy', true);
 
 app.use(express.json({ limit: '10mb' }));
@@ -474,13 +469,13 @@ app.post('/api/user/sync', async (req, res) => {
   }
 });
 
-// Monetag Impression Verification Route (Fixed Response)
+// monetag verification route
 app.post('/api/user/verify-monetag-impression', async (req, res) => {
   try {
-    const { telegramId, impressionVerified } = req.body;
+    const { telegramId } = req.body;
 
-    if (!telegramId || !impressionVerified) {
-      return res.status(400).json({ success: false, message: 'Invalid impression request' });
+    if (!telegramId) {
+      return res.status(400).json({ success: false, message: 'telegramId is required' });
     }
 
     const user = await User.findOne({ telegramId: String(telegramId) });
@@ -488,15 +483,6 @@ app.post('/api/user/verify-monetag-impression', async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Anti-Cheat Cooldown (৩০ সেকেন্ড পর পর রিওয়ার্ড দেওয়া হবে)
-    const now = Date.now();
-    const lastAdTime = user.lastAdWatchedAt ? new Date(user.lastAdWatchedAt).getTime() : 0;
-
-    if (now - lastAdTime < 10000) { 
-      return res.status(429).json({ success: false, message: 'Too frequent ad requests' });
-    }
-
-    // ৮০ কয়েন আপডেট
     const REWARD_COINS = 80;
     user.mainCoins = (user.mainCoins || 0) + REWARD_COINS;
     user.dailyCoins = (user.dailyCoins || 0) + REWARD_COINS;
@@ -505,16 +491,13 @@ app.post('/api/user/verify-monetag-impression', async (req, res) => {
     
     await user.save();
 
-    // 🟢 আপডেট করা সঠিক রেসপন্স
     return res.status(200).json({ 
       success: true, 
-      verified: true, 
       mainCoins: user.mainCoins,
-      dailyCoins: user.dailyCoins,
-      adsWatched: user.adsWatched 
+      dailyCoins: user.dailyCoins
     });
   } catch (err) {
-    console.error("Monetag verification error:", err);
+    console.error("Backend Error:", err);
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 });
