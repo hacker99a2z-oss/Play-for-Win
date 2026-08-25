@@ -166,73 +166,44 @@ export default function App() {
         resolve(false);
       }
       */
-      // 🟢 ACTIVE MONETAG SERVER-VERIFIED LOGIC
-      (async () => {
-        try {
-          // ১. সিকিউর ট্র্যাকিং টোকেন জেনারেট করা
-          const tokenRes = await fetch(`${BACKEND_URL}/api/user/generate-ad-token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ telegramId: currentTelegramId })
-          });
-          const tokenData = await tokenRes.json();
+      // 🟢 MONETAG IN-APP SDK LOGIC (Adsgram Style)
+      // Monetag SDK থেকে আসা জোন ফাংশনটি কল করা
+      const showAdFunc = window.show_RewardedInterstitial || window.show_3444057 || window.showPromise;
 
-          if (!tokenData || !tokenData.success) {
-            alert("❌ Failed to create ad verification session. Try again!");
-            resolve(false);
-            return;
-          }
-
-          const subId = tokenData.subId;
-
-          // ⚠️ আপনার অরিজিনাল Monetag Direct Link URL এখানে বসান
-          const MONETAG_BASE_URL = "https://omg10.com/4/11648494"; // REPLACE THIS
-      
-          // sub_id যুক্ত করে ফাইনাল ইউআরএল
-          const finalAdUrl = MONETAG_BASE_URL.includes('?') 
-            ? `${MONETAG_BASE_URL}&sub_id=${subId}` 
-            : `${MONETAG_BASE_URL}?sub_id=${subId}`;
-
-          // 🟢 টেলিগ্রামের ইন-অ্যাপ ব্রাউজারে পপ-আপ ব্লক না করে অ্যাড ওপেন করার সেফ উপায়
-          if (tg && tg.openLink) {
-            tg.openLink(finalAdUrl);
-          } else {
-            window.open(finalAdUrl, '_blank');
-          }
-
-          // ২. Monetag Postback এসেছে কিনা চেক করতে Polling শুরু
-          let attempts = 0;
-          const pollInterval = setInterval(async () => {
-            attempts += 1;
-
+      if (typeof showAdFunc === 'function') {
+        showAdFunc()
+          .then(async () => {
+            // অ্যাড দেখা শেষ হলে সরাসরি রিওয়ার্ডের জন্য ব্যাকএন্ডে API কল
             try {
-              const checkRes = await fetch(`${BACKEND_URL}/api/user/check-ad-status`, {
+              const res = await fetch(`${BACKEND_URL}/api/game/reward`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegramId: currentTelegramId, subId })
+                body: JSON.stringify({ telegramId: currentTelegramId })
               });
-              const checkData = await checkRes.json();
+              const data = await res.json();
 
-              if (checkData && checkData.verified) {
-                clearInterval(pollInterval);
-                syncUserData(); // ইউজার ডাটা রিফ্রেশ করা
-                resolve(true); // ✅ Monetag ভেরিফাইড হলে গেম বা রিওয়ার্ড অনুমোদন
-              } else if (attempts >= 20) { // ৪০ সেকেন্ড পর টাইমআউট
-                clearInterval(pollInterval);
-                alert("❌ Ad verification timed out! Please ensure you watched the ad properly.");
+              if (data && data.success) {
+                syncUserData(); // কয়েন আপডেট রিফ্রেশ করা
+                resolve(true); // ✅ অ্যাড সফল
+              } else {
+                alert("❌ Verification failed!");
                 resolve(false);
               }
             } catch (err) {
-              console.error("Ad status check error:", err);
+              console.error("Reward API Error:", err);
+              alert("❌ Network Error: Failed to add reward.");
+              resolve(false);
             }
-          }, 2000);
-
-        } catch (err) {
-          console.error("Monetag Ad System Error:", err);
-          alert("❌ Network Error: Could not verify Monetag Ad.");
-          resolve(false);
-        }
-      })();
+          })
+          .catch((err) => {
+            console.error("Monetag Ad Error/Cancelled:", err);
+            alert("❌ Ad was closed early or failed to load!");
+            resolve(false);
+          });
+      } else {
+        alert("⚠️ Ad system is initializing. Please try again in a few seconds.");
+        resolve(false);
+      }
     });
   };
 
