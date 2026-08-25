@@ -92,7 +92,7 @@ export default function App() {
     
   }, [syncUserData]);
 
-// 🟢 ১. অ্যাড দেখানোর সেফ ফাংশন (Monetag internal error এড়াতে)
+// 🟢 ১. অ্যাড দেখানোর সেফ ফাংশন (Monetag internal error এড়াতে)
 const handlePlayAd = () => {
   return new Promise((resolve) => {
     const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
@@ -104,12 +104,12 @@ const handlePlayAd = () => {
           resolve(true);
         })
         .catch((err) => {
-          // Monetag-এর internal pixel/network failed হলেও ইউজারকে রিওয়ার্ড দিন
+          // Monetag-এর internal pixel/network failed হলেও ইউজারকে রিওয়ার্ড দিন
           console.warn("⚠️ Monetag SDK Warning/Error Ignored:", err);
           resolve(true); 
         });
     } else {
-      // যদি SDK লোড না-ও হয়, টেস্ট বা ফলব্যাক হিসেবে ক্লেইম অ্যালাউ করবে
+      // যদি SDK লোড না-ও হয়, টেস্ট বা ফলব্যাক হিসেবে ক্লেইম অ্যালাউ করবে
       console.warn("⚠️ Ad SDK function not found, bypassing for reward...");
       resolve(true);
     }
@@ -123,7 +123,7 @@ const watchAdAndClaimReward = async () => {
   // অ্যাড কল করা
   await handlePlayAd();
 
-  // Monetag-এর internal error যাই হোক না কেন, সরাসরি ব্যাকএন্ডে ৮০ কয়েন জমা করার রিকোয়েস্ট যাবে
+  // Monetag-এর internal error যাই হোক না কেন, সরাসরি ব্যাকএন্ডে ৮০ কয়েন জমা করার রিকোয়েস্ট যাবে
   try {
     const response = await fetch('https://play-for-win.onrender.com/api/user/verify-monetag-impression', {
       method: 'POST',
@@ -136,16 +136,19 @@ const watchAdAndClaimReward = async () => {
       })
     });
 
-    const data = await response.json();
+    // রেসপন্স সেফলি পার্স করা
+    const data = await response.json().catch(() => ({}));
 
     if (response.ok && data.success) {
-      alert(`🎉 80 Coins Added Successfully! Total: ${data.mainCoins}`);
+      alert(`🎉 80 Coins Added! Total Coins: ${data.mainCoins}`);
     } else {
-      alert(data.message || 'Reward claim failed!');
+      // ব্যাকএন্ডের আসল বার্তা দেখাবে (যাতে ভুলেও Network Error না দেখায়)
+      alert(data.message || `Status Code: ${response.status} - Reward request failed.`);
     }
+
   } catch (error) {
-    console.error("Backend Fetch Error:", error);
-    alert("Backend Server Error. Make sure Render server is awake!");
+    console.error("Fetch Execution Error:", error);
+    alert("Server is responding slow. Please wait a few seconds and try again.");
   }
 };
   // ৩. অ্যাপ লোডিং স্ক্রিন
