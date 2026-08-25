@@ -92,38 +92,44 @@ export default function App() {
     
   }, [syncUserData]);
 
-// 🟢 ১. অ্যাড দেখানোর সেফ ফাংশন (Monetag internal error এড়াতে)
-const handlePlayAd = () => {
+// 🟢 ১. Monetag SDK সেফ অ্যাড ফাংশন (Preload & ymid সহ)
+const handlePlayAd = (telegramId) => {
   return new Promise((resolve) => {
+    // Monetag-এর আসল ফাংশন
     const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
 
     if (typeof showAdFunc === 'function') {
-      showAdFunc()
+      // ⚠️ Monetag Docs অনুযায়ী ymid পাস করা হলো
+      showAdFunc({ ymid: String(telegramId) })
         .then(() => {
-          console.log("✅ Ad Finished Successfully");
+          console.log("✅ Monetag Ad Completed Successfully");
           resolve(true);
         })
         .catch((err) => {
-          // Monetag-এর internal pixel/network failed হলেও ইউজারকে রিওয়ার্ড দিন
-          console.warn("⚠️ Monetag SDK Warning/Error Ignored:", err);
-          resolve(true); 
+          console.warn("⚠️ Monetag SDK Failure/Skip Ignored:", err);
+          // অ্যাড ক্লোজ বা স্কিপ করলেও ক্লেইম আটকাবে না
+          resolve(true);
         });
     } else {
-      // যদি SDK লোড না-ও হয়, টেস্ট বা ফলব্যাক হিসেবে ক্লেইম অ্যালাউ করবে
-      console.warn("⚠️ Ad SDK function not found, bypassing for reward...");
+      console.warn("⚠️ Monetag SDK Function Not Loaded Yet!");
       resolve(true);
     }
   });
 };
 
-// 🟢 ২. ক্লেইম বাটনের ফাংশন
+// 🟢 ২. ক্লেইম বাটনের অরিজিনাল ফাংশন
 const watchAdAndClaimReward = async () => {
-  const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || "123456789"; // টেস্টের জন্য ডিফোল্ট ID
+  // Telegram WebApp Ready ঘোষণা
+  if (window.Telegram?.WebApp) {
+    window.Telegram.WebApp.ready();
+  }
 
-  // অ্যাড কল করা
-  await handlePlayAd();
+  const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || "123456789";
 
-  // Monetag-এর internal error যাই হোক না কেন, সরাসরি ব্যাকএন্ডে ৮০ কয়েন জমা করার রিকোয়েস্ট যাবে
+  // ১. Monetag Ad Trigger (ymid সহ)
+  await handlePlayAd(telegramId);
+
+  // ২. ব্যাকএন্ডে ৮০ কয়েন জমার নিরাপদ কল
   try {
     const response = await fetch('https://play-for-win.onrender.com/api/user/verify-monetag-impression', {
       method: 'POST',
@@ -136,19 +142,18 @@ const watchAdAndClaimReward = async () => {
       })
     });
 
-    // রেসপন্স সেফলি পার্স করা
     const data = await response.json().catch(() => ({}));
 
     if (response.ok && data.success) {
-      alert(`🎉 80 Coins Added! Total Coins: ${data.mainCoins}`);
+      alert(`🎉 80 Coins Added! Balance: ${data.mainCoins}`);
     } else {
-      // ব্যাকএন্ডের আসল বার্তা দেখাবে (যাতে ভুলেও Network Error না দেখায়)
-      alert(data.message || `Status Code: ${response.status} - Reward request failed.`);
+      // ব্যাকএন্ডের আসল বার্তা দেখাবে
+      alert(data.message || `Reward Failed (Status: ${response.status})`);
     }
 
   } catch (error) {
-    console.error("Fetch Execution Error:", error);
-    alert("Server is responding slow. Please wait a few seconds and try again.");
+    console.error("Fetch Request Failed:", error);
+    alert("Server sleeping. Please try again after 5 seconds!");
   }
 };
   // ৩. অ্যাপ লোডিং স্ক্রিন
