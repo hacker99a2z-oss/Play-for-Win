@@ -257,6 +257,8 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     if (isLoading || isCooldownActive) return;
     setIsLoading(true);
 
+    const currentTelegramId = user?.telegramId || user?.id || window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
+
     try {
       if (hasFreePlay) {
         const today = new Date().toISOString().slice(0, 10);
