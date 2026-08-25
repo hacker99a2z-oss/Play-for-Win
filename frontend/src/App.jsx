@@ -168,7 +168,7 @@ export default function App() {
       */
       // 🟢 MONETAG IN-APP SDK LOGIC (Adsgram Style)
       // Monetag SDK থেকে আসা জোন ফাংশনটি কল করা
-      const showAdFunc = window.show_RewardedInterstitial || window.show_3444057 || window.showPromise;
+      const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
 
       if (typeof showAdFunc === 'function') {
         showAdFunc()
