@@ -92,60 +92,53 @@ export default function App() {
     
   }, [syncUserData]);
 
-// 🟢 ১. Monetag SDK সেফ অ্যাড ফাংশন
-const handlePlayAd = (telegramId = null) => {
-  return new Promise((resolve) => {
-    // telegramId না থাকলে স্টেট বা SDK থেকে নেওয়া হবে
-    const activeTgId = 
-      telegramId || 
-      user?.telegramId || 
-      user?.id || 
-      window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || 
-      "123456789";
+  // 🟢 ১. Monetag SDK সেফ ও সঠিক অ্যাড ফাংশন
+  const handlePlayAd = (telegramId = null) => {
+    return new Promise((resolve) => {
+      // telegramId না থাকলে স্টেট বা SDK থেকে নেওয়া হবে
+      const activeTgId = 
+        telegramId || 
+        user?.telegramId || 
+        user?.id || 
+        window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() || 
+        "123456789";
 
-    const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
+      // Monetag SDK-এর সম্ভাব্য ফাংশনগুলো খোঁজা
+      const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
 
-    // ৫ সেকেন্ডের সেফটি টাইমার (অ্যাড না আসলে অ্যাপ যাতে আটকে না যায়)
-    const timeout = setTimeout(() => {
-      console.warn("⚠️ Monetag timeout. Auto resolving...");
-      resolve(true);
-    }, 5000);
+      if (typeof showAdFunc === 'function') {
+        try {
+          const adResult = showAdFunc({ ymid: String(activeTgId) });
 
-    if (typeof showAdFunc === 'function') {
-      try {
-        const adResult = showAdFunc({ ymid: String(activeTgId) });
-
-        // যদি SDK Promise রিটার্ন করে
-        if (adResult && typeof adResult.then === 'function') {
-          adResult
-            .then(() => {
-              clearTimeout(timeout);
-              console.log("✅ Monetag Ad Completed Successfully");
-              resolve(true);
-            })
-            .catch((err) => {
-              clearTimeout(timeout);
-              console.warn("⚠️ Monetag SDK Failure/Skip Ignored:", err);
-              resolve(true);
-            });
-        } else {
-          // যদি সরাসরি রান হয় (Non-Promise)
-          clearTimeout(timeout);
-          console.log("✅ Monetag Ad Executed");
-          resolve(true);
+          // যদি SDK Promise রিটার্ন করে
+          if (adResult && typeof adResult.then === 'function') {
+            adResult
+              .then(() => {
+                // 🟢 ইউজার সম্পূর্ণ অ্যাড দেখলে কেবল এটি কল হবে
+                console.log("✅ Monetag Ad Completed Successfully");
+                resolve(true);
+              })
+              .catch((err) => {
+                // 🔴 ইউজার অ্যাড স্কিপ করলে বা কোনো সমস্যা হলে
+                console.warn("⚠️ Monetag SDK Skipped or Closed Early:", err);
+                resolve(false);
+              });
+          } else {
+            // যদি সরাসরি রান হয় (Non-Promise fallbacks)
+            console.log("✅ Monetag Ad Executed");
+            resolve(true);
+          }
+        } catch (err) {
+          console.error("⚠️ Monetag Execution Error:", err);
+          resolve(false);
         }
-      } catch (err) {
-        clearTimeout(timeout);
-        console.error("⚠️ Monetag Execution Error:", err);
-        resolve(true);
+      } else {
+        console.warn("⚠️ Monetag SDK Function Not Loaded Yet!");
+        alert("Ads are loading. Please try again in a few seconds.");
+        resolve(false);
       }
-    } else {
-      clearTimeout(timeout);
-      console.warn("⚠️ Monetag SDK Function Not Loaded Yet!");
-      resolve(true);
-    }
-  });
-};
+    });
+  };
   
   // ৩. অ্যাপ লোডিং স্ক্রিন
   if (loading) {
