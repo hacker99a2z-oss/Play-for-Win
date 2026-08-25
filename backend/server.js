@@ -515,7 +515,7 @@ app.post('/api/game/reward', async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
-
+/*
 // AdsGram Webhook Endpoint
 app.get('/api/adsgram-reward', async (req, res) => {
   const targetUserId = req.query.userId || req.query.userid;
@@ -573,10 +573,11 @@ app.post('/api/adsgram-verify', async (req, res) => {
     return res.status(500).json({ success: false, error: 'Verification failed' });
   }
 });
+*/
 
-// Monetag Postback Endpoint
+// ১. Monetag Server Postback (অ্যাড দেখা সম্পন্ন হলে Monetag সার্ভার এই রাউট কল করবে)
 app.get('/api/monetag-postback', async (req, res) => {
-  const { sub_id } = req.query;
+  const sub_id = req.query.sub_id || req.query.userId || req.query.telegramId;
 
   if (!sub_id) {
     return res.status(400).send('Missing sub_id (telegramId)');
@@ -588,7 +589,7 @@ app.get('/api/monetag-postback', async (req, res) => {
     if (user) {
       user.adsWatched = (user.adsWatched || 0) + 1;
       await user.save();
-      console.log(`✅ Monetag Postback Verified for Telegram ID: ${sub_id}`);
+      console.log(`✅ Monetag Postback Verified & Ad Counted for Telegram ID: ${sub_id}`);
       return res.status(200).send('OK');
     }
 
@@ -599,7 +600,49 @@ app.get('/api/monetag-postback', async (req, res) => {
   }
 });
 
-// Ad Reward Endpoint (80 Coins for Main & Daily Coins)
+// ২. Monetag Ad Verification & Reward Endpoint (Direct Front-End Verification)
+// ইউজারের Monetag অ্যাড দেখা হলে কয়েন যুক্ত বা কয়েন ডাবল করার জন্য এই API ব্যবহার হবে
+app.post('/api/monetag-reward', async (req, res) => {
+  try {
+    const { telegramId, type, rewardCoins } = req.body; 
+    // type: 'WATCH_AD_COINS' (80 Coins), 'DOUBLE_REWARD' (Game reward x2)
+    
+    if (!telegramId) {
+      return res.status(400).json({ success: false, message: 'Telegram ID is required' });
+    }
+
+    const user = await User.findOne({ telegramId });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    let addedCoins = 80;
+
+    if (type === 'DOUBLE_REWARD' && rewardCoins) {
+      addedCoins = Number(rewardCoins); // ২ গুণ বাড়তি কয়েন
+    }
+
+    user.mainCoins = (user.mainCoins || 0) + addedCoins;
+    user.dailyCoins = (user.dailyCoins || 0) + addedCoins;
+    user.adsWatched = (user.adsWatched || 0) + 1;
+
+    await user.save();
+
+    console.log(`✅ Monetag Ad Verified! User: ${telegramId} received ${addedCoins} coins.`);
+
+    res.json({
+      success: true,
+      message: 'Monetag Ad Reward added successfully!',
+      mainCoins: user.mainCoins,
+      dailyCoins: user.dailyCoins
+    });
+  } catch (error) {
+    console.error('Error verifying Monetag ad reward:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// ৩. Ad Reward Endpoint (80 Coins - Monetag Compatible)
 app.post('/api/user/ad-reward', async (req, res) => {
   try {
     const { telegramId } = req.body;
@@ -614,15 +657,15 @@ app.post('/api/user/ad-reward', async (req, res) => {
 
     const REWARD_COINS = 80;
 
-    // mainCoins এবং dailyCoins দুইটিতেই ৮০ কয়েন যোগ করা
     user.mainCoins = (user.mainCoins || 0) + REWARD_COINS;
     user.dailyCoins = (user.dailyCoins || 0) + REWARD_COINS;
+    user.adsWatched = (user.adsWatched || 0) + 1;
 
     await user.save();
 
     res.json({
       success: true,
-      message: 'Reward added successfully!',
+      message: '80 Coins Reward added via Monetag!',
       mainCoins: user.mainCoins,
       dailyCoins: user.dailyCoins
     });
