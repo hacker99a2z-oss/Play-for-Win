@@ -93,21 +93,22 @@ export default function App() {
   }, [syncUserData]);
 
 const handleWatchAd = async () => {
-  // ১. Telegram User ID সংগৃহীত নিশ্চিত করুন
-  const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-  const telegramId = tgUser?.id || "123456789"; // ব্যাকআপ টেস্ট ID
+  // ১. টেলিগ্রাম ইউজারের আইডি চেক
+  const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || "123456789";
 
-  // ২. Monetag Ad Trigger (AdBlocker বা Error হ্যান্ডলিং সহ)
+  // ২. Monetag Ad Trigger (নিরাপদভাবে ট্রাই-ক্যাচ করা)
   try {
     const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
     if (typeof showAdFunc === 'function') {
-      await showAdFunc().catch(e => console.warn("Monetag Ad skipped/blocked:", e));
+      await showAdFunc().catch((e) => console.log("Ad closed or blocked silently"));
+    } else {
+      console.log("Ad SDK not ready yet");
     }
-  } catch (adErr) {
-    console.warn("SDK Not Ready, bypassing to reward step:", adErr);
+  } catch (err) {
+    console.warn("SDK call error ignored:", err);
   }
 
-  // ৩. ব্যাকএন্ডে ৮০ কয়েন জমা করার রিকোয়েস্ট
+  // ৩. ব্যাকএন্ডে ৮০ কয়েন পাঠানোর রিকোয়েস্ট
   try {
     const response = await fetch('https://play-for-win.onrender.com/api/user/verify-monetag-impression', {
       method: 'POST',
@@ -120,16 +121,20 @@ const handleWatchAd = async () => {
       })
     });
 
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status}`);
+    }
+
     const data = await response.json();
 
-    if (data.success) {
-      alert(`🎉 80 Coins Added! Balance: ${data.mainCoins}`);
+    if (data && data.success) {
+      alert(`🎉 80 Coins Added! Main Balance: ${data.mainCoins}`);
     } else {
-      alert(`⚠️ ${data.message || 'Reward failed'}`);
+      alert(data?.message || 'Reward claim failed!');
     }
   } catch (error) {
-    console.error("Fetch Exception:", error);
-    alert("Render server is sleeping. Please wait 10 seconds and try again.");
+    console.error("Backend Error:", error);
+    alert("Server takes time to respond. Please try again after 5 seconds.");
   }
 };
 
