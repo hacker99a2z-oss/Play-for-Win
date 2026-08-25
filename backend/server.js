@@ -469,25 +469,29 @@ app.post('/api/user/sync', async (req, res) => {
   }
 });
 
-// monetag verification route
 app.post('/api/user/verify-monetag-impression', async (req, res) => {
+  // CORS হেডার সরাসরি সেট করুন
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+
   try {
     const { telegramId } = req.body;
 
     if (!telegramId) {
-      return res.status(400).json({ success: false, message: 'telegramId is required' });
+      return res.status(200).json({ success: false, message: 'Telegram ID missing' });
     }
 
-    const user = await User.findOne({ telegramId: String(telegramId) });
+    // ID দিয়ে ইউজার খোঁজা
+    let user = await User.findOne({ telegramId: String(telegramId) });
+    
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(200).json({ success: false, message: 'User not found in DB' });
     }
 
+    // কয়েন যোগ
     const REWARD_COINS = 80;
-    user.mainCoins = (user.mainCoins || 0) + REWARD_COINS;
-    user.dailyCoins = (user.dailyCoins || 0) + REWARD_COINS;
-    user.adsWatched = (user.adsWatched || 0) + 1;
-    user.lastAdWatchedAt = new Date();
+    user.mainCoins = Number(user.mainCoins || 0) + REWARD_COINS;
+    user.dailyCoins = Number(user.dailyCoins || 0) + REWARD_COINS;
     
     await user.save();
 
@@ -496,9 +500,11 @@ app.post('/api/user/verify-monetag-impression', async (req, res) => {
       mainCoins: user.mainCoins,
       dailyCoins: user.dailyCoins
     });
+
   } catch (err) {
     console.error("Backend Error:", err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    // 500 না পাঠিয়ে 200 পাঠাবো যেন Network Error না মারে
+    return res.status(200).json({ success: false, message: 'Server Internal Error' });
   }
 });
 
