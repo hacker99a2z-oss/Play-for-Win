@@ -92,9 +92,9 @@ export default function App() {
     
   }, [syncUserData]);
 
-  // ২. Adsgram Ad Controller (Strict Event Success Check)
+  // ২. Monetag Ad Controller with Postback Verification
   const handlePlayAd = () => {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       const tg = window.Telegram?.WebApp;
       const currentTelegramId = user?.telegramId || tg?.initDataUnsafe?.user?.id?.toString();
 
@@ -103,105 +103,69 @@ export default function App() {
         resolve(false);
         return;
       }
-      /*
-      if (window.Adsgram) {
-        try {
-          const AdController = window.Adsgram.init({
-            blockId: "41655",
-            userId: String(currentTelegramId)
-          });
 
-          // Adsgram থেকে ডিরেক্ট ইম্প্রেশন/সাফল্যের রেজাল্ট চেক
-          AdController.show()
-            .then(async (result) => {
-              // 🛑 কেবল Adsgram ডিরেক্ট 'done: true' (Impression Counted) দিলেই ভেতরে ঢুকবে
-              if (result && result.done === true) {
+      try {
+        // [পরিবর্তন ১]: সার্ভার থেকে সিকিউর Token/subId জেনারেট করা
+        const tokenRes = await fetch(`${BACKEND_URL}/api/user/generate-ad-token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ telegramId: currentTelegramId })
+        });
+        const tokenData = await tokenRes.json();
+        
+        if (!tokenData.success || !tokenData.subId) {
+          alert("❌ Failed to initialize Ad verification session.");
+          resolve(false);
+          return;
+        }
+
+        const subId = tokenData.subId;
+        const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
+
+        if (typeof showAdFunc === 'function') {
+          // [পরিবর্তন ২]: Monetag-এ subId পাঠিয়ে অ্যাড চালু করা
+          showAdFunc({ subId: subId })
+            .then(() => {
+              // [পরিবর্তন ৩]: Postback কনফার্মেশন এর জন্য Polling চেক করা
+              let checkCount = 0;
+              const maxChecks = 15; // সর্বোচ্চ ৩০ সেকেন্ড অপেক্ষা করবে
+
+              const pollInterval = setInterval(async () => {
+                checkCount++;
                 try {
-                  await new Promise((res) => setTimeout(res, 500));
-
-                  // 🟢 টেলিগ্রামের অরিজিনাল এনক্রিপ্টেড র-স্ট্রিং
-                  const rawInitData = window.Telegram?.WebApp?.initData || "";
-                  
-                  // সার্ভারে কল করে কনফার্ম করা
-                  const response = await fetch(`${BACKEND_URL}/api/adsgram-verify`, {
+                  const statusRes = await fetch(`${BACKEND_URL}/api/user/check-ad-status`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      telegramId: currentTelegramId,
-                      initData: rawInitData
-                    })
+                    body: JSON.stringify({ telegramId: currentTelegramId, subId: subId })
                   });
-                  
-                  const data = await response.json();
+                  const statusData = await statusRes.json();
 
-                  if (data && data.success && data.verified) {
-                    resolve(true); // ✅ ইম্প্রেশন সফল ও সার্ভার ভেরিফাইড -> গেম/কয়েন ডাবল এলাউড
-                  } else {
-                    alert("❌ Server verification failed!");
+                  if (statusData && statusData.verified) {
+                    clearInterval(pollInterval);
+                    syncUserData(); // কয়েন আপডেট রিফ্রেশ করা
+                    resolve(true); // ✅ পোস্টব্যাক ভেরিফাইড ও সফল
+                  } else if (checkCount >= maxChecks) {
+                    clearInterval(pollInterval);
+                    alert("❌ Ad verification timeout. Please ensure you watched the ad properly!");
                     resolve(false);
                   }
                 } catch (err) {
-                  console.error("Adsgram verification error:", err);
-                  alert("❌ Network Error: Could not verify ad with server.");
-                  resolve(false);
+                  console.error("Ad status check error:", err);
                 }
-              } else {
-                // ❌ যদি ইউজার অ্যাড স্কিপ করে, কেটে দেয় বা ইম্প্রেশন না হয়
-                alert("❌ Ad impression failed or closed early. Action cancelled!");
-                resolve(false);
-              }
+              }, 2000);
             })
             .catch((err) => {
-              console.error("Adsgram Error:", err);
-              alert("❌ Unable to load Ad or Adblocker detected!");
+              console.error("Monetag Ad Error/Cancelled:", err);
+              alert("❌ Ad was closed early or failed to load!");
               resolve(false);
             });
-        } catch (error) {
-          console.error("Adsgram Init Error:", error);
-          alert("❌ Failed to trigger Ad network.");
+        } else {
+          alert("⚠️ Ad system is initializing. Please try again in a few seconds.");
           resolve(false);
         }
-      } else {
-        alert("⚠️ Ad Network failed to load! Check your internet or disable AdBlocker.");
-        resolve(false);
-      }
-      */
-      // 🟢 MONETAG IN-APP SDK LOGIC (Adsgram Style)
-      // Monetag SDK থেকে আসা জোন ফাংশনটি কল করা
-      const showAdFunc = window.show_11548724 || window.show_RewardedInterstitial || window.showPromise;
-
-      if (typeof showAdFunc === 'function') {
-        showAdFunc()
-          .then(async () => {
-            // অ্যাড দেখা শেষ হলে সরাসরি রিওয়ার্ডের জন্য ব্যাকএন্ডে API কল
-            try {
-              const res = await fetch(`${BACKEND_URL}/api/game/reward`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ telegramId: currentTelegramId })
-              });
-              const data = await res.json();
-
-              if (data && data.success) {
-                syncUserData(); // কয়েন আপডেট রিফ্রেশ করা
-                resolve(true); // ✅ অ্যাড সফল
-              } else {
-                alert("❌ Verification failed!");
-                resolve(false);
-              }
-            } catch (err) {
-              console.error("Reward API Error:", err);
-              alert("❌ Network Error: Failed to add reward.");
-              resolve(false);
-            }
-          })
-          .catch((err) => {
-            console.error("Monetag Ad Error/Cancelled:", err);
-            alert("❌ Ad was closed early or failed to load!");
-            resolve(false);
-          });
-      } else {
-        alert("⚠️ Ad system is initializing. Please try again in a few seconds.");
+      } catch (err) {
+        console.error("Ad Process Error:", err);
+        alert("❌ Error connecting to server!");
         resolve(false);
       }
     });
