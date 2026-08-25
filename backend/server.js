@@ -99,12 +99,12 @@ const getClientIpAndCountry = async (req, frontendIp) => {
   }
 
   try {
-    const ipResponse = await axios.get(`https://ipapi.co/${clientIp}/json/`, { timeout: 3000 });
-    if (ipResponse.data && ipResponse.data.country_name) {
+    const ipResponse = await axios.get(`http://ip-api.com/json/${clientIp}?fields=status,country,proxy,hosting`, { timeout: 3000 });
+    if (ipResponse.data.status === 'success') {
       return {
         clientIp,
         countryName: ipResponse.data.country_name || 'Unknown',
-        isVpnOrProxy: Boolean(ipResponse.data.security?.is_proxy)
+        isVpnOrProxy: Boolean(ipResponse.data.proxy || ipResponse.data.hosting)
       };
     }
   } catch (err) {
