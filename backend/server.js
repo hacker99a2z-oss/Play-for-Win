@@ -676,6 +676,38 @@ app.get('/api/monetag-postback', async (req, res) => {
   }
 });
 
+// backend server.js / index.js
+
+app.post('/api/user/ad-reward', async (req, res) => {
+  const { telegramId } = req.body;
+
+  if (!telegramId) {
+    return res.status(400).json({ success: false, message: 'Telegram ID is required' });
+  }
+
+  try {
+    // ডাটাবেজে ৮০ কয়েন যোগ করার লজিক (উদাহরণস্বরূপ MongoDB/PostgreSQL)
+    const user = await User.findOneAndUpdate(
+      { telegramId: String(telegramId) },
+      { $inc: { coins: 80 } },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: '80 coins added successfully',
+      mainCoins: user.coins
+    });
+  } catch (error) {
+    console.error('Ad reward error:', error);
+    return res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+});
+
 // ডেইলি টাইমার এন্ডপয়েন্ট
 app.get('/api/contest/timer', (req, res) => {
   const now = new Date();
