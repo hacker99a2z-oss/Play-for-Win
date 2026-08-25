@@ -575,25 +575,53 @@ app.post('/api/adsgram-verify', async (req, res) => {
 });
 */
 
-// ১. Monetag Server Postback (অ্যাড দেখা সম্পন্ন হলে Monetag সার্ভার এই রাউট কল করবে)
+// Monetag Server Postback (Secure Verification)
 app.get('/api/monetag-postback', async (req, res) => {
-  const sub_id = req.query.sub_id || req.query.userId || req.query.telegramId;
+  const { sub_id, secret, trans_id } = req.query;
 
+  // ১. প্রয়োজনীয় প্যারামিটার চেক
   if (!sub_id) {
-    return res.status(400).send('Missing sub_id (telegramId)');
+    return res.status(400).send('Missing sub_id');
+  }
+
+  // ২. সিকিউরিটি চেক (Monetag ড্যাশবোর্ড থেকে সেট করা Secret Token মিলাবে)
+  const MONETAG_SECRET = process.env.MONETAG_SECRET_KEY || 'YOUR_SECRET_KEY';
+  if (secret !== MONETAG_SECRET) {
+    console.warn(`🚨 Unauthorized Postback Attempt for ID: ${sub_id}`);
+    return res.status(403).send('Forbidden: Invalid Secret');
   }
 
   try {
-    let user = await User.findOne({ telegramId: sub_id });
+    const user = await User.findOne({ telegramId: String(sub_id) });
 
-    if (user) {
-      user.adsWatched = (user.adsWatched || 0) + 1;
-      await user.save();
-      console.log(`✅ Monetag Postback Verified & Ad Counted for Telegram ID: ${sub_id}`);
-      return res.status(200).send('OK');
+    if (!user) {
+      return res.status(404).send('User not found');
     }
 
-    return res.status(404).send('User not found');
+    // ৩. ডুপ্লিকেট পেমেন্ট/পোস্টব্যাক রোধ (Replay Attack Prevention)
+    if (trans_id) {
+      if (!user.processedTransactions) {
+        user.processedTransactions = [];
+      }
+
+      if (user.processedTransactions.includes(trans_id)) {
+        console.log(`⚠️ Duplicate postback skipped for Transaction ID: ${trans_id}`);
+        return res.status(200).send('OK (Already Processed)');
+      }
+
+      user.processedTransactions.push(trans_id);
+    }
+
+    // ৪. রিওয়ার্ড ও অ্যাড কাউন্ট আপডেট
+    user.adsWatched = (user.adsWatched || 0) + 1;
+    user.mainCoins = (user.mainCoins || 0) + 80; // প্রয়োজন অনুযায়ী কয়েন দিন
+    user.dailyCoins = (user.dailyCoins || 0) + 80;
+
+    await user.save();
+
+    console.log(`✅ Monetag Postback Verified! User: ${sub_id}, Trans ID: ${trans_id || 'N/A'}`);
+    return res.status(200).send('OK');
+
   } catch (err) {
     console.error('Monetag Postback Error:', err);
     return res.status(500).send('Internal Server Error');
