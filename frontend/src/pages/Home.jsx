@@ -42,26 +42,14 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       setHasFreePlay(true);
     }
 
-    const savedCooldownTarget = localStorage.getItem('gameCooldownTarget');
+    const savedCooldownTarget = localStorage.getItem('sharedCooldownTarget');
     if (savedCooldownTarget) {
       const remaining = Math.ceil((parseInt(savedCooldownTarget, 10) - Date.now()) / 1000);
       if (remaining > 0) {
         setCooldown(remaining);
         setIsCooldownActive(true);
       } else {
-        localStorage.removeItem('gameCooldownTarget');
-      }
-    }
-
-    // 🔴 এই অংশটুকু যুক্ত করুন:
-    const savedAdCoinsCooldownTarget = localStorage.getItem('adCoinsCooldownTarget');
-    if (savedAdCoinsCooldownTarget) {
-      const remainingAd = Math.ceil((parseInt(savedAdCoinsCooldownTarget, 10) - Date.now()) / 1000);
-      if (remainingAd > 0) {
-        setAdCoinsCooldown(remainingAd);
-        setIsAdCoinsCooldownActive(true);
-      } else {
-        localStorage.removeItem('adCoinsCooldownTarget');
+        localStorage.removeItem('sharedCooldownTarget');
       }
     }
 
@@ -178,7 +166,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
     return () => clearInterval(timer);
   }, [gameState, timeLeft]);
 
-  // ৪. কুলডাউন টাইমার
+  // ৪. কমন কুলডাউন টাইমার
   useEffect(() => {
     let timer;
     if (isCooldownActive && cooldown > 0) {
@@ -187,23 +175,10 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
       }, 1000);
     } else if (cooldown === 0 && isCooldownActive) {
       setIsCooldownActive(false);
+      localStorage.removeItem('sharedCooldownTarget');
     }
     return () => clearInterval(timer);
   }, [isCooldownActive, cooldown]);
-
-  // 🔴 এই দুইটি নতুন অংশ যুক্ত করুন:
-  // (ক) ৮০ কয়েন অ্যাডের ৩৫ সেকেন্ড টাইমার
-  useEffect(() => {
-    let timer;
-    if (isAdCoinsCooldownActive && adCoinsCooldown > 0) {
-      timer = setInterval(() => {
-        setAdCoinsCooldown((prev) => prev - 1);
-      }, 1000);
-    } else if (adCoinsCooldown === 0 && isAdCoinsCooldownActive) {
-      setIsAdCoinsCooldownActive(false);
-    }
-    return () => clearInterval(timer);
-  }, [isAdCoinsCooldownActive, adCoinsCooldown]);
 
   // ৮০ কয়েন ক্লেইম করার ফিক্সড ফাংশন
   const handleWatchAdForCoins = async () => {
@@ -238,7 +213,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
         refreshUserData();
 
         const cooldownTarget = Date.now() + 35 * 1000;
-        localStorage.setItem('adCoinsCooldownTarget', cooldownTarget.toString());
+        localStorage.setItem('sharedCooldownTarget', cooldownTarget.toString());
 
         setAdCoinsCooldown(35);
         setIsAdCoinsCooldownActive(true);
@@ -351,7 +326,7 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           setScore(0);
           
           const cooldownTarget = Date.now() + 35 * 1000;
-          localStorage.setItem('gameCooldownTarget', cooldownTarget.toString());
+          localStorage.setItem('sharedCooldownTarget', cooldownTarget.toString());
           
           setCooldown(35);
           setIsCooldownActive(true);
@@ -429,9 +404,9 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
           {/* 🔴 ঠিক এই জায়গায় নিচে নতুন বাটনটি যুক্ত করুন: */}
           <button
             onClick={handleWatchAdForCoins}
-            disabled={isAdCoinsLoading || isAdCoinsCooldownActive}
+            disabled={isAdCoinsLoading || isCooldownActive}
             className={`w-full max-w-xs mt-3 py-3.5 px-6 rounded-2xl font-bold text-base transition-all transform flex items-center justify-center gap-2 border ${
-              isAdCoinsLoading || isAdCoinsCooldownActive
+              isAdCoinsLoading || isCooldownActive
                 ? 'bg-gray-800 text-gray-400 border-gray-700 cursor-not-allowed opacity-80 shadow-none'
                 : 'bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-white border-amber-300/40 shadow-lg shadow-orange-500/30 hover:brightness-110 active:scale-95'
             }`}
@@ -444,8 +419,8 @@ const Home = ({ user, onPlayAd, refreshUserData }) => {
                 </svg>
                 <span>Loading Ad...</span>
               </>
-            ) : isAdCoinsCooldownActive ? (
-              `⏳ Wait ${adCoinsCooldown}s...`
+            ) : isCooldownActive ? (
+              `⏳ Wait ${cooldown}s...`
             ) : (
               '📺 Play Ads = 80 Coins'
             )}
