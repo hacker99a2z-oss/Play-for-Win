@@ -689,8 +689,12 @@ app.post('/api/user/ad-reward', async (req, res) => {
     // ডাটাবেজে ৮০ কয়েন যোগ করার লজিক (উদাহরণস্বরূপ MongoDB/PostgreSQL)
     const user = await User.findOneAndUpdate(
       { telegramId: String(telegramId) },
-      { $inc: { coins: 80 } },
-      { new: true }
+      { $inc: {
+          mainCoins: 80, 
+          dailyCoins: 80,
+          adsWatched: 1 
+        } 
+      },
     );
 
     if (!user) {
